@@ -11,6 +11,7 @@ pub fn make_ignore_walker(root: impl AsRef<Path>) -> Vec<PathBuf> {
         .add_custom_ignore_filename(".gitignore")
         .add_custom_ignore_filename(".dockerignore")
         .add_custom_ignore_filename(".backupignore")
+        .filter_entry(|entry| entry.path().file_name().map(|n| n != ".git").unwrap_or(false))
         .parents(true)
         .build()
         .into_iter()
