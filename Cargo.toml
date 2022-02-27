@@ -15,4 +15,4 @@ path = "src/merge_ignores/main.rs"
 bump_alloc = "0.1.0"
 fd-find = "8.3.1"
 tokio = { version = "1.17.0", features = ["full"] }
-
+async-walkdir = "0.2.0"
