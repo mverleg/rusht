@@ -7,10 +7,15 @@ static A: BumpAlloc = BumpAlloc::with_size(1024 * 1024 * 4);
 
 #[tokio::main]
 async fn main() {
-    println!("Hello, world!");
-    for_all_files(|pth| {
-        println!("file = {}", pth.to_string_lossy());
-        if 1 > 2 { return Err(()) };  //TODO @mark: TEMPORARY! REMOVE THIS!
-        Ok(())
-    }).await.unwrap();
+    for result in WalkBuilder::new("./")
+            .standard_filters(false)
+            .follow_links(true)
+            .add_ignore(".git")
+            .add_custom_ignore_filename(".gitignore")
+            .add_custom_ignore_filename(".dockerignore")
+            .add_custom_ignore_filename(".backupignore")
+            .parents(true)
+            .build_parallel() {
+        println!("{:?}", result);
+    }
 }
