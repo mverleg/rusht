@@ -3,6 +3,15 @@ name = "rusht"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "rusht"
+path = "src/lib.rs"
+
+[[bin]]
+name = "merge_ignores"
+path = "src/merge_ignores/main.rs"
 
 [dependencies]
+bump_alloc = "0.1.0"
+fd-find = "8.3.1"
+
