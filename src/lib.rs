@@ -1,8 +1,16 @@
 use ::std::path::Path;
 use ::std::path::PathBuf;
-use ::std::process::exit;
 
 use ::ignore::WalkBuilder;
+
+#[macro_export]
+macro_rules! stop {
+    () => (print!("\n"));
+    ($fmt:expr, $($arg:tt)*) => ({
+        print!(concat!($fmt, "\n"), $($arg)*);
+        std::process::exit(1)
+    });
+}
 
 pub fn make_ignore_walker(root: impl AsRef<Path>) -> Vec<PathBuf> {
     let paths = WalkBuilder::new(root.as_ref())
@@ -21,14 +29,12 @@ pub fn make_ignore_walker(root: impl AsRef<Path>) -> Vec<PathBuf> {
     match paths {
         Ok(paths) => {
             if paths.is_empty() {
-                eprintln!("did not find any file that is not ignored in '{}'", root.as_ref().to_string_lossy());
-                exit(1)
+                stop!("did not find any file that is not ignored in '{}'", root.as_ref().to_string_lossy())
             }
             paths
         },
         Err(err) => {
-            eprintln!("failed to find files: {}", err);
-            exit(1)
+            stop!("failed to find files: {}", err)
         }
     }
 }
