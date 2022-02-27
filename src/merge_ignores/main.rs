@@ -1,9 +1,6 @@
-extern crate bump_alloc;
-
-use ::async_walkdir::WalkDir;
 use ::bump_alloc::BumpAlloc;
 
-use ::futures_lite::stream::StreamExt;
+use ::rusht::for_all_files;
 
 #[global_allocator]
 static A: BumpAlloc = BumpAlloc::with_size(1024 * 1024 * 4);
@@ -11,13 +8,9 @@ static A: BumpAlloc = BumpAlloc::with_size(1024 * 1024 * 4);
 #[tokio::main]
 async fn main() {
     println!("Hello, world!");
-
-    let mut entries = WalkDir::new(".");
-    loop {
-        match entries.next().await {
-            Some(Ok(entry)) => println!("file: {}", entry.path().display()),
-            Some(Err(err)) => panic!("walkdir error: {}", err),
-            None => break,
-        }
-    }
+    for_all_files(|pth| {
+        println!("file = {}", pth.to_string_lossy());
+        if 1 > 2 { return Err(()) };  //TODO @mark: TEMPORARY! REMOVE THIS!
+        Ok(())
+    }).await.unwrap();
 }
