@@ -12,7 +12,14 @@ name = "merge_ignores"
 path = "src/merge_ignores/main.rs"
 
 [dependencies]
+lazy_static = "1.4.0"
+regex = "1.5.4"
+itertools = "0.10.1"
+smallvec = "1.7.0"
+bitmaps = "3.1.0"
+structopt = "0.3.26"
 bump_alloc = "0.1.0"
 fd-find = "8.3.1"
+futures-lite = "1.12.0"
 tokio = { version = "1.17.0", features = ["full"] }
 async-walkdir = "0.2.0"
