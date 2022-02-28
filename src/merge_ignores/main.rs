@@ -1,12 +1,10 @@
-use ::std::path::PathBuf;
-use std::fs::read_to_string;
+use ::std::fs::read_to_string;
+use ::std::path::Path;
 
 use ::bump_alloc::BumpAlloc;
 use ::gitignore::Pattern;
 use ::lazy_static::lazy_static;
 use ::regex::Regex;
-use gitignore::Error;
-use itertools::Itertools;
 
 use ::rusht::make_ignore_walker;
 use ::rusht::stop;
@@ -25,7 +23,7 @@ async fn main() {
     //TODO @mark:
 }
 
-fn find_ignore_patterns(pth: &str) -> Vec<PathBuf> {
+fn find_ignore_patterns(pth: &str) -> Vec<Pattern> {
     make_ignore_walker(pth).into_iter()
         .filter(|pth|
             pth.file_name()
@@ -33,15 +31,16 @@ fn find_ignore_patterns(pth: &str) -> Vec<PathBuf> {
                 .filter(|name| name.starts_with(".") && name.ends_with("ignore"))
                 .is_some()
         )
-        .map(|pth| read_to_string(pth).unwrap_or_else(|err| stop!("failed to read ignore file; err: {}", err)))
-        .flat_map(|content| content.lines())
-        .filter(|line| PATTERN_RE.is_match(line))
-        .map(|line| parse_pattern(line))
+        .map(|pth| (pth.as_path(), read_to_string(&pth).unwrap_or_else(|err| stop!("failed to read ignore file; err: {}", err))))
+        .flat_map(|(pth, content)| content.lines().map(|line| (pth, line)))
+        .filter(|(pth, line)| PATTERN_RE.is_match(line))
+        .map(|(pth, line)| parse_pattern(line, pth))
         .collect::<Vec<_>>()
 }
 
-fn parse_pattern(line: &str) -> Pattern {
-    match Pattern::new(line) {
+fn parse_pattern<'a>(line: &str, ignore_pth: &'a Path) -> Pattern<'a> {
+    let root_pth = ignore_pth.canonicalize().unwrap().parent().unwrap();
+    match Pattern::new(line, root_pth) {
         Ok(pattern) => pattern,
         Err(err) => stop!("failed to parse pattern '{}', err: {}", line, err),
     }
