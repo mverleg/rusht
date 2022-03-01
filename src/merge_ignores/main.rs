@@ -19,7 +19,7 @@ static A: BumpAlloc = BumpAlloc::with_size(1024 * 1024 * 4);
 
 #[tokio::main]
 async fn main() {
-    let ignore_patterns = find_ignore_patterns("./");
+    let _ignore_patterns = find_ignore_patterns("./");
     //TODO @mark:
 }
 
@@ -33,7 +33,7 @@ fn find_ignore_patterns(pth: &str) -> Vec<Pattern> {
         )
         .map(|pth| (pth.as_path(), read_to_string(&pth).unwrap_or_else(|err| stop!("failed to read ignore file; err: {}", err))))
         .flat_map(|(pth, content)| content.lines().map(|line| (pth, line)))
-        .filter(|(pth, line)| PATTERN_RE.is_match(line))
+        .filter(|(_, line)| PATTERN_RE.is_match(*line))
         .map(|(pth, line)| parse_pattern(line, pth))
         .collect::<Vec<_>>()
 }
@@ -45,17 +45,3 @@ fn parse_pattern<'a>(line: &str, ignore_pth: &'a Path) -> Pattern<'a> {
         Err(err) => stop!("failed to parse pattern '{}', err: {}", line, err),
     }
 }
-
-// fn parse_patterns(ignore_files: &[PathBuf]) -> Vec<Pattern> {
-//     let mut patterns = vec![];
-//     for file in ignore_files {
-//         //TODO @mark: don't unwrap?
-//         let name = file.file_name().unwrap().to_string_lossy().as_ref();
-//         if ! &*PATTERN_RE.is_match(name) {
-//             continue
-//         }
-//         let is_neg = &*NEG_PATTERN_RE.is_match(name);
-//         unimplemented!("prefix the current directory")
-//     }
-//     patterns
-// }
