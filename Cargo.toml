@@ -24,3 +24,10 @@ futures-lite = "1.12.0"
 tokio = { version = "1.17.0", features = ["full"] }
 ignore = "0.4.18"
 gitignore = "1.0.7"
+
+# for `ignore`
+failure = "0.1.2"
+failure_derive = "0.1.2"
+glob = "0.2.11"
+globset = "0.4.1"
+

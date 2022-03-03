@@ -3,6 +3,8 @@ use ::std::path::PathBuf;
 
 use ::ignore::WalkBuilder;
 
+pub mod deps;
+
 #[macro_export]
 macro_rules! stop {
     () => (print!("\n"));
