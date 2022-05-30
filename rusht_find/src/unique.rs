@@ -220,7 +220,11 @@ mod tests {
         sorted.sort();
         assert_eq!(values, sorted);
         dbg!(&values);
-        let find = values.binary_search(&Ustr::from("/a/c"));
+        let needle = Ustr::from("/a/c");
+        let find = values.binary_search_by(|l| {
+            eprintln!("{} vs {}: {:?}", l, needle, l.cmp(&needle));
+            l.cmp(&needle)
+        });
         assert_eq!(find, Ok(2));
     }
 }
