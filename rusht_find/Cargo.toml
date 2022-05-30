@@ -14,7 +14,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "main_unit_prefix"
-path = "src/main_unit_prefix.rs"
+path = "src/main_uniq_prefix.rs"
 
 [dependencies]
 structopt = "*"
