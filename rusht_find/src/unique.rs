@@ -14,13 +14,29 @@ pub struct UniqueArgs {
     pub find_duplicates: bool,
 }
 
-pub fn unique<S>(texts: &[S], sorted: bool) -> Vec<String>
+#[derive(Debug, Default, Clone, Copy)]
+pub enum Keep {
+    #[default]
+    First,
+    Subsequent,
+}
+
+impl Keep {
+    fn keep_is_first(&self, is_first: bool) -> bool {
+        match self {
+            Keep::First => is_first,
+            Keep::Subsequent => !is_first,
+        }
+    }
+}
+
+pub fn unique<S>(texts: &[S], sorted: bool, keep: Keep) -> Vec<String>
         where S: AsRef<str>, S: Into<String> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
         let txt = txt.as_ref();
-        if ! seen.insert(txt) {
+        if keep.keep_is_first(seen.insert(txt)) {
             eprintln!("  DUPLICATE {}", txt);  //TODO @mark:
             continue
         }
@@ -37,7 +53,7 @@ pub fn unique<S>(texts: &[S], sorted: bool) -> Vec<String>
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
     where S: AsRef<str>, S: Into<String> {
-    let known = unique(texts, true);
+    let known = unique(texts, true, Keep::First);
     let known = known.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
     debug!("finding uniq_prefix in {} items", known.len());
     dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
