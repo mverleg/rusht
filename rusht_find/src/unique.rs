@@ -63,7 +63,7 @@ impl Keep {
     }
 }
 
-pub fn unique(texts: &[Ustr], order: Order, keep: Keep) -> Vec<String> {
+pub fn unique(texts: &[Ustr], order: Order, keep: Keep) -> Vec<Ustr> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
@@ -79,7 +79,7 @@ pub fn unique(texts: &[Ustr], order: Order, keep: Keep) -> Vec<String> {
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<String> {
+pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<Ustr> {
     let mut known = unique(texts, Order::SortAscending, Keep::First);
     debug!("finding unique_prefix in {} items ({} unique)", texts.len(), known.len());
     let input = unique(texts, order, Keep::First);
@@ -90,7 +90,7 @@ pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<String> {
         if indx > 0 {
             let other = &known[indx - 1];
             eprintln!("-1: compare {} to {}", txt, other);  //TODO @mark:
-            if txt.starts_with(other) {
+            if txt.as_str().starts_with(other.as_str()) {
                 eprintln!("  DROP {}", txt);  //TODO @mark:
                 known[indx - 1] = txt;
                 continue;
@@ -106,51 +106,63 @@ pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<String> {
 mod tests {
     use super::*;
 
+    macro_rules! ustrvec {
+        ($($element: expr),*) => {
+            {
+                let mut txts: Vec<Ustr> = Vec::new();
+                $(
+                    txts.push(Ustr::from(&$element));
+                )*
+                txts
+            }
+        };
+    }
+
     #[test]
     fn unique_first() {
-        let res = unique(&vec!["/a", "/c", "/a", "/b"], Order::Preserve, Keep::First);
-        assert_eq!(res, vec!["/a".to_owned(), "/c".to_owned(), "/b".to_owned()]);
+        let res = unique(&ustrvec!["/a", "/c", "/a", "/b"], Order::Preserve, Keep::First);
+        assert_eq!(res, ustrvec!["/a", "/c", "/b"]);
     }
 
     #[test]
     fn unique_sorted() {
-        let res = unique(&vec!["/a", "/c", "/a", "/b"], Order::SortAscending, Keep::First);
-        assert_eq!(res, vec!["/a".to_owned(), "/b".to_owned(), "/c".to_owned()]);
+        let res = unique(&ustrvec!["/a", "/c", "/a", "/b"], Order::SortAscending, Keep::First);
+        assert_eq!(res, ustrvec!["/a", "/b", "/c"]);
     }
 
     #[test]
     fn unique_duplicates() {
-        let res = unique(&vec!["/a", "/c", "/a", "/a", "/b", "/c"], Order::Preserve, Keep::Subsequent);
-        assert_eq!(res, vec!["/a".to_owned(), "/a".to_owned(), "/c".to_owned()]);
+        let res = unique(&ustrvec!["/a", "/c", "/a", "/a", "/b", "/c"], Order::Preserve, Keep::Subsequent);
+        assert_eq!(res, ustrvec!["/a", "/a", "/c"]);
     }
 
     #[test]
     fn unique_prefix_first() {
-        let res = unique_prefix(&vec!["/a", "/a/b", "/a/c"], Order::Preserve);
-        assert_eq!(res, vec!["/a".to_owned()]);
+        let res = unique_prefix(&ustrvec!["/a", "/a/b", "/a/c"], Order::Preserve);
+        assert_eq!(res, ustrvec!["/a"]);
     }
 
     #[test]
     fn unique_prefix_duplicates() {
-        let res = unique_prefix(&vec!["/a", "/a", "/a"], Order::Preserve);
-        assert_eq!(res, vec!["/a".to_owned()]);
+        let res = unique_prefix(&ustrvec!["/a", "/a", "/a"], Order::Preserve);
+        assert_eq!(res, ustrvec!["/a"]);
     }
 
     #[test]
     fn unique_prefix_middle() {
-        let res = unique_prefix(&vec!["/a/c", "/a", "/a/b"], Order::Preserve);
-        assert_eq!(res, vec!["/a".to_owned()]);
+        let res = unique_prefix(&ustrvec!["/a/c", "/a", "/a/b"], Order::Preserve);
+        assert_eq!(res, ustrvec!["/a"]);
     }
 
     #[test]
     fn unique_prefix_sorted() {
-        let res = unique_prefix(&vec!["/a/c", "/a/b", "/a/c/q"], Order::SortAscending);
-        assert_eq!(res, vec!["/a/b".to_owned(), "/a/b".to_owned()]);
+        let res = unique_prefix(&ustrvec!["/a/c", "/a/b", "/a/c/q"], Order::SortAscending);
+        assert_eq!(res, ustrvec!["/a/b", "/a/b"]);
     }
 
     #[test]
     fn unique_prefix_nomatch() {
-        let res = unique_prefix(&vec!["/a/c", "/a/b", "/b"], Order::Preserve);
-        assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned(), "/b".to_owned()]);
+        let res = unique_prefix(&ustrvec!["/a/c", "/a/b", "/b"], Order::Preserve);
+        assert_eq!(res, ustrvec!["/a/c", "/a/b", "/b"]);
     }
 }
