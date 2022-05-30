@@ -47,7 +47,7 @@ pub fn add_cmd(args: AddArgs) {
             if let Some(templ) = args.lines_with {
                 assert!(templ.len() >= 1);
                 if !cmd.iter().any(|part| part.contains(&templ)) {
-                    fail(format!("did not find template string '{}' in task: {}",
+                    fail(format!("did not rusht_find template string '{}' in task: {}",
                                  templ, cmd.join(" ")))
                 }
                 debug!("going to read stdin lines");

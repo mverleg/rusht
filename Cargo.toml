@@ -2,6 +2,7 @@
 
 members = [
     "rusht_cmd",
+    "rusht_find",
 ]
 
 [profile.dev.package."*"]

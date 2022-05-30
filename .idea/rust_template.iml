@@ -13,6 +13,7 @@
       <sourceFolder url="file://$MODULE_DIR$/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/rusht_cmd/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rusht_lines/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rusht_find/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

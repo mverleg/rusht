@@ -378,6 +378,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusht_find"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "env_logger",
+ "itertools",
+ "lazy_static",
+ "log",
+ "regex",
+ "structopt",
+ "walkdir",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

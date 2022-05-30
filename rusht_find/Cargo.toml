@@ -1,0 +1,27 @@
+[package]
+name = "rusht_find"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+#[[bin]]
+#name = "logcount"
+#path = "src/log_stats.rs"
+
+[lib]
+name = "rusht_find"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main_unit_prefix"
+path = "src/main_unit_prefix.rs"
+
+[dependencies]
+structopt = "*"
+walkdir = "*"
+lazy_static = "*"
+regex = "*"
+itertools = "*"
+dirs = "*"
+log = "*"
+env_logger = "*"
