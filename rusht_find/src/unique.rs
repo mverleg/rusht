@@ -81,27 +81,21 @@ pub fn unique<S>(texts: &[S], order: Order, keep: Keep) -> Vec<String>
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix<S>(texts: &[S], order: Order) -> Vec<String>
         where S: AsRef<str>, S: Into<String> {
-    let known = unique(texts, Order::SortAscending, Keep::First);
-    let known = known.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
-    dbg!(&known);  //TODO @mark:
+    let mut known = unique(texts, Order::SortAscending, Keep::First);
     debug!("finding unique_prefix in {} items ({} unique)", texts.len(), known.len());
     let input = unique(texts, order, Keep::First);
     let mut result = Vec::with_capacity(known.len());
-    for txt in texts {
-        let txt = txt.as_ref();
+    for txt in input {
         let indx = known.binary_search(&txt)
             .expect("should always be found since collections have the same elements");
-        eprintln!(" 0: compare {} to {}", txt, &texts[indx].as_ref());  //TODO @mark:
         if indx > 0 {
-            let other = texts[indx - 1].as_ref();
+            let other = &known[indx - 1];
             eprintln!("-1: compare {} to {}", txt, other);  //TODO @mark:
             if txt.starts_with(other) {
                 eprintln!("  DROP {}", txt);  //TODO @mark:
+                known[indx - 1] = txt;
                 continue
             }
-        }
-        if indx + 1 < texts.len() {
-            eprintln!("+1: compare {} to {}", txt, &texts[indx + 1].as_ref());  //TODO @mark:
         }
         result.push(txt.into())
     }
@@ -157,7 +151,7 @@ mod tests {
 
     #[test]
     fn unique_prefix_nomatch() {
-        let res = unique_prefix(&vec!["/a/c", "/a/b"], Order::Preserve);
-        assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned()]);
+        let res = unique_prefix(&vec!["/a/c", "/a/b", "/b"], Order::Preserve);
+        assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned(), "/b".to_owned()]);
     }
 }
