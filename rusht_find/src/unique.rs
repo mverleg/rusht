@@ -3,6 +3,7 @@ use ::std::collections::HashSet;
 use ::log::debug;
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
+use ::ustr::UstrMap;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "unique_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
@@ -82,21 +83,35 @@ pub fn unique(texts: &[Ustr], order: Order, keep: Keep) -> Vec<Ustr> {
 pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<Ustr> {
     let mut known = unique(texts, Order::SortAscending, Keep::First);
     debug!("finding unique_prefix in {} items ({} unique)", texts.len(), known.len());
-    let input = unique(texts, order, Keep::First);
     let mut result = Vec::with_capacity(known.len());
-    for txt in input {
+    let mut parents = UstrMap::default();
+    for txt in texts {
+        if parents.contains_key(txt) {
+            eprintln!("  duplicate {}", txt);
+            continue;
+        }
+        dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
+        dbg!(&txt);  //TODO @mark: TEMPORARY! REMOVE THIS!
+        dbg!(known.binary_search(&txt));  //TODO @mark: TEMPORARY! REMOVE THIS!
         let indx = known.binary_search(&txt)
             .expect("should always be found since collections have the same elements");
+        // dbg!(indx);  //TODO @mark: TEMPORARY! REMOVE THIS!
         if indx > 0 {
             let other = &known[indx - 1];
             eprintln!("-1: compare {} to {}", txt, other);  //TODO @mark:
             if txt.as_str().starts_with(other.as_str()) {
+                parents.insert(txt.clone(), other);
+                // if let Some(other_parent) = parents.get(other) {
+                //
+                // } else {
+                //
+                // }
                 eprintln!("  DROP {}", txt);  //TODO @mark:
-                known[indx - 1] = txt;
+                //known[indx - 1] = txt;
                 continue;
             }
         }
-        result.push(txt.into())
+        result.push(txt.clone())
     }
     order.order_inplace(&mut result);
     result
@@ -164,5 +179,11 @@ mod tests {
     fn unique_prefix_nomatch() {
         let res = unique_prefix(&ustrvec!["/a/c", "/a/b", "/b"], Order::Preserve);
         assert_eq!(res, ustrvec!["/a/c", "/a/b", "/b"]);
+    }
+
+    #[test]
+    fn unique_prefix_dedup_if_no_parent() {
+        let res = unique_prefix(&ustrvec!["/a/c", "/a/c", "/b", "/b/a"], Order::Preserve);
+        assert_eq!(res, ustrvec!["/a/c", "/b"]);
     }
 }
