@@ -16,6 +16,6 @@ fn main() {
     if args.prefix {
         unique_prefix(&lines, args.sorted);
     } else {
-        unique(&lines, args.sorted, args.find_duplicates);
+        unique(&lines, args.sorted, args.keep);
     }
 }

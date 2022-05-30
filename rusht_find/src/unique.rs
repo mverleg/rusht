@@ -10,8 +10,8 @@ pub struct UniqueArgs {
     pub sorted: bool,
     #[structopt(short = "p", long, help = "Remove any lines for which any other line is a prefix. E.g. /a and /a/b will remove the latter.")]
     pub prefix: bool,
-    #[structopt(short = "d", long, help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with="prefix")]
-    pub find_duplicates: bool,
+    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "find-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with="prefix", )]
+    pub keep: Keep,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -19,6 +19,7 @@ pub enum Keep {
     #[default]
     First,
     Subsequent,
+    All,
 }
 
 impl Keep {
@@ -26,6 +27,15 @@ impl Keep {
         match self {
             Keep::First => is_first,
             Keep::Subsequent => !is_first,
+            Keep::All => true,
+        }
+    }
+
+    fn from_find_duplicates(is_find_duplicates: bool) -> Keep {
+        if is_find_duplicates {
+            Keep::Subsequent
+        } else {
+            Keep::First
         }
     }
 }
