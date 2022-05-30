@@ -6,12 +6,29 @@ use ::structopt::StructOpt;
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "uniq_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
 pub struct UniqueArgs {
-    #[structopt(short = "s", long, help = "Sort the entries")]
-    pub sorted: bool,
-    #[structopt(short = "p", long, help = "Remove any lines for which any other line is a prefix. E.g. /a and /a/b will remove the latter.")]
-    pub prefix: bool,
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sorted", help = "Sort the entries")]
+    pub order: Order,
     #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "find-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with="prefix", )]
     pub keep: Keep,
+    #[structopt(short = "p", long = "prefix", help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter.")]
+    pub prefix: bool,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub enum Order {
+    #[default]
+    Preserve,
+    SortAscending,
+}
+
+impl Order {
+    fn from_is_sorted(is_sorted: bool) -> Self {
+        if is_sorted {
+            Order::SortAscending
+        } else {
+            Order::Preserve
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -19,23 +36,21 @@ pub enum Keep {
     #[default]
     First,
     Subsequent,
-    All,
 }
 
 impl Keep {
-    fn keep_is_first(&self, is_first: bool) -> bool {
-        match self {
-            Keep::First => is_first,
-            Keep::Subsequent => !is_first,
-            Keep::All => true,
-        }
-    }
-
-    fn from_find_duplicates(is_find_duplicates: bool) -> Keep {
+    fn from_find_duplicates(is_find_duplicates: bool) -> Self {
         if is_find_duplicates {
             Keep::Subsequent
         } else {
             Keep::First
+        }
+    }
+
+    fn keep_is_first(&self, is_first: bool) -> bool {
+        match self {
+            Keep::First => is_first,
+            Keep::Subsequent => !is_first,
         }
     }
 }
@@ -61,7 +76,7 @@ pub fn unique<S>(texts: &[S], sorted: bool, keep: Keep) -> Vec<String>
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-pub fn unique_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
+pub fn unique_prefix<S>(texts: &[S], order: Order) -> Vec<String>
     where S: AsRef<str>, S: Into<String> {
     let known = unique(texts, true, Keep::First);
     let known = known.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
@@ -91,7 +106,7 @@ pub fn unique_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
         }
         result.push(txt.into())
     }
-    if sorted {
+    if order {
         debug!("sorting uniq_prefix result");
         result.sort_unstable()
     }
@@ -104,25 +119,25 @@ mod tests {
 
     #[test]
     fn uniq_prefix_first() {
-        let res = unique_prefix(&vec!["/a", "/a/b", "/a/c"], false);
+        let res = unique_prefix(&vec!["/a", "/a/b", "/a/c"], Order::Preserve);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_duplicates() {
-        let res = unique_prefix(&vec!["/a", "/a", "/a"], false);
+        let res = unique_prefix(&vec!["/a", "/a", "/a"], Order::Preserve);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_middle() {
-        let res = unique_prefix(&vec!["/a/c", "/a", "/a/b"], false);
+        let res = unique_prefix(&vec!["/a/c", "/a", "/a/b"], Order::Preserve);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_nomatch() {
-        let res = unique_prefix(&vec!["/a/c", "/a/b"], false);
+        let res = unique_prefix(&vec!["/a/c", "/a/b"], Order::Preserve);
         assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned()]);
     }
 

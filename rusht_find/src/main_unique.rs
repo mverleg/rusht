@@ -14,8 +14,8 @@ fn main() {
         .map(|line| line.expect("a line was not utf8"))
         .collect::<Vec<String>>();
     if args.prefix {
-        unique_prefix(&lines, args.sorted);
+        unique_prefix(&lines, args.order);
     } else {
-        unique(&lines, args.sorted, args.keep);
+        unique(&lines, args.order, args.keep);
     }
 }
