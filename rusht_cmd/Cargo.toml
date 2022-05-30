@@ -1,0 +1,46 @@
+[package]
+name = "rusht_cmd"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+#[[bin]]
+#name = "logcount"
+#path = "src/log_stats.rs"
+
+[lib]
+name = "rusht_cmd"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cmadd"
+path = "src/main_add.rs"
+
+[[bin]]
+name = "cmdo"
+path = "src/main_do.rs"
+
+[[bin]]
+name = "cmlist"
+path = "src/main_list.rs"
+
+[[bin]]
+name = "cmdrop"
+path = "src/main_drop.rs"
+
+[dependencies]
+structopt = "*"
+walkdir = "*"
+lazy_static = "*"
+regex = "*"
+itertools = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+chrono = { version = "*", features = ["std", "clock", "serde"] }
+strum = "*"
+strum_macros = "*"
+dirs = "*"
+log = "*"
+env_logger = "*"
+memoize = "*"
+rand = "*"
