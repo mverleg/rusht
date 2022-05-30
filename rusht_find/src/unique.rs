@@ -153,7 +153,7 @@ mod tests {
 
     #[test]
     fn unique_prefix_first() {
-        let res = unique_prefix(&ustrvec!["/a", "/a/b", "/a/c"], Order::Preserve);
+        let res = unique_prefix(&ustrvec!["/a", "/a/b", "/a/c", "/a"], Order::Preserve);
         assert_eq!(res, ustrvec!["/a"]);
     }
 
@@ -185,5 +185,18 @@ mod tests {
     fn unique_prefix_dedup_if_no_parent() {
         let res = unique_prefix(&ustrvec!["/a/c", "/a/c", "/b", "/b/a"], Order::Preserve);
         assert_eq!(res, ustrvec!["/a/c", "/b"]);
+    }
+
+    #[test]
+    fn check_for_a_binary_search_problem_that_happened() {
+        let mut values = Vec::new();
+        values.push(Ustr::from(&"/a"));
+        values.push(Ustr::from(&"/a/b"));
+        values.push(Ustr::from(&"/a/c"));
+        let mut sorted = values.clone();
+        sorted.sort();
+        assert_eq!(values, sorted);
+        let find = values.binary_search(&Ustr::from("/a/c"));
+        assert_eq!(find, Ok(2));
     }
 }
