@@ -29,6 +29,13 @@ impl Order {
             Order::Preserve
         }
     }
+
+    fn order_inplace<T: Ord>(&self, data: &mut Vec<T>) {
+        if let Order::SortAscending = *self {
+            debug!("sorting uniq_prefix result");
+            data.sort_unstable()
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -55,7 +62,7 @@ impl Keep {
     }
 }
 
-pub fn unique<S>(texts: &[S], sorted: bool, keep: Keep) -> Vec<String>
+pub fn unique<S>(texts: &[S], order: Order, keep: Keep) -> Vec<String>
         where S: AsRef<str>, S: Into<String> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
@@ -67,10 +74,7 @@ pub fn unique<S>(texts: &[S], sorted: bool, keep: Keep) -> Vec<String>
         }
         result.push(txt.into())
     }
-    if sorted {
-        debug!("sorting uniq_prefix result");
-        result.sort_unstable()
-    }
+    order.order_inplace(&mut result);
     result
 }
 
@@ -78,7 +82,7 @@ pub fn unique<S>(texts: &[S], sorted: bool, keep: Keep) -> Vec<String>
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix<S>(texts: &[S], order: Order) -> Vec<String>
     where S: AsRef<str>, S: Into<String> {
-    let known = unique(texts, true, Keep::First);
+    let known = unique(texts, Order::Preserve, Keep::First);
     let known = known.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
     debug!("finding uniq_prefix in {} items", known.len());
     dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
@@ -106,10 +110,7 @@ pub fn unique_prefix<S>(texts: &[S], order: Order) -> Vec<String>
         }
         result.push(txt.into())
     }
-    if order {
-        debug!("sorting uniq_prefix result");
-        result.sort_unstable()
-    }
+    order.order_inplace(&mut result);
     result
 }
 
