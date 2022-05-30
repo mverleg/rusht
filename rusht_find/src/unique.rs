@@ -188,6 +188,29 @@ mod tests {
     }
 
     #[test]
+    fn check_for_a_binary_search_problem_that_happened_pure_string() {
+        //TODO @mark: TEMPORARY! REMOVE THIS!
+        let mut values = Vec::new();
+        values.push("/a".to_owned());
+        values.push("/a/b".to_owned());
+        values.push("/a/c".to_owned());
+        let mut sorted = values.clone();
+        sorted.sort();
+        assert_eq!(values, sorted);
+        dbg!(&values);
+        let find = values.binary_search(&"/a/c".to_owned());
+        assert_eq!(find, Ok(2));
+    }
+
+    #[test]
+    fn ustr_order_operations() {
+        assert!(!(Ustr::from("/a/c") > Ustr::from("/a/c")));
+        assert!(!(Ustr::from("/a/c") < Ustr::from("/a/c")));
+        assert!(Ustr::from("/a/c") == Ustr::from("/a/c"));
+        assert!(Ustr::from("/a/b") < Ustr::from("/a/c"));
+    }
+
+    #[test]
     fn check_for_a_binary_search_problem_that_happened() {
         let mut values = Vec::new();
         values.push(Ustr::from(&"/a"));
@@ -196,6 +219,7 @@ mod tests {
         let mut sorted = values.clone();
         sorted.sort();
         assert_eq!(values, sorted);
+        dbg!(&values);
         let find = values.binary_search(&Ustr::from("/a/c"));
         assert_eq!(find, Ok(2));
     }
