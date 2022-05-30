@@ -56,8 +56,8 @@ impl Keep {
 
     fn keep_is_first(&self, is_first: bool) -> bool {
         match self {
-            Keep::First => is_first,
-            Keep::Subsequent => !is_first,
+            Keep::First => !is_first,
+            Keep::Subsequent => is_first,
         }
     }
 }
@@ -69,7 +69,6 @@ pub fn unique<S>(texts: &[S], order: Order, keep: Keep) -> Vec<String>
     for txt in texts {
         let txt = txt.as_ref();
         if keep.keep_is_first(seen.insert(txt)) {
-            eprintln!("  DUPLICATE {}", txt);  //TODO @mark:
             continue
         }
         result.push(txt.into())
@@ -129,7 +128,7 @@ mod tests {
     #[test]
     fn unique_duplicates() {
         let res = unique(&vec!["/a", "/c", "/a", "/a", "/b", "/c"], Order::Preserve, Keep::Subsequent);
-        assert_eq!(res, vec!["/a".to_owned(), "/a".to_owned(), "/a".to_owned()]);
+        assert_eq!(res, vec!["/a".to_owned(), "/a".to_owned(), "/c".to_owned()]);
     }
 
     #[test]
