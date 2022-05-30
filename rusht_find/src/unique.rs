@@ -5,14 +5,16 @@ use ::structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "uniq_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
-pub struct UniqArgs {
+pub struct UniqueArgs {
     #[structopt(short = "s", long, help = "Sort the entries")]
     pub sorted: bool,
     #[structopt(short = "p", long, help = "Remove any lines for which any other line is a prefix. E.g. /a and /a/b will remove the latter.")]
     pub prefix: bool,
+    #[structopt(short = "d", long, help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with="prefix")]
+    pub find_duplicates: bool,
 }
 
-fn uniq<S>(texts: &[S], sorted: bool) -> Vec<String>
+pub fn unique<S>(texts: &[S], sorted: bool) -> Vec<String>
         where S: AsRef<str>, S: Into<String> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
@@ -33,9 +35,10 @@ fn uniq<S>(texts: &[S], sorted: bool) -> Vec<String>
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-fn uniq_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
+pub fn unique_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
     where S: AsRef<str>, S: Into<String> {
-    let known = uniq(texts, true);
+    let known = unique(texts, true);
+    let known = known.iter().map(|s| s.as_ref()).collect::<Vec<&str>>();
     debug!("finding uniq_prefix in {} items", known.len());
     dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
     let mut result = Vec::with_capacity(known.len());
@@ -75,25 +78,25 @@ mod tests {
 
     #[test]
     fn uniq_prefix_first() {
-        let res = uniq_prefix(&vec!["/a", "/a/b", "/a/c"], false);
+        let res = unique_prefix(&vec!["/a", "/a/b", "/a/c"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_duplicates() {
-        let res = uniq_prefix(&vec!["/a", "/a", "/a"], false);
+        let res = unique_prefix(&vec!["/a", "/a", "/a"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_middle() {
-        let res = uniq_prefix(&vec!["/a/c", "/a", "/a/b"], false);
+        let res = unique_prefix(&vec!["/a/c", "/a", "/a/b"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_nomatch() {
-        let res = uniq_prefix(&vec!["/a/c", "/a/b"], false);
+        let res = unique_prefix(&vec!["/a/c", "/a/b"], false);
         assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned()]);
     }
 
