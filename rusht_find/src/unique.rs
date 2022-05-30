@@ -1,6 +1,5 @@
 use ::std::collections::HashSet;
 
-use ::itertools::Itertools;
 use ::log::debug;
 use ::structopt::StructOpt;
 
@@ -9,17 +8,12 @@ use ::structopt::StructOpt;
 pub struct UniqArgs {
     #[structopt(short = "s", long, help = "Sort the entries")]
     pub sorted: bool,
+    #[structopt(short = "p", long, help = "Remove any lines for which any other line is a prefix. E.g. /a and /a/b will remove the latter.")]
+    pub prefix: bool,
 }
 
-#[derive(StructOpt, Debug, Default)]
-#[structopt(name = "uniq_prefix", about = "Remove any lines for which any other line is a prefix. E.g. /a and /a/b will remove the latter.")]
-pub struct UniqPrefixArgs {
-    #[structopt(short = "s", long, help = "Sort the entries")]
-    pub sorted: bool,
-}
-
-fn uniq<S>(args: &UniqPrefixArgs, texts: &[S]) -> Vec<String>
-    where S: AsRef<str>, S: Into<String> {
+fn uniq<S>(texts: &[S], sorted: bool) -> Vec<String>
+        where S: AsRef<str>, S: Into<String> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
@@ -30,7 +24,7 @@ fn uniq<S>(args: &UniqPrefixArgs, texts: &[S]) -> Vec<String>
         }
         result.push(txt.into())
     }
-    if args.sorted {
+    if sorted {
         debug!("sorting uniq_prefix result");
         result.sort_unstable()
     }
@@ -39,11 +33,9 @@ fn uniq<S>(args: &UniqPrefixArgs, texts: &[S]) -> Vec<String>
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-fn uniq_prefix<S>(args: &UniqPrefixArgs, texts: &[S]) -> Vec<String>
+fn uniq_prefix<S>(texts: &[S], sorted: bool) -> Vec<String>
     where S: AsRef<str>, S: Into<String> {
-    let known: uniq(&UniqArgs {
-        sorted: true,
-    }, texts);
+    let known = uniq(texts, true);
     debug!("finding uniq_prefix in {} items", known.len());
     dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
     let mut result = Vec::with_capacity(known.len());
@@ -70,7 +62,7 @@ fn uniq_prefix<S>(args: &UniqPrefixArgs, texts: &[S]) -> Vec<String>
         }
         result.push(txt.into())
     }
-    if args.sorted {
+    if sorted {
         debug!("sorting uniq_prefix result");
         result.sort_unstable()
     }
@@ -83,25 +75,29 @@ mod tests {
 
     #[test]
     fn uniq_prefix_first() {
-        let res = uniq_prefix(&UniqPrefixArgs::default(), &vec!["/a", "/a/b", "/a/c"]);
+        let res = uniq_prefix(&vec!["/a", "/a/b", "/a/c"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_duplicates() {
-        let res = uniq_prefix(&UniqPrefixArgs::default(), &vec!["/a", "/a", "/a"]);
+        let res = uniq_prefix(&vec!["/a", "/a", "/a"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_middle() {
-        let res = uniq_prefix(&UniqPrefixArgs::default(), &vec!["/a/c", "/a", "/a/b"]);
+        let res = uniq_prefix(&vec!["/a/c", "/a", "/a/b"], false);
         assert_eq!(res, vec!["/a".to_owned()]);
     }
 
     #[test]
     fn uniq_prefix_nomatch() {
-        let res = uniq_prefix(&UniqPrefixArgs::default(), &vec!["/a/c", "/a/b"]);
+        let res = uniq_prefix(&vec!["/a/c", "/a/b"], false);
         assert_eq!(res, vec!["/a/c".to_owned(), "/a/b".to_owned()]);
     }
+
+    //TODO @mark: uniq
+
+    //TODO @mark: sort
 }

@@ -13,8 +13,8 @@ name = "rusht_find"
 path = "src/lib.rs"
 
 [[bin]]
-name = "main_unit_prefix"
-path = "src/main_uniq_prefix.rs"
+name = "unique"
+path = "src/main_unique.rs"
 
 [dependencies]
 structopt = "*"
