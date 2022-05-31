@@ -121,13 +121,11 @@ fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
     texts.sort_unstable();
     collect(texts[0]);
     let mut prev = texts[0].as_str();
-    for (indx, this) in texts.into_iter().enumerate().skip(1) {
+    for this in texts.into_iter().skip(1) {
         let prev_is_parent = this.as_str().starts_with(prev);
         if prev_is_parent {
-            eprintln!("{}: drop {} because of {}", indx, this, prev); //TODO @mark:
             continue;
         }
-        eprintln!("{}: keep {} despite {}", indx, this, prev); //TODO @mark:
         prev = this.as_str();
         collect(this)
     }

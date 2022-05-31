@@ -73,16 +73,13 @@ pub struct DoArgs {
 pub fn do_cmd(args: DoArgs) -> bool {
     let ts_s = current_time_s();
     let mut tasks = read(args.namespace.clone());
-    eprintln!("tasks1 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     if tasks.is_empty() {
         eprintln!("there are no commands to run, use cmadd to add them");
         return false;
     }
 
     let to_run = mark_tasks_to_run(&args, &mut tasks, ts_s);
-    eprintln!("tasks2 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     write(args.namespace.clone(), &tasks);
-    eprintln!("tasks3 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
 
     let mut statuses = to_run
         .iter()
@@ -101,11 +98,8 @@ pub fn do_cmd(args: DoArgs) -> bool {
         }
     }
 
-    eprintln!("tasks4 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     let tasks = read(args.namespace.clone());
-    eprintln!("tasks5 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
-    eprintln!("tasks6 = {:?} (remaining)", &remaining.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     write(args.namespace, &remaining);
 
     if !args.quiet {
