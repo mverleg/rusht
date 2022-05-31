@@ -104,7 +104,7 @@ pub fn stack_pth(namespace: String) -> PathBuf {
 fn make_app_dir() -> PathBuf {
     let mut pth = match dirs::cache_dir() {
         Some(pth) => pth,
-        None => fail("failed to rusht_find app data directory"),
+        None => fail("failed to find app data directory"),
     };
     pth.push("cmdstack");
     if let Err(err) = create_dir_all(&pth) {

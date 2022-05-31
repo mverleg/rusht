@@ -70,7 +70,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                 assert!(!templ.is_empty());
                 if !cmd.iter().any(|part| part.contains(&templ)) {
                     fail(format!(
-                        "did not rusht_find template string '{}' in task: {}",
+                        "did not find template string '{}' in task: {}",
                         templ,
                         cmd.join(" ")
                     ))

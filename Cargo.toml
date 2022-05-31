@@ -1,10 +1,53 @@
-[workspace]
+[package]
+name = "rusht"
+version = "0.1.0"
+edition = "2021"
+publish = false
 
-members = [
-    "rusht_common",
-    "rusht_cmd",
-    "rusht_find",
-]
+#[[bin]]
+#name = "logcount"
+#path = "src/log_stats.rs"
 
-[profile.dev.package."*"]
-opt-level = 3
+[lib]
+name = "rusht"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cmadd"
+path = "src/main_add.rs"
+
+[[bin]]
+name = "cmdo"
+path = "src/main_do.rs"
+
+[[bin]]
+name = "cmlist"
+path = "src/main_list.rs"
+
+[[bin]]
+name = "cmdrop"
+path = "src/main_drop.rs"
+
+[[bin]]
+name = "unique"
+path = "main_unique.rs"
+
+[dependencies]
+structopt = "*"
+walkdir = "*"
+lazy_static = "*"
+regex = "*"
+itertools = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+chrono = { version = "*", features = ["std", "clock", "serde"] }
+strum = "*"
+strum_macros = "*"
+dirs = "*"
+log = "*"
+env_logger = "*"
+memoize = "*"
+rand = "*"
+
+[dev-dependencies]
+tempfile = "*"
