@@ -28,7 +28,7 @@ pub struct DropArgs {
         short = "c",
         long,
         default_value = "1",
-        help = "Number of commands to run"
+        help = "Number of commands to drop"
     )]
     pub count: u32,
     #[structopt(
