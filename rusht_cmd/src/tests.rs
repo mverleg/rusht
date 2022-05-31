@@ -2,7 +2,7 @@ use std::io::stdin;
 use ::rand::Rng;
 use ::rand::thread_rng;
 
-use crate::{add_cmd, AddArgs, AddArgsExtra, drop_cmd, DropArgs};
+use crate::{add_cmd, AddArgs, AddArgsExtra, drop_cmd, DropArgs, list_cmds, ListArgs};
 
 fn init_test() -> String {
     env_logger::init();
@@ -33,6 +33,12 @@ fn batch_add_drop() {
         "Leonardo".to_owned(),
         "Benjamin".to_owned(),
     ]);
+    list_cmds(ListArgs {
+        namespace: namespace.to_owned(),
+        file_path: false,
+        count: None,
+        exit_code: false
+    });
     drop_cmd(DropArgs {
         namespace,
         all: true,

@@ -41,12 +41,11 @@ pub struct ListArgs {
     pub exit_code: bool,
 }
 
-pub fn list_cmds(args: ListArgs) -> bool {
+pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ()> {
     debug!("arguments: {:?}", &args);
     if args.file_path {
         let pth = stack_pth(args.namespace);
-        println!("{}", pth.to_str().unwrap());
-        return true;
+        return Ok(vec![pth.to_str().unwrap().to_owned()]);
     }
     let tasks = read(args.namespace.clone());
     if tasks.is_empty() {
@@ -56,19 +55,20 @@ pub fn list_cmds(args: ListArgs) -> bool {
                 args.namespace
             );
         }
-        return false;
+        return Err(());
     }
     if args.exit_code {
-        return true;
+        return Ok(vec![]);
     }
     let tasks_iter = if let Some(count) = args.count {
         tasks.iter().take(count as usize)
     } else {
         tasks.iter().take(usize::MAX)
     };
-    for (nr, task) in tasks_iter.enumerate() {
-        let run_msg = if task.is_running() { "running? " } else { "" };
-        println!("{}  # {}{}", task.as_cmd_str(), run_msg, nr + 1)
-    }
-    true
+    Ok(tasks_iter.enumerate()
+        .map(|(nr, task)| {
+            let run_msg = if task.is_running() { "running? " } else { "" };
+            format!("{}  # {}{}", task.as_cmd_str(), run_msg, nr + 1)
+        })
+        .collect())
 }

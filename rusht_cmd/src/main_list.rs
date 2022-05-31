@@ -8,6 +8,14 @@ use ::rusht_cmd::ListArgs;
 fn main() {
     env_logger::init();
     let args = ListArgs::from_args();
-    let has_item_code = list_cmds(args);
-    exit(if has_item_code { 0 } else { 1 })
+    match list_cmds(args) {
+        Ok(lines) => {
+            for line in lines {
+                println!("{}", line);
+            }
+        }
+        Err(()) => {
+            exit(1);
+        }
+    }
 }
