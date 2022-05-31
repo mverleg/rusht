@@ -101,27 +101,23 @@ fn onebyone_add_run() {
         .path()
         .to_string_lossy()
         .to_string();
+    add_one(
+        &namespace,
+        vec![
+            "sh".to_owned(),
+            "-c".to_owned(),
+            format!("echo hello world >> {}", &out_path),
+        ],
+    );
+    add_one(
+        &namespace,
+        vec![
+            "sh".to_owned(),
+            "-c".to_owned(),
+            format!("echo bye world >> {}", &out_path),
+        ],
+    );
     add_one(&namespace, vec!["cat".to_owned(), out_path.clone()]);
-    add_one(
-        &namespace,
-        vec![
-            "echo".to_owned(),
-            "bye".to_owned(),
-            "world".to_owned(),
-            ">>".to_owned(),
-            out_path.clone(),
-        ],
-    );
-    add_one(
-        &namespace,
-        vec![
-            "echo".to_owned(),
-            "hello".to_owned(),
-            "world".to_owned(),
-            ">>".to_owned(),
-            out_path.clone(),
-        ],
-    );
     let out = list_cmds(ListArgs {
         namespace: namespace.to_owned(),
         file_path: false,
@@ -130,8 +126,8 @@ fn onebyone_add_run() {
     })
     .unwrap();
     assert_eq!(out.len(), 3);
-    assert!(out[0].starts_with("echo hello world >> "));
-    assert!(out[1].starts_with("echo bye world >> "));
+    assert!(out[1].contains("echo bye world >> "));
+    assert!(out[2].contains("echo hello world >> "));
     do_cmd(DoArgs {
         namespace: namespace.to_owned(),
         count: 1,
@@ -149,6 +145,6 @@ fn onebyone_add_run() {
     });
     assert!(out.is_err());
     let outfile_content = fs::read_to_string(out_path).unwrap();
-    assert_eq!(outfile_content, "abc");
+    assert_eq!(outfile_content, "hello world\nbye world\n");
     drop(outfile.unwrap());
 }
