@@ -3,6 +3,7 @@ use ::std::collections::HashSet;
 use ::log::debug;
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
+use ustr::UstrSet;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "unique_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
@@ -57,8 +58,8 @@ impl Keep {
 
     fn keep_is_first(&self, is_first: bool) -> bool {
         match self {
-            Keep::First => !is_first,
-            Keep::Subsequent => is_first,
+            Keep::First => is_first,
+            Keep::Subsequent => !is_first,
         }
     }
 }
@@ -67,7 +68,7 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
-        if keep.keep_is_first(seen.insert(txt)) {
+        if ! keep.keep_is_first(seen.insert(txt)) {
             continue;
         }
         result.push(txt.into())
@@ -88,10 +89,14 @@ pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
             debug!("removing items that have other items as prefix, preserving order");
             let mut uniques = HashSet::with_capacity(texts.len());
             unique_prefix_sorted(texts.clone(), |uniq| { uniques.insert(uniq); });
-            let mut seen = HashSet::with_capacity(texts.len());
+            let mut seen = UstrSet::default();
             texts.into_iter()
                 .filter(|item| uniques.contains(item))
-                .filter(|item| keep.keep_is_first(seen.insert(item.clone())))
+                .filter(|item| {
+                    dbg!(seen.clone().contains(&item));
+                    dbg!(keep.keep_is_first(seen.insert(item.clone())));
+                    keep.keep_is_first(seen.insert(item.clone()))
+                })
                 .collect()
         },
         Order::SortAscending => {
@@ -129,6 +134,7 @@ mod tests {
     macro_rules! ustrvec {
         ($($element: expr),*) => {
             {
+                #[allow(unused_mut)]
                 let mut txts: Vec<Ustr> = Vec::new();
                 $(
                     txts.push(Ustr::from(&$element));
@@ -213,7 +219,7 @@ mod tests {
     #[ignore]
     #[test]
     fn ustr_order_operations() {
-        // problem with ustr
+        // problem with ustr, has a fix but not published; doesn't matter anymore since no longer using trees
         assert_eq!(Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Less);
         assert_eq!(Ustr::from("/a/b").cmp(&Ustr::from("/a/c")), Ordering::Less);
         assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(), Ordering::Greater);
