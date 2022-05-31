@@ -41,7 +41,12 @@ pub struct ListArgs {
     pub exit_code: bool,
 }
 
-pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ()> {
+#[derive(Debug, Clone)]
+pub enum ListErr {
+    Empty,
+}
+
+pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ListErr> {
     debug!("arguments: {:?}", &args);
     if args.file_path {
         let pth = stack_pth(args.namespace);
@@ -55,7 +60,7 @@ pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ()> {
                 args.namespace
             );
         }
-        return Err(());
+        return Err(ListErr::Empty);
     }
     if args.exit_code {
         return Ok(vec![]);
@@ -65,7 +70,8 @@ pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ()> {
     } else {
         tasks.iter().take(usize::MAX)
     };
-    Ok(tasks_iter.enumerate()
+    Ok(tasks_iter
+        .enumerate()
         .map(|(nr, task)| {
             let run_msg = if task.is_running() { "running? " } else { "" };
             format!("{}  # {}{}", task.as_cmd_str(), run_msg, nr + 1)

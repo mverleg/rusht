@@ -7,7 +7,6 @@ use ::std::time::Instant;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
-use crate::common::fail;
 
 use crate::cmd::cmd_io::current_time_s;
 use crate::cmd::cmd_io::read;
@@ -16,6 +15,7 @@ use crate::cmd::cmd_type::RunId;
 use crate::cmd::cmd_type::RunningTask;
 use crate::cmd::cmd_type::TaskStack;
 use crate::cmd::cmd_type::TaskType;
+use crate::common::fail;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

@@ -14,13 +14,13 @@ use ::std::time::Instant;
 use ::std::time::SystemTime;
 use ::std::time::UNIX_EPOCH;
 
+use crate::common::fail;
 use ::log::debug;
 use ::log::warn;
 use ::memoize::memoize;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use crate::common::fail;
 
 use crate::cmd::cmd_type::RunningTask;
 use crate::cmd::cmd_type::TaskStack;

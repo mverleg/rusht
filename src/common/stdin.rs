@@ -1,8 +1,8 @@
 use ::std::env;
-use ::std::io::{BufRead, stdin};
+use ::std::io::{stdin, BufRead};
 use ::std::process::exit;
-use ::std::sync::Arc;
 use ::std::sync::atomic::{AtomicBool, Ordering};
+use ::std::sync::Arc;
 use ::std::thread::{sleep, spawn};
 use ::std::time::Duration;
 
@@ -32,7 +32,7 @@ fn perform_read_input_lines(has_data: Arc<AtomicBool>, empty: EmptyLineHandling)
         .map(|line| line.expect("failed to read line from stdin; not utf8?"))
         .inspect(|line| trace!("stdin line: {}", line))
         .inspect(|_| has_data.store(true, Ordering::Release))
-        .filter(|line| matches!(empty, EmptyLineHandling::Keep)  || !line.trim().is_empty())
+        .filter(|line| matches!(empty, EmptyLineHandling::Keep) || !line.trim().is_empty())
         .collect::<Vec<_>>()
 }
 
@@ -54,19 +54,21 @@ fn start_time_monitor(has_data: Arc<AtomicBool>) {
 
 fn read_timeout_env() -> u64 {
     match env::var("STDIN_READ_TIMEOUT") {
-        Ok(timeout_str) => match timeout_str.parse::<u64>() {
-            Ok(timeout) => {
-                debug!("read STDIN_READ_TIMEOUT = {} seconds", timeout);
-                timeout
-            },
-            Err(_) => {
-                warn!("failed to parse STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
-                30
+        Ok(timeout_str) => {
+            match timeout_str.parse::<u64>() {
+                Ok(timeout) => {
+                    debug!("read STDIN_READ_TIMEOUT = {} seconds", timeout);
+                    timeout
+                }
+                Err(_) => {
+                    warn!("failed to parse STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
+                    30
+                }
             }
-        },
+        }
         Err(_) => {
             debug!("did not find STDIN_READ_TIMEOUT in env, using default");
             30
-        },
+        }
     }
 }

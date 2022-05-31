@@ -1,6 +1,6 @@
+use ::std::io::stdin;
 use ::std::io::BufRead;
 use ::std::io::Read;
-use ::std::io::stdin;
 use ::std::thread::spawn;
 
 use ::log::debug;
@@ -9,7 +9,7 @@ use ::structopt::StructOpt;
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
 use crate::cmd::cmd_type::PendingTask;
-use crate::common::{EmptyLineHandling, fail, stdin_lines};
+use crate::common::{fail, stdin_lines, EmptyLineHandling};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -76,8 +76,9 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                     ))
                 }
                 debug!("going to read stdin lines");
-                line_reader().iter()
-                    .map(|input| task_from_template(&cmd, &input, &templ))
+                line_reader()
+                    .iter()
+                    .map(|input| task_from_template(&cmd, input, &templ))
                     .collect()
             } else {
                 spawn(stdin_warning);

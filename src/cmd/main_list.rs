@@ -1,7 +1,10 @@
 use ::std::process::exit;
 
 use ::structopt::StructOpt;
-use ::rusht::cmd::{list_cmds, ListArgs};
+
+use ::rusht::cmd::list_cmds;
+use ::rusht::cmd::ListArgs;
+use ::rusht::cmd::ListErr;
 
 fn main() {
     env_logger::init();
@@ -12,7 +15,7 @@ fn main() {
                 println!("{}", line);
             }
         }
-        Err(()) => {
+        Err(ListErr::Empty) => {
             exit(1);
         }
     }

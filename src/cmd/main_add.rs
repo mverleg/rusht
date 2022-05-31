@@ -1,5 +1,5 @@
 use rusht::cmd::{add_cmd, AddArgs};
-use rusht::common::{EmptyLineHandling, stdin_lines};
+use rusht::common::{stdin_lines, EmptyLineHandling};
 use structopt::StructOpt;
 
 //TODO: option to deduplicate tasks
