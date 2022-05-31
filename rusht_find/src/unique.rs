@@ -3,7 +3,6 @@ use ::std::collections::HashSet;
 use ::log::debug;
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
-use ::ustr::UstrMap;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "unique_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
@@ -81,37 +80,13 @@ pub fn unique(texts: &[Ustr], order: Order, keep: Keep) -> Vec<Ustr> {
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<Ustr> {
-    let mut known = unique(texts, Order::SortAscending, Keep::First);
-    debug!("finding unique_prefix in {} items ({} unique)", texts.len(), known.len());
-    let mut result = Vec::with_capacity(known.len());
-    let mut parents = UstrMap::default();
-    for txt in texts {
-        if parents.contains_key(txt) {
-            eprintln!("  duplicate {}", txt);
-            continue;
+    let mut result = Vec::with_capacity(texts.len());
+    for indx in 1 .. texts.len() {
+        let prev_is_parent = texts[indx].as_str().starts_with(&texts[indx - 1].as_str());
+        if prev_is_parent {
+            continue
         }
-        dbg!(&known);  //TODO @mark: TEMPORARY! REMOVE THIS!
-        dbg!(&txt);  //TODO @mark: TEMPORARY! REMOVE THIS!
-        dbg!(known.binary_search(&txt));  //TODO @mark: TEMPORARY! REMOVE THIS!
-        let indx = known.binary_search(&txt)
-            .expect("should always be found since collections have the same elements");
-        // dbg!(indx);  //TODO @mark: TEMPORARY! REMOVE THIS!
-        if indx > 0 {
-            let other = &known[indx - 1];
-            eprintln!("-1: compare {} to {}", txt, other);  //TODO @mark:
-            if txt.as_str().starts_with(other.as_str()) {
-                parents.insert(txt.clone(), other);
-                // if let Some(other_parent) = parents.get(other) {
-                //
-                // } else {
-                //
-                // }
-                eprintln!("  DROP {}", txt);  //TODO @mark:
-                //known[indx - 1] = txt;
-                continue;
-            }
-        }
-        result.push(txt.clone())
+        result.push(texts[indx].into())
     }
     order.order_inplace(&mut result);
     result
@@ -189,49 +164,10 @@ mod tests {
     }
 
     #[test]
-    fn check_for_a_binary_search_problem_that_happened_pure_string() {
-        //TODO @mark: TEMPORARY! REMOVE THIS!
-        let mut values = Vec::new();
-        values.push("/a".to_owned());
-        values.push("/a/b".to_owned());
-        values.push("/a/c".to_owned());
-        let mut sorted = values.clone();
-        sorted.sort();
-        assert_eq!(values, sorted);
-        dbg!(&values);
-        let find = values.binary_search(&"/a/c".to_owned());
-        assert_eq!(find, Ok(2));
-    }
-
-    #[test]
     fn ustr_order_operations() {
-        assert!(!(Ustr::from("/a/c") > Ustr::from("/a/c")));
-        assert!(!(Ustr::from("/a/c") < Ustr::from("/a/c")));
-        assert!(Ustr::from("/a/c") == Ustr::from("/a/c"));
-        assert!(Ustr::from("/a/b") < Ustr::from("/a/c"));
-        assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Equal);
-        assert_eq!(Ustr::from("/a/c").cmp(&Ustr::from("/a/c")), Ordering::Equal);
         assert_eq!(Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Less);
         assert_eq!(Ustr::from("/a/b").cmp(&Ustr::from("/a/c")), Ordering::Less);
         assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(), Ordering::Greater);
         assert_eq!(Ustr::from("/a/c").cmp(&Ustr::from("/a/b")), Ordering::Greater);
-    }
-
-    #[test]
-    fn check_for_a_binary_search_problem_that_happened() {
-        let mut values = Vec::new();
-        values.push(Ustr::from(&"/a"));
-        values.push(Ustr::from(&"/a/b"));
-        values.push(Ustr::from(&"/a/c"));
-        let mut sorted = values.clone();
-        sorted.sort();
-        assert_eq!(values, sorted);
-        dbg!(&values);
-        let needle = Ustr::from("/a/c");
-        let find = values.binary_search_by(|l| {
-            eprintln!("{} vs {}: {:?}", l, needle, l.cmp(&needle));
-            l.cmp(&needle)
-        });
-        assert_eq!(find, Ok(2));
     }
 }
