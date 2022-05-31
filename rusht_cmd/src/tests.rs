@@ -33,17 +33,28 @@ fn batch_add_drop() {
         "Leonardo".to_owned(),
         "Benjamin".to_owned(),
     ]);
-    list_cmds(ListArgs {
+    let out = list_cmds(ListArgs {
         namespace: namespace.to_owned(),
         file_path: false,
         count: None,
         exit_code: false
-    });
+    }).unwrap();
+    assert_eq!(out, vec![
+        "echo hello Benjamin  # 1".to_owned(),
+        "echo hello Leonardo  # 2".to_owned(),
+    ]);
     drop_cmd(DropArgs {
-        namespace,
+        namespace: namespace.to_owned(),
         all: true,
         count: 0,
         end: false,
         quiet: false,
     });
+    let out = list_cmds(ListArgs {
+        namespace,
+        file_path: false,
+        count: None,
+        exit_code: true
+    });
+    assert!(out.is_err());
 }
