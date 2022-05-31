@@ -45,3 +45,6 @@ log = "*"
 env_logger = "*"
 memoize = "*"
 rand = "*"
+
+[dev-dependencies]
+tempfile = "*"
