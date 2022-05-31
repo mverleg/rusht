@@ -15,7 +15,7 @@ fn main() {
         .map(|line| Ustr::from(&line.expect("a line was not utf8")))
         .collect::<Vec<Ustr>>();
     if args.prefix {
-        unique_prefix(lines, args.order);
+        unique_prefix(lines, args.order, args.keep);
     } else {
         unique(lines, args.order, args.keep);
     }
