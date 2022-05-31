@@ -79,8 +79,13 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix(mut texts: Vec<Ustr>, order: Order) -> Vec<Ustr> {
+    if texts.is_empty() {
+        return texts
+    }
+    //TODO @mark: too much sorting
     texts.sort_unstable();
     let mut result = Vec::with_capacity(texts.len());
+    result.push(texts[0].into());
     let mut prev = texts[0].as_str();
     for indx in 1 .. texts.len() {
         let prev_is_parent = texts[indx].as_str().starts_with(prev);
@@ -150,9 +155,15 @@ mod tests {
     }
 
     #[test]
+    fn unique_prefix_preserve_order() {
+        let res = unique_prefix(ustrvec!["/d", "/b", "/a", "/c", "/a/a"], Order::SortAscending);
+        assert_eq!(res, ustrvec!["/d", "/b", "/a", "/c"]);
+    }
+
+    #[test]
     fn unique_prefix_sorted() {
         let res = unique_prefix(ustrvec!["/a/c", "/a/b", "/a/c/q"], Order::SortAscending);
-        assert_eq!(res, ustrvec!["/a/b", "/a/b"]);
+        assert_eq!(res, ustrvec!["/a/b", "/a/c"]);
     }
 
     #[test]
