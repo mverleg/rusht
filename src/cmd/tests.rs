@@ -1,13 +1,12 @@
+use ::std::fs;
 use ::std::io::stdin;
+use ::std::io::Read;
 use ::std::sync::Once;
-use std::fs;
-use std::io::Read;
 
 use ::rand::thread_rng;
 use ::rand::Rng;
-
 use ::tempfile::tempfile;
-use tempfile::NamedTempFile;
+use ::tempfile::NamedTempFile;
 
 use crate::cmd::{
     add_cmd, do_cmd, drop_cmd, list_cmds, AddArgs, AddArgsExtra, DoArgs, DropArgs, ListArgs,

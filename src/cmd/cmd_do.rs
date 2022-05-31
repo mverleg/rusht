@@ -4,10 +4,10 @@ use ::std::process::Command;
 use ::std::process::Stdio;
 use ::std::time::Instant;
 
+use ::itertools::Itertools;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
-use itertools::Itertools;
 
 use crate::cmd::cmd_io::current_time_s;
 use crate::cmd::cmd_io::read;

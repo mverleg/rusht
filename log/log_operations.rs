@@ -1,5 +1,5 @@
-use regex::Regex;
-use std::collections::HashMap;
+use ::regex::Regex;
+use ::std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Group {
