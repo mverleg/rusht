@@ -6,6 +6,7 @@ use ::std::thread::{sleep, spawn};
 use ::std::time::Duration;
 
 use ::log::debug;
+use ::log::trace;
 
 pub fn stdin_lines() -> Vec<String> {
     debug!("reading lines from stdin");
@@ -20,6 +21,7 @@ fn perform_read_input_lines(has_data: Arc<AtomicBool>) -> Vec<String> {
         .lock()
         .lines()
         .map(|line| line.expect("failed to read line from stdin; not utf8?"))
+        .inspect(|line| trace!("stdin line: {}", line))
         .inspect(|_| has_data.store(true, Ordering::Release))
         .collect::<Vec<_>>()
 }

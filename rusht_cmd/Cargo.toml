@@ -29,6 +29,7 @@ name = "cmdrop"
 path = "src/main_drop.rs"
 
 [dependencies]
+rusht_common = { path = "../rusht_common" }
 structopt = "*"
 walkdir = "*"
 lazy_static = "*"

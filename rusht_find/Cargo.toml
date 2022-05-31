@@ -17,6 +17,7 @@ name = "unique"
 path = "src/main_unique.rs"
 
 [dependencies]
+rusht_common = { path = "../rusht_common" }
 structopt = "*"
 walkdir = "*"
 lazy_static = "*"

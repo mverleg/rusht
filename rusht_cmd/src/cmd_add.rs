@@ -5,6 +5,7 @@ use ::std::thread::spawn;
 
 use ::log::debug;
 use ::structopt::StructOpt;
+use rusht_common::stdin_lines;
 
 use crate::cmd_io::fail;
 use crate::cmd_io::read;
@@ -75,11 +76,7 @@ pub fn add_cmd(args: AddArgs) {
                     ))
                 }
                 debug!("going to read stdin lines");
-                stdin()
-                    .lock()
-                    .lines()
-                    .map(|line| line.unwrap())
-                    .inspect(|line| debug!("stdin line: {}", line))
+                stdin_lines().iter()
                     .filter(|line| !line.trim().is_empty())
                     .map(|input| task_from_template(&cmd, &input, &templ))
                     .collect()
