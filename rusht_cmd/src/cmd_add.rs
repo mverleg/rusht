@@ -5,9 +5,8 @@ use ::std::thread::spawn;
 
 use ::log::debug;
 use ::structopt::StructOpt;
-use rusht_common::{EmptyLineHandling, stdin_lines};
+use rusht_common::{EmptyLineHandling, fail, stdin_lines};
 
-use crate::cmd_io::fail;
 use crate::cmd_io::read;
 use crate::cmd_io::write;
 use crate::cmd_type::PendingTask;
@@ -51,6 +50,7 @@ pub struct AddArgs {
     #[structopt(subcommand)]
     pub cmd: AddArgsExtra,
 }
+
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?
 //TODO: source bashrc/profile
@@ -63,7 +63,7 @@ pub enum AddArgsExtra {
     Cmd(Vec<String>),
 }
 
-pub fn add_cmd(args: AddArgs) {
+pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     let new_tasks = match args.cmd {
         AddArgsExtra::Cmd(cmd) => {
             if let Some(templ) = args.lines_with {
@@ -76,7 +76,7 @@ pub fn add_cmd(args: AddArgs) {
                     ))
                 }
                 debug!("going to read stdin lines");
-                stdin_lines(EmptyLineHandling::Drop).iter()
+                line_reader().iter()
                     .map(|input| task_from_template(&cmd, &input, &templ))
                     .collect()
             } else {

@@ -20,18 +20,11 @@ use ::memoize::memoize;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use rusht_common::fail;
 
 use crate::cmd_type::RunningTask;
 use crate::cmd_type::TaskStack;
 use crate::cmd_type::DATA_VERSION;
-
-pub fn fail(msg: impl AsRef<str>) -> ! {
-    let msg = msg.as_ref();
-    warn!("{}", msg);
-    eprintln!("{}", msg);
-    debug_assert!(false, "explicit `fail` was called");
-    exit(2)
-}
 
 pub fn read(namespace: String) -> TaskStack {
     debug!("going to read commands for namespace '{}'", &namespace);

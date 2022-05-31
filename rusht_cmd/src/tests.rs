@@ -29,7 +29,10 @@ fn batch_add_drop() {
         lines: false,
         lines_with: Some("%".to_owned()),
         cmd: AddArgsExtra::Cmd(vec!["echo".to_owned(), "hello".to_owned(), "%".to_owned()])
-    });
+    }, || vec![
+        "Leonardo".to_owned(),
+        "Benjamin".to_owned(),
+    ]);
     drop_cmd(DropArgs {
         namespace,
         all: true,

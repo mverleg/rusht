@@ -7,9 +7,9 @@ use ::std::time::Instant;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
+use rusht_common::fail;
 
 use crate::cmd_io::current_time_s;
-use crate::cmd_io::fail;
 use crate::cmd_io::read;
 use crate::cmd_io::write;
 use crate::cmd_type::RunId;

@@ -1,6 +1,7 @@
 use ::rusht_cmd::add_cmd;
 use ::rusht_cmd::AddArgs;
 use ::structopt::StructOpt;
+use rusht_common::{EmptyLineHandling, stdin_lines};
 
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?
@@ -14,5 +15,5 @@ fn main() {
         args.lines_with = Some("{}".to_owned());
     }
     assert!(!args.skip_validation, "skip_validation not implemented");
-    add_cmd(args);
+    add_cmd(args, || stdin_lines(EmptyLineHandling::Drop));
 }
