@@ -32,6 +32,10 @@ path = "src/cmd/main_drop.rs"
 name = "unique"
 path = "src/find/main_unique.rs"
 
+[[bin]]
+name = "unique"
+path = "src/find/dir_with.rs"
+
 [dependencies]
 structopt = "*"
 walkdir = "*"
