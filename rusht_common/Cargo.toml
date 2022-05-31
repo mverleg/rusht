@@ -1,0 +1,20 @@
+[package]
+name = "rusht_common"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "rusht_common"
+path = "src/lib.rs"
+
+[dependencies]
+structopt = "*"
+walkdir = "*"
+lazy_static = "*"
+regex = "*"
+itertools = "*"
+dirs = "*"
+log = "*"
+env_logger = "*"
+ustr = "*"

@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "rusht_common",
     "rusht_cmd",
     "rusht_find",
 ]

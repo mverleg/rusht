@@ -1,3 +1,4 @@
+use std::io::stdin;
 use ::rand::Rng;
 use ::rand::thread_rng;
 
