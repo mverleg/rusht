@@ -120,7 +120,8 @@ impl TaskType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskStack {
-    tasks: Vec<TaskType>,
+    //TODO @mark: back to private
+    pub(crate) tasks: Vec<TaskType>,
 }
 
 impl TaskStack {
@@ -164,6 +165,10 @@ impl TaskStack {
 
     /// Iterate from next to last (reverse to `self.task`)
     pub fn iter(&self) -> Rev<Iter<TaskType>> {
-        self.tasks.iter().rev()
+        self.iter_old2new().rev()
+    }
+
+    pub fn iter_old2new(&self) -> Iter<TaskType> {
+        self.tasks.iter()
     }
 }

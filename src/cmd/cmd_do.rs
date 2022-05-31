@@ -7,6 +7,7 @@ use ::std::time::Instant;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
+use itertools::Itertools;
 
 use crate::cmd::cmd_io::current_time_s;
 use crate::cmd::cmd_io::read;
@@ -72,13 +73,16 @@ pub struct DoArgs {
 pub fn do_cmd(args: DoArgs) -> bool {
     let ts_s = current_time_s();
     let mut tasks = read(args.namespace.clone());
+    eprintln!("tasks1 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     if tasks.is_empty() {
         eprintln!("there are no commands to run, use cmadd to add them");
         return false;
     }
 
     let to_run = mark_tasks_to_run(&args, &mut tasks, ts_s);
+    eprintln!("tasks2 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     write(args.namespace.clone(), &tasks);
+    eprintln!("tasks3 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
 
     let mut statuses = to_run
         .iter()
@@ -97,8 +101,11 @@ pub fn do_cmd(args: DoArgs) -> bool {
         }
     }
 
+    eprintln!("tasks4 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     let tasks = read(args.namespace.clone());
+    eprintln!("tasks5 = {:?}", &tasks.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
+    eprintln!("tasks6 = {:?} (remaining)", &remaining.tasks.iter().map(|t| t.as_cmd_str()).join(" / "));  //TODO @mark: TEMPORARY! REMOVE THIS!
     write(args.namespace, &remaining);
 
     if !args.quiet {
@@ -197,7 +204,7 @@ fn remove_completed_tasks(
     statuses: &HashMap<RunId, Status>,
 ) -> TaskStack {
     let filtered_tasks = tasks
-        .iter()
+        .iter_old2new()
         .flat_map(|task| should_keep_completed_task(task, args, statuses))
         .collect();
     TaskStack::from(filtered_tasks)
