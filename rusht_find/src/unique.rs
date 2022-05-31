@@ -127,7 +127,6 @@ fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
-    use std::panic::catch_unwind;
 
     use super::*;
 
