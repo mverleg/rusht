@@ -9,9 +9,12 @@ fn main() {
     env_logger::init();
     let args = UniqueArgs::from_args();
     let lines = read_input_lines();
-    if args.prefix {
-        unique_prefix(lines, args.order, args.keep);
+    let result = if args.prefix {
+        unique_prefix(lines, args.order, args.keep)
     } else {
-        unique(lines, args.order, args.keep);
+        unique(lines, args.order, args.keep)
+    };
+    for line in result {
+        println!("{}", line);
     }
 }
