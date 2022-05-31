@@ -3,7 +3,7 @@ use ::std::collections::HashSet;
 use ::log::debug;
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
-use ustr::UstrSet;
+use ::ustr::UstrSet;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(name = "unique_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
@@ -80,6 +80,9 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
+    if matches!(order, Order::SortAscending) && matches!(keep, Keep::Subsequent) {
+        panic!("--find-duplicates, --sorted and --prefix cannot all be used together");
+    };
     if texts.is_empty() {
         debug!("empty input while removing items that have other items as prefix");
         return texts
@@ -92,16 +95,11 @@ pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
             let mut seen = UstrSet::default();
             texts.into_iter()
                 .filter(|item| uniques.contains(item))
-                .filter(|item| {
-                    dbg!(seen.clone().contains(&item));
-                    dbg!(keep.keep_is_first(seen.insert(item.clone())));
-                    keep.keep_is_first(seen.insert(item.clone()))
-                })
+                .filter(|item| keep.keep_is_first(seen.insert(item.clone())))
                 .collect()
         },
         Order::SortAscending => {
             debug!("removing items that have other items as prefix, sorting ascendingly");
-            assert!(matches!(keep, Keep::First), "--find-duplicates, --sorted and --prefix cannot all be used together");
             let mut result = Vec::with_capacity(texts.len());
             unique_prefix_sorted(texts, |uniq| result.push(uniq));
             result
@@ -129,6 +127,8 @@ fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
+    use std::panic::catch_unwind;
+
     use super::*;
 
     macro_rules! ustrvec {
@@ -163,6 +163,12 @@ mod tests {
     }
 
     #[test]
+    fn unique_prefix_empty() {
+        let res = unique_prefix(ustrvec![], Order::Preserve, Keep::First);
+        assert_eq!(res, ustrvec![]);
+    }
+
+    #[test]
     fn unique_prefix_first() {
         let res = unique_prefix(ustrvec!["/a", "/a/b", "/a/c", "/a"], Order::Preserve, Keep::First);
         assert_eq!(res, ustrvec!["/a"]);
@@ -183,13 +189,13 @@ mod tests {
     #[test]
     fn unique_prefix_keep_duplicates() {
         let res = unique_prefix(ustrvec!["/a/c", "/a", "/a/b", "/a/c", "/a", "/a"], Order::Preserve, Keep::Subsequent);
-        assert_eq!(res, ustrvec!["/a", "/a", "/a"]);
+        assert_eq!(res, ustrvec!["/a", "/a"]);
     }
 
     #[test]
     #[should_panic]
     fn unique_prefix_keep_duplicates_not_supported_with_sort() {
-        unique_prefix(ustrvec![], Order::SortAscending, Keep::Subsequent);
+        let _ = unique_prefix(ustrvec![], Order::SortAscending, Keep::Subsequent);
     }
 
     #[test]
