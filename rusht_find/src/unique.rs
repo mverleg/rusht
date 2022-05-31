@@ -78,27 +78,38 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-pub fn unique_prefix(mut texts: Vec<Ustr>, order: Order) -> Vec<Ustr> {
+pub fn unique_prefix(texts: Vec<Ustr>, order: Order) -> Vec<Ustr> {
     if texts.is_empty() {
         return texts
     }
-    //TODO @mark: too much sorting
+    match order {
+        Order::Preserve => {
+            let mut uniques = HashSet::with_capacity(texts.len());
+            unique_prefix_sorted(texts.clone(), |uniq| { uniques.insert(uniq); });
+            texts.into_iter()
+                .filter(|item| uniques.contains(item))
+                .collect()
+        },
+        Order::SortAscending => {
+            let mut result = Vec::with_capacity(texts.len());
+            unique_prefix_sorted(texts, |uniq| result.push(uniq));
+            result
+        },
+    }
+}
+
+fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
     texts.sort_unstable();
-    let mut result = Vec::with_capacity(texts.len());
-    result.push(texts[0].into());
+    collect(texts[0].into());
     let mut prev = texts[0].as_str();
     for indx in 1 .. texts.len() {
         let prev_is_parent = texts[indx].as_str().starts_with(prev);
         if prev_is_parent {
-            eprintln!("skipping {} because of {}", texts[indx], prev);  //TODO @mark: TEMPORARY! REMOVE THIS!
             continue
         }
-        eprintln!("including {} despite {}", texts[indx], prev);  //TODO @mark: TEMPORARY! REMOVE THIS!
         prev = texts[indx].as_str();
-        result.push(texts[indx].into())
+        collect(texts[indx].into())
     }
-    order.order_inplace(&mut result);
-    result
 }
 
 #[cfg(test)]
