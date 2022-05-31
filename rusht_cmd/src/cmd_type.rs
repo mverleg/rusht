@@ -1,7 +1,7 @@
 use ::std::fmt;
+use ::std::fs::remove_file;
 use ::std::fs::File;
 use ::std::fs::OpenOptions;
-use ::std::fs::remove_file;
 use ::std::io::BufReader;
 use ::std::io::BufWriter;
 use ::std::iter::Rev;
@@ -72,10 +72,7 @@ pub struct RunningTask {
 
 impl PendingTask {
     pub fn new(cmd: String, args: Vec<String>) -> Self {
-        PendingTask {
-            cmd,
-            args,
-        }
+        PendingTask { cmd, args }
     }
 
     pub fn new_split(parts: Vec<String>) -> Self {
@@ -128,7 +125,7 @@ pub struct TaskStack {
 
 impl TaskStack {
     pub fn empty() -> Self {
-        TaskStack { tasks: vec![], }
+        TaskStack { tasks: vec![] }
     }
 
     pub fn from(tasks: Vec<TaskType>) -> Self {

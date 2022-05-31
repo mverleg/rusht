@@ -7,15 +7,37 @@ use crate::cmd_io::read;
 use crate::cmd_io::stack_pth;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "cmadd", about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop")]
+#[structopt(
+    name = "cmadd",
+    about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
+)]
 pub struct ListArgs {
-    #[structopt(short = "n", long, default_value = "", help = "Use the stack from the given namespace instead of the global one")]
+    #[structopt(
+        short = "n",
+        long,
+        default_value = "",
+        help = "Use the stack from the given namespace instead of the global one"
+    )]
     pub namespace: String,
-    #[structopt(short = "p", long, help = "Show the path to the stack file, instead of commands")]
+    #[structopt(
+        short = "p",
+        long,
+        help = "Show the path to the stack file, instead of commands"
+    )]
     pub file_path: bool,
-    #[structopt(short = "c", long, help = "Maximum number of (newest) commands to show", conflicts_with = "file_path")]
+    #[structopt(
+        short = "c",
+        long,
+        help = "Maximum number of (newest) commands to show",
+        conflicts_with = "file_path"
+    )]
     pub count: Option<u32>,
-    #[structopt(short = "e", long, help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)", conflicts_with = "file_path")]
+    #[structopt(
+        short = "e",
+        long,
+        help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)",
+        conflicts_with = "file_path"
+    )]
     pub exit_code: bool,
 }
 
@@ -24,17 +46,20 @@ pub fn list_cmds(args: ListArgs) -> bool {
     if args.file_path {
         let pth = stack_pth(args.namespace);
         println!("{}", pth.to_str().unwrap());
-        return true
+        return true;
     }
     let tasks = read(args.namespace.clone());
     if tasks.is_empty() {
         if !args.exit_code {
-            eprintln!("no commands in namespace '{}'; use the cmadd command", args.namespace);
+            eprintln!(
+                "no commands in namespace '{}'; use the cmadd command",
+                args.namespace
+            );
         }
-        return false
+        return false;
     }
     if args.exit_code {
-        return true
+        return true;
     }
     let tasks_iter = if let Some(count) = args.count {
         tasks.iter().take(count as usize)
@@ -42,12 +67,8 @@ pub fn list_cmds(args: ListArgs) -> bool {
         tasks.iter().take(usize::MAX)
     };
     for (nr, task) in tasks_iter.enumerate() {
-        let run_msg = if task.is_running() {
-            "running? "
-        } else {
-            ""
-        };
+        let run_msg = if task.is_running() { "running? " } else { "" };
         println!("{}  # {}{}", task.as_cmd_str(), run_msg, nr + 1)
     }
-    return true
+    true
 }

@@ -1,7 +1,6 @@
-
-use ::structopt::StructOpt;
-use ::rusht_cmd::AddArgs;
 use ::rusht_cmd::add_cmd;
+use ::rusht_cmd::AddArgs;
+use ::structopt::StructOpt;
 
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?

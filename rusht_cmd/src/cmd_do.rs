@@ -1,6 +1,6 @@
 use ::std::collections::HashMap;
-use ::std::process::Command;
 use ::std::process::exit;
+use ::std::process::Command;
 use ::std::process::Stdio;
 use ::std::time::Instant;
 
@@ -18,19 +18,52 @@ use crate::cmd_type::TaskStack;
 use crate::cmd_type::TaskType;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "cmdo", about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop")]
+#[structopt(
+    name = "cmdo",
+    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
+)]
 pub struct DoArgs {
-    #[structopt(short = "c", long, default_value = "1", help = "Number of commands to run")]
+    #[structopt(
+        short = "c",
+        long,
+        default_value = "1",
+        help = "Number of commands to run"
+    )]
     pub count: u32,
-    #[structopt(short = "n", long, default_value = "", help = "Use the stack from the given namespace instead of the global one")]
+    #[structopt(
+        short = "n",
+        long,
+        default_value = "",
+        help = "Use the stack from the given namespace instead of the global one"
+    )]
     pub namespace: String,
-    #[structopt(short = "a", long, help = "Keep running commands until one fails or the stack is empty", conflicts_with = "count", conflicts_with = "parallel")]
+    #[structopt(
+        short = "a",
+        long,
+        help = "Keep running commands until one fails or the stack is empty",
+        conflicts_with = "count",
+        conflicts_with = "parallel"
+    )]
     pub autorun: bool,
-    #[structopt(short = "p", long, help = "Whether to run commands in parallel (if more than one)")]
+    #[structopt(
+        short = "p",
+        long,
+        help = "Whether to run commands in parallel (if more than one)"
+    )]
     pub parallel: bool,
-    #[structopt(short = "r", long, help = "Always remove the command(s) from the stack, even if they fail", conflicts_with = "keep")]
+    #[structopt(
+        short = "r",
+        long,
+        help = "Always remove the command(s) from the stack, even if they fail",
+        conflicts_with = "keep"
+    )]
     pub always_pop: bool,
-    #[structopt(short = "k", long, help = "Execute the command but keep it on the stack", conflicts_with = "always_pop")]
+    #[structopt(
+        short = "k",
+        long,
+        help = "Execute the command but keep it on the stack",
+        conflicts_with = "always_pop"
+    )]
     pub keep: bool,
     #[structopt(short = "q", long, help = "Do not log command and timing")]
     pub quiet: bool,
@@ -47,7 +80,8 @@ pub fn do_cmd(args: DoArgs) -> bool {
     let to_run = mark_tasks_to_run(&args, &mut tasks, ts_s);
     write(args.namespace.clone(), &tasks);
 
-    let mut statuses = to_run.iter()
+    let mut statuses = to_run
+        .iter()
         .map(|task| task.run_id)
         .map(|run_id| (run_id, Status::Skipped))
         .collect::<HashMap<_, _>>();
@@ -59,7 +93,7 @@ pub fn do_cmd(args: DoArgs) -> bool {
         let status = execute(task, args.quiet);
         statuses.insert(run_id, status);
         if status != Status::Success {
-            break
+            break;
         }
     }
 
@@ -78,7 +112,11 @@ pub fn do_cmd(args: DoArgs) -> bool {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Status { Success, Failed, Skipped }
+enum Status {
+    Success,
+    Failed,
+    Skipped,
+}
 
 fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<RunningTask> {
     let rand_id = rand::thread_rng().gen::<u32>();
@@ -87,11 +125,15 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
     for task in tasks.iter_mut() {
         let pending = match task {
             TaskType::Running(running) => {
-                debug!("still running with run-id {}, command {}", running.run_id, running.as_cmd_str());
+                debug!(
+                    "still running with run-id {}, command {}",
+                    running.run_id,
+                    running.as_cmd_str()
+                );
                 eprintln!("skipping command because it is already running or has failed without contact: {}",
                           running.as_cmd_str());
-                continue
-            },
+                continue;
+            }
             TaskType::Pending(task) => task.clone(),
         };
         let run_id = RunId {
@@ -99,7 +141,11 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
             run_rand_id: rand_id,
             cmd_id: run_nr,
         };
-        debug!("assigning run-id {} to command {}", run_id, pending.as_cmd_str());
+        debug!(
+            "assigning run-id {} to command {}",
+            run_id,
+            pending.as_cmd_str()
+        );
         let run_task = pending.with_run_id(run_id);
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
@@ -119,19 +165,30 @@ fn execute(task: RunningTask, quiet: bool) -> Status {
         //.shell(true)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .spawn() {
+        .spawn()
+    {
         Ok(child) => child,
-        Err(err) => fail(format!("failed to start command '{}', error {}", cmd_str, err)),
+        Err(err) => fail(format!(
+            "failed to start command '{}', error {}",
+            cmd_str, err
+        )),
     };
     let status = match child.wait() {
         Ok(status) => status,
-        Err(err) => fail(format!("failed to finish command '{}', error {}", cmd_str, err))
+        Err(err) => fail(format!(
+            "failed to finish command '{}', error {}",
+            cmd_str, err
+        )),
     };
     if !quiet {
         let duration = t0.elapsed().as_millis();
         println!("took {} ms to run: {}", duration, cmd_str);
     }
-    return if status.success() { Status::Success } else { Status::Failed }
+    if status.success() {
+        Status::Success
+    } else {
+        Status::Failed
+    }
 }
 
 fn remove_completed_tasks(
@@ -139,7 +196,8 @@ fn remove_completed_tasks(
     tasks: TaskStack,
     statuses: &HashMap<RunId, Status>,
 ) -> TaskStack {
-    let filtered_tasks = tasks.iter()
+    let filtered_tasks = tasks
+        .iter()
         .flat_map(|task| should_keep_completed_task(task, args, statuses))
         .collect();
     TaskStack::from(filtered_tasks)
@@ -155,28 +213,38 @@ fn should_keep_completed_task(
         TaskType::Pending(pending) => {
             debug!("keep command because it is not running: {}", &cmd);
             Some(TaskType::Pending(pending.clone()))
-        },
+        }
         TaskType::Running(running) => match statuses.get(&running.run_id) {
-            Some(Status::Success) => if args.keep {
-                debug!("keep successful command because all tasks kept: {}", &cmd);
-                Some(TaskType::Running(running.clone()))
-            } else {
-                debug!("removing successful command: {}", &cmd);
-                None
-            },
-            Some(Status::Failed) => if args.always_pop {
-                debug!("removing failed command because all started tasks are removed: {}", &cmd);
-                None
-            } else {
-                debug!("keep failed command to be retried: {}", &cmd);
-                Some(TaskType::Running(running.clone()))
-            },
+            Some(Status::Success) => {
+                if args.keep {
+                    debug!("keep successful command because all tasks kept: {}", &cmd);
+                    Some(TaskType::Running(running.clone()))
+                } else {
+                    debug!("removing successful command: {}", &cmd);
+                    None
+                }
+            }
+            Some(Status::Failed) => {
+                if args.always_pop {
+                    debug!(
+                        "removing failed command because all started tasks are removed: {}",
+                        &cmd
+                    );
+                    None
+                } else {
+                    debug!("keep failed command to be retried: {}", &cmd);
+                    Some(TaskType::Running(running.clone()))
+                }
+            }
             Some(Status::Skipped) => {
                 debug!("keep skipped command to be retried: {}", &cmd);
                 Some(TaskType::Running(running.clone()))
             }
             None => {
-                eprintln!("command is running but not started by current run: {}", &cmd);
+                eprintln!(
+                    "command is running but not started by current run: {}",
+                    &cmd
+                );
                 Some(TaskType::Running(running.clone()))
             }
         },

@@ -1,4 +1,4 @@
-#![allow(unused)]  //TODO: TEMPORARY! REMOVE THIS!
+#![allow(unused)] //TODO: TEMPORARY! REMOVE THIS!
 
 pub use cmd_add::add_cmd;
 pub use cmd_add::AddArgs;
@@ -12,8 +12,8 @@ pub use cmd_list::ListArgs;
 
 mod cmd_add;
 mod cmd_do;
-mod cmd_list;
 mod cmd_drop;
-mod cmd_type;
 mod cmd_io;
+mod cmd_list;
+mod cmd_type;
 mod tests;

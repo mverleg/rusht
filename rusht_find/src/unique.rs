@@ -6,13 +6,20 @@ use ::ustr::Ustr;
 use ::ustr::UstrSet;
 
 #[derive(StructOpt, Debug, Default)]
-#[structopt(name = "unique_prefix", about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested.")]
+#[structopt(
+    name = "unique_prefix",
+    about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
+)]
 pub struct UniqueArgs {
     #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sorted", help = "Sort the entries")]
     pub order: Order,
     #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "find-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
-    #[structopt(short = "p", long = "prefix", help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter.")]
+    #[structopt(
+        short = "p",
+        long = "prefix",
+        help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter."
+    )]
     pub prefix: bool,
 }
 
@@ -32,7 +39,7 @@ impl Order {
         }
     }
 
-    fn order_inplace<T: Ord>(&self, data: &mut Vec<T>) {
+    fn order_inplace<T: Ord>(&self, data: &mut [T]) {
         if let Order::SortAscending = *self {
             debug!("sorting unique_prefix result");
             data.sort_unstable()
@@ -68,10 +75,10 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
-        if ! keep.keep_is_first(seen.insert(txt)) {
+        if !keep.keep_is_first(seen.insert(txt)) {
             continue;
         }
-        result.push(txt.into())
+        result.push(txt)
     }
     order.order_inplace(&mut result);
     result
@@ -85,46 +92,49 @@ pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     };
     if texts.is_empty() {
         debug!("empty input while removing items that have other items as prefix");
-        return texts
+        return texts;
     }
     match order {
         Order::Preserve => {
             debug!("removing items that have other items as prefix, preserving order");
             let mut uniques = HashSet::with_capacity(texts.len());
-            unique_prefix_sorted(texts.clone(), |uniq| { uniques.insert(uniq); });
+            unique_prefix_sorted(texts.clone(), |uniq| {
+                uniques.insert(uniq);
+            });
             let mut seen = UstrSet::default();
-            texts.into_iter()
+            texts
+                .into_iter()
                 .filter(|item| uniques.contains(item))
-                .filter(|item| keep.keep_is_first(seen.insert(item.clone())))
+                .filter(|item| keep.keep_is_first(seen.insert(*item)))
                 .collect()
-        },
+        }
         Order::SortAscending => {
             debug!("removing items that have other items as prefix, sorting ascendingly");
             let mut result = Vec::with_capacity(texts.len());
             unique_prefix_sorted(texts, |uniq| result.push(uniq));
             result
-        },
+        }
     }
 }
 
 fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
     texts.sort_unstable();
-    collect(texts[0].into());
+    collect(texts[0]);
     let mut prev = texts[0].as_str();
-    for indx in 1 .. texts.len() {
-        let this = texts[indx];
+    for (indx, this) in texts.into_iter().enumerate().skip(1) {
         let prev_is_parent = this.as_str().starts_with(prev);
         if prev_is_parent {
-            eprintln!("{}: drop {} because of {}", indx, this, prev);  //TODO @mark:
-            continue
+            eprintln!("{}: drop {} because of {}", indx, this, prev); //TODO @mark:
+            continue;
         }
-        eprintln!("{}: keep {} despite {}", indx, this, prev);  //TODO @mark:
+        eprintln!("{}: keep {} despite {}", indx, this, prev); //TODO @mark:
         prev = this.as_str();
-        collect(this.into())
+        collect(this)
     }
 }
 
 #[cfg(test)]
+#[allow(clippy::vec_init_then_push, unused_mut)]
 mod tests {
     use std::cmp::Ordering;
 
@@ -133,7 +143,6 @@ mod tests {
     macro_rules! ustrvec {
         ($($element: expr),*) => {
             {
-                #[allow(unused_mut)]
                 let mut txts: Vec<Ustr> = Vec::new();
                 $(
                     txts.push(Ustr::from(&$element));
@@ -145,19 +154,31 @@ mod tests {
 
     #[test]
     fn unique_first() {
-        let res = unique(ustrvec!["/a", "/c", "/a", "/b"], Order::Preserve, Keep::First);
+        let res = unique(
+            ustrvec!["/a", "/c", "/a", "/b"],
+            Order::Preserve,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/a", "/c", "/b"]);
     }
 
     #[test]
     fn unique_sorted() {
-        let res = unique(ustrvec!["/a", "/c", "/a", "/b"], Order::SortAscending, Keep::First);
+        let res = unique(
+            ustrvec!["/a", "/c", "/a", "/b"],
+            Order::SortAscending,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/a", "/b", "/c"]);
     }
 
     #[test]
     fn unique_duplicates() {
-        let res = unique(ustrvec!["/a", "/c", "/a", "/a", "/b", "/c"], Order::Preserve, Keep::Subsequent);
+        let res = unique(
+            ustrvec!["/a", "/c", "/a", "/a", "/b", "/c"],
+            Order::Preserve,
+            Keep::Subsequent,
+        );
         assert_eq!(res, ustrvec!["/a", "/a", "/c"]);
     }
 
@@ -169,7 +190,11 @@ mod tests {
 
     #[test]
     fn unique_prefix_first() {
-        let res = unique_prefix(ustrvec!["/a", "/a/b", "/a/c", "/a"], Order::Preserve, Keep::First);
+        let res = unique_prefix(
+            ustrvec!["/a", "/a/b", "/a/c", "/a"],
+            Order::Preserve,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/a"]);
     }
 
@@ -187,7 +212,11 @@ mod tests {
 
     #[test]
     fn unique_prefix_keep_duplicates() {
-        let res = unique_prefix(ustrvec!["/a/c", "/a", "/a/b", "/a/c", "/a", "/a"], Order::Preserve, Keep::Subsequent);
+        let res = unique_prefix(
+            ustrvec!["/a/c", "/a", "/a/b", "/a/c", "/a", "/a"],
+            Order::Preserve,
+            Keep::Subsequent,
+        );
         assert_eq!(res, ustrvec!["/a", "/a"]);
     }
 
@@ -199,13 +228,21 @@ mod tests {
 
     #[test]
     fn unique_prefix_preserve_order() {
-        let res = unique_prefix(ustrvec!["/d", "/b", "/a", "/c", "/a/a"], Order::Preserve, Keep::First);
+        let res = unique_prefix(
+            ustrvec!["/d", "/b", "/a", "/c", "/a/a"],
+            Order::Preserve,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/d", "/b", "/a", "/c"]);
     }
 
     #[test]
     fn unique_prefix_sorted() {
-        let res = unique_prefix(ustrvec!["/a/c", "/a/b", "/a/c/q"], Order::SortAscending, Keep::First);
+        let res = unique_prefix(
+            ustrvec!["/a/c", "/a/b", "/a/c/q"],
+            Order::SortAscending,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/a/b", "/a/c"]);
     }
 
@@ -217,7 +254,11 @@ mod tests {
 
     #[test]
     fn unique_prefix_dedup_if_no_parent() {
-        let res = unique_prefix(ustrvec!["/a/c", "/a/c", "/b", "/b/a"], Order::Preserve, Keep::First);
+        let res = unique_prefix(
+            ustrvec!["/a/c", "/a/c", "/b", "/b/a"],
+            Order::Preserve,
+            Keep::First,
+        );
         assert_eq!(res, ustrvec!["/a/c", "/b"]);
     }
 
@@ -225,9 +266,18 @@ mod tests {
     #[test]
     fn ustr_order_operations() {
         // problem with ustr, has a fix but not published; doesn't matter anymore since no longer using trees
-        assert_eq!(Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Less);
+        assert_eq!(
+            Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(),
+            Ordering::Less
+        );
         assert_eq!(Ustr::from("/a/b").cmp(&Ustr::from("/a/c")), Ordering::Less);
-        assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(), Ordering::Greater);
-        assert_eq!(Ustr::from("/a/c").cmp(&Ustr::from("/a/b")), Ordering::Greater);
+        assert_eq!(
+            Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            Ustr::from("/a/c").cmp(&Ustr::from("/a/b")),
+            Ordering::Greater
+        );
     }
 }
