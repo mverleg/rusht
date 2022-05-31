@@ -119,6 +119,7 @@ pub fn unique_prefix(texts: &[Ustr], order: Order) -> Vec<Ustr> {
 
 #[cfg(test)]
 mod tests {
+    use std::cmp::Ordering;
     use super::*;
 
     macro_rules! ustrvec {
@@ -208,6 +209,12 @@ mod tests {
         assert!(!(Ustr::from("/a/c") < Ustr::from("/a/c")));
         assert!(Ustr::from("/a/c") == Ustr::from("/a/c"));
         assert!(Ustr::from("/a/b") < Ustr::from("/a/c"));
+        assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Equal);
+        assert_eq!(Ustr::from("/a/c").cmp(&Ustr::from("/a/c")), Ordering::Equal);
+        assert_eq!(Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(), Ordering::Less);
+        assert_eq!(Ustr::from("/a/b").cmp(&Ustr::from("/a/c")), Ordering::Less);
+        assert_eq!(Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(), Ordering::Greater);
+        assert_eq!(Ustr::from("/a/c").cmp(&Ustr::from("/a/b")), Ordering::Greater);
     }
 
     #[test]
