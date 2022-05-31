@@ -1,7 +1,6 @@
 use ::structopt::StructOpt;
 
-use ::rusht_cmd::drop_cmd;
-use ::rusht_cmd::DropArgs;
+use rusht::cmd::{drop_cmd, DropArgs};
 
 fn main() {
     env_logger::init();

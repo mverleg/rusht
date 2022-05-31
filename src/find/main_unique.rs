@@ -1,11 +1,8 @@
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
+use rusht::common::{EmptyLineHandling, stdin_lines};
+use rusht::find::{unique, unique_prefix, UniqueArgs};
 
-use ::rusht_common::stdin_lines;
-use ::rusht_find::unique;
-use ::rusht_find::unique_prefix;
-use ::rusht_find::UniqueArgs;
-use rusht_common::EmptyLineHandling;
 
 fn main() {
     env_logger::init();

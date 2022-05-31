@@ -1,9 +1,7 @@
 use ::std::process::exit;
 
 use ::structopt::StructOpt;
-
-use ::rusht_cmd::list_cmds;
-use ::rusht_cmd::ListArgs;
+use ::rusht::cmd::{list_cmds, ListArgs};
 
 fn main() {
     env_logger::init();

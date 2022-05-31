@@ -8,7 +8,7 @@ use ::rand::thread_rng;
 use ::tempfile::tempfile;
 use tempfile::NamedTempFile;
 
-use crate::{add_cmd, AddArgs, AddArgsExtra, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs};
+use crate::cmd::{add_cmd, AddArgs, AddArgsExtra, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs};
 
 static INIT: Once = Once::new();
 
@@ -115,5 +115,6 @@ fn onebyone_add_run() {
     assert!(out.is_err());
     let mut outfile_content = String::new();
     outfile.read_to_string(&mut outfile_content).unwrap();
-    assert_eq!(outfile_content, "abc")
+    assert_eq!(outfile_content, "abc");
+    drop(outfile);
 }

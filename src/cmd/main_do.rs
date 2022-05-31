@@ -2,8 +2,7 @@ use ::std::process::exit;
 
 use ::structopt::StructOpt;
 
-use ::rusht_cmd::do_cmd;
-use ::rusht_cmd::DoArgs;
+use ::rusht::cmd::{do_cmd, DoArgs};
 
 fn main() {
     env_logger::init();

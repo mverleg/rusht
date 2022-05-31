@@ -14,23 +14,23 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "cmadd"
-path = "src/main_add.rs"
+path = "src/cmd/main_add.rs"
 
 [[bin]]
 name = "cmdo"
-path = "src/main_do.rs"
+path = "src/cmd/main_do.rs"
 
 [[bin]]
 name = "cmlist"
-path = "src/main_list.rs"
+path = "src/cmd/main_list.rs"
 
 [[bin]]
 name = "cmdrop"
-path = "src/main_drop.rs"
+path = "src/cmd/main_drop.rs"
 
 [[bin]]
 name = "unique"
-path = "main_unique.rs"
+path = "src/find/main_unique.rs"
 
 [dependencies]
 structopt = "*"
@@ -48,6 +48,7 @@ log = "*"
 env_logger = "*"
 memoize = "*"
 rand = "*"
+ustr = "*"
 
 [dev-dependencies]
 tempfile = "*"

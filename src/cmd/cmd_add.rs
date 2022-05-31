@@ -1,15 +1,15 @@
-use ::std::io::stdin;
 use ::std::io::BufRead;
 use ::std::io::Read;
+use ::std::io::stdin;
 use ::std::thread::spawn;
 
 use ::log::debug;
 use ::structopt::StructOpt;
-use rusht_common::{EmptyLineHandling, fail, stdin_lines};
 
-use crate::cmd_io::read;
-use crate::cmd_io::write;
-use crate::cmd_type::PendingTask;
+use crate::cmd::cmd_io::read;
+use crate::cmd::cmd_io::write;
+use crate::cmd::cmd_type::PendingTask;
+use crate::common::{EmptyLineHandling, fail, stdin_lines};
 
 #[derive(StructOpt, Debug)]
 #[structopt(

@@ -7,15 +7,15 @@ use ::std::time::Instant;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
-use rusht_common::fail;
+use crate::common::fail;
 
-use crate::cmd_io::current_time_s;
-use crate::cmd_io::read;
-use crate::cmd_io::write;
-use crate::cmd_type::RunId;
-use crate::cmd_type::RunningTask;
-use crate::cmd_type::TaskStack;
-use crate::cmd_type::TaskType;
+use crate::cmd::cmd_io::current_time_s;
+use crate::cmd::cmd_io::read;
+use crate::cmd::cmd_io::write;
+use crate::cmd::cmd_type::RunId;
+use crate::cmd::cmd_type::RunningTask;
+use crate::cmd::cmd_type::TaskStack;
+use crate::cmd::cmd_type::TaskType;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

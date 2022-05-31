@@ -20,11 +20,11 @@ use ::memoize::memoize;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use rusht_common::fail;
+use crate::common::fail;
 
-use crate::cmd_type::RunningTask;
-use crate::cmd_type::TaskStack;
-use crate::cmd_type::DATA_VERSION;
+use crate::cmd::cmd_type::RunningTask;
+use crate::cmd::cmd_type::TaskStack;
+use crate::cmd::cmd_type::DATA_VERSION;
 
 pub fn read(namespace: String) -> TaskStack {
     debug!("going to read commands for namespace '{}'", &namespace);

@@ -3,8 +3,8 @@ use ::std::process::exit;
 use ::log::debug;
 use ::structopt::StructOpt;
 
-use crate::cmd_io::read;
-use crate::cmd_io::stack_pth;
+use crate::cmd::cmd_io::read;
+use crate::cmd::cmd_io::stack_pth;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
