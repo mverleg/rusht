@@ -17,10 +17,11 @@ use ::memoize::memoize;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+
 use crate::common::Task;
 
 /// Increment for breaking changes, to avoid loading old task stack files
-pub const DATA_VERSION: u32 = 2;
+pub const DATA_VERSION: u32 = 3;
 
 // #[derive(Debug, Clone, PartialEq, Eq)]
 // pub enum ExecWith {

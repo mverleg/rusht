@@ -2,6 +2,7 @@ use ::std::io::BufRead;
 use ::std::io::Read;
 use ::std::io::stdin;
 use ::std::thread::spawn;
+use std::env::current_dir;
 use std::path::PathBuf;
 
 use ::log::debug;
@@ -52,7 +53,7 @@ pub struct AddArgs {
         long,
         help = "Working directory when running the command. Can use placeholder if -l or -L is used."
     )]
-    pub working_dir: Option<PathBuf>,
+    pub working_dir: Option<String>,
     #[structopt(subcommand)]
     pub cmd: CommandArgs,
 }
@@ -77,11 +78,11 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                 debug!("going to read stdin lines");
                 line_reader()
                     .iter()
-                    .map(|input| task_from_template(&cmd, input, &templ))
+                    .map(|input| task_from_template(&cmd, input, &templ, &args.working_dir))
                     .collect()
             } else {
                 spawn(stdin_warning);
-                vec![Task::new_split(cmd)]
+                vec![Task::new_split_in_cwd(cmd)]
             }
         }
     };
@@ -106,8 +107,13 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     write(args.namespace, &stored_tasks);
 }
 
-fn task_from_template(cmd: &[String], input: &str, templ: &str) -> Task {
-    Task::new_split(cmd.iter().map(|part| part.replace(templ, input)).collect())
+fn task_from_template(cmd: &[String], input: &str, templ: &str, working_dir: &Option<String>) -> Task {
+    let parts = cmd.iter().map(|part| part.replace(templ, input)).collect();
+    let working_dir = match working_dir {
+        Some(dir) => PathBuf::from(dir.replace(templ, input)),
+        None => current_dir().unwrap(),
+    };
+    Task::new_split(parts, working_dir)
 }
 
 fn stdin_warning() {

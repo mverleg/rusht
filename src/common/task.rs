@@ -1,6 +1,8 @@
 use ::std::process::Command;
 use ::std::process::Stdio;
 use ::std::time::Instant;
+use std::env::current_dir;
+use std::path::PathBuf;
 use std::process::ExitStatus;
 
 use ::serde::Deserialize;
@@ -20,16 +22,22 @@ pub enum CommandArgs {
 pub struct Task {
     pub cmd: String,
     pub args: Vec<String>,
+    pub working_dir: PathBuf,
 }
 
 impl Task {
-    pub fn new(cmd: String, args: Vec<String>) -> Self {
-        Task { cmd, args }
+    pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
+        Task { cmd, args, working_dir }
     }
 
-    pub fn new_split(parts: Vec<String>) -> Self {
+    pub fn new_split_in_cwd(parts: Vec<String>) -> Self {
         let (cmd, args) = parts.split_first().unwrap();
-        Task::new(cmd.to_owned(), args.to_vec())
+        Task::new(cmd.to_owned(), args.to_vec(), current_dir().unwrap())
+    }
+
+    pub fn new_split(parts: Vec<String>, working_dir: PathBuf) -> Self {
+        let (cmd, args) = parts.split_first().unwrap();
+        Task::new(cmd.to_owned(), args.to_vec(), working_dir)
     }
 
     pub fn as_cmd_str(&self) -> String {
