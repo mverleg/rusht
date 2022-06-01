@@ -151,7 +151,12 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     let mut results = vec![];
     for root in &args.roots {
         debug!("searching root '{}'", root.to_str().unwrap());
-        let matches = find_matching_dirs(root, &args, args.max_depth)?;
+        let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
+        if args.path_modification == PathModification::Relative {
+            matches = matches.into_iter()
+                .map(|pth| pth.strip_prefix(root).expect("failed to make path relative").to_path_buf())
+                .collect();
+        }
         results.extend(matches);
     }
     if args.order == Order::SortAscending {
@@ -166,11 +171,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     }
     let mut current_is_match = false;
     let mut results: Dirs = if is_parent_match(parent, &args.itself) {
-        let found = if args.path_modification == PathModification::Canonical {
-            parent.canonicalize().expect("failed to create absolute path")
-        } else {
-            parent.to_path_buf()
-        };
+        let found = parent.to_path_buf();
         if args.nested == StopOnMatch {
             debug!("found a match based on parent name: {}, not recursing deeper", parent.to_str().unwrap());
             return Ok(smallvec![found]);
@@ -186,11 +187,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if ! current_is_match && is_content_match(sub, &args.files, &args.dirs) {
-            let found = if args.path_modification == PathModification::Canonical {
-                parent.canonicalize().expect("failed to create absolute path")
-            } else {
-                parent.to_path_buf()
-            };
+            let found = parent.to_path_buf();
             if args.nested == StopOnMatch {
                 debug!("found a match based on child name: {}, not recursing deeper", sub.to_str().unwrap());
                 return Ok(smallvec![found]);

@@ -50,9 +50,10 @@ pub struct DoArgs {
     #[structopt(
         short = "p",
         long,
-        help = "Whether to run commands in parallel (if more than one)"
+        default_value = "1",
+        help = "How many parallel tasks to run"
     )]
-    pub parallel: bool,
+    pub parallel: u32,
     #[structopt(
         short = "r",
         long,

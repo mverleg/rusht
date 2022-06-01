@@ -1,5 +1,3 @@
-use ::std::process::exit;
-
 use ::structopt::StructOpt;
 
 use ::rusht::cached::CachedArgs;

@@ -10,7 +10,7 @@ fn main() {
     env_logger::init();
     let args = DirWithArgs::from_args();
     if args.roots.len() > 1 && args.path_modification == PathModification::Relative {
-        eprintln!("warning: using multiple roots with relative paths, won't know how to locate files");
+        eprintln!("warning: using multiple roots with relative paths, won't know which file belongs to which root");
     }
     match find_dir_with(args) {
         Ok(lines) => {

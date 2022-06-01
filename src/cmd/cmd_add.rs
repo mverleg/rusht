@@ -2,6 +2,7 @@ use ::std::io::BufRead;
 use ::std::io::Read;
 use ::std::io::stdin;
 use ::std::thread::spawn;
+use std::path::PathBuf;
 
 use ::log::debug;
 use ::structopt::StructOpt;
@@ -46,6 +47,12 @@ pub struct AddArgs {
         conflicts_with = "lines"
     )]
     pub lines_with: Option<String>,
+    #[structopt(
+        short = "P",
+        long,
+        help = "Working directory when running the command. Can use placeholder if -l or -L is used."
+    )]
+    pub working_dir: Option<PathBuf>,
     #[structopt(subcommand)]
     pub cmd: CommandArgs,
 }

@@ -9,8 +9,9 @@ use ::tempfile::NamedTempFile;
 use ::tempfile::tempfile;
 
 use crate::cmd::{
-    add_cmd, AddArgs, AddArgsExtra, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs,
+    add_cmd, AddArgs, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs,
 };
+use crate::common::CommandArgs;
 
 static INIT: Once = Once::new();
 
@@ -41,7 +42,8 @@ fn batch_add_drop() {
             skip_validation: false,
             lines: false,
             lines_with: Some("%".to_owned()),
-            cmd: AddArgsExtra::Cmd(vec!["echo".to_owned(), "hello".to_owned(), "%".to_owned()]),
+            working_dir: None,
+            cmd: CommandArgs::Cmd(vec!["echo".to_owned(), "hello".to_owned(), "%".to_owned()]),
         },
         || vec!["Leonardo".to_owned(), "Benjamin".to_owned()],
     );
@@ -84,7 +86,8 @@ fn add_one(namespace: &str, args: Vec<String>) {
             skip_validation: false,
             lines: false,
             lines_with: None,
-            cmd: AddArgsExtra::Cmd(args),
+            working_dir: None,
+            cmd: CommandArgs::Cmd(args),
         },
         std::vec::Vec::new,
     );
@@ -131,7 +134,7 @@ fn onebyone_add_run() {
         namespace: namespace.to_owned(),
         count: 1,
         autorun: true,
-        parallel: false,
+        parallel: 1,
         always_pop: false,
         keep: false,
         quiet: false,
