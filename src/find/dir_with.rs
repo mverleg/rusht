@@ -10,6 +10,7 @@ use ::regex::Regex;
 use ::smallvec::{SmallVec, smallvec};
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
+use log::trace;
 
 use crate::find::Nested::StopOnMatch;
 use crate::find::unique::Keep;
@@ -130,6 +131,7 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
     let mut results = vec![];
     for root in &args.roots {
+        debug!("searching root '{}'", root.to_str().unwrap());
         let matches = find_matching_dirs(root, &args, args.max_depth)?;
         results.extend(matches);
     }
@@ -157,6 +159,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
         smallvec![]
     };
     let content = read_content(parent, args.on_err)?;
+    trace!("found {} items in {}", content.len(), parent.to_str().unwrap());
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if ! current_is_match && is_content_match(sub, &args.files, &args.dirs) {
@@ -221,10 +224,13 @@ fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
     if patterns.is_empty() {
         return false
     }
-    let dir_name = dir.to_str().unwrap();
-    for me in patterns {
-        if me.is_match(&dir_name) {
-            return true
+    if let Some(dir_name) = dir.file_name() {
+        let dir_name = dir_name.to_str().unwrap();
+        for re in patterns {
+            if re.is_match(&dir_name) {
+                debug!("parent match: '{}' matches '{}'", dir_name, re);
+                return true
+            }
         }
     }
     false
@@ -235,15 +241,19 @@ fn is_content_match(item: &Path, file_res: &Vec<Regex>, dir_res: &Vec<Regex>) ->
     if file_res.is_empty() && dir_res.is_empty() {
         return false
     }
-    let item_name = item.to_str().unwrap();
-    for re in file_res {
-        if re.is_match(&item_name) && item.is_file() {
-            return true
+    if let Some(item_name) = item.file_name() {
+        let item_name = item_name.to_str().unwrap();
+        for re in file_res {
+            if re.is_match(&item_name) && item.is_file() {
+                debug!("match: '{}' matches '{}'", item_name, re);
+                return true
+            }
         }
-    }
-    for re in dir_res {
-        if re.is_match(&item_name) && item.is_dir() {
-            return true
+        for re in dir_res {
+            if re.is_match(&item_name) && item.is_dir() {
+                debug!("match: '{}' matches '{}'", item_name, re);
+                return true
+            }
         }
     }
     false
