@@ -33,11 +33,11 @@ pub struct DirWithArgs {
     pub on_err: OnErr,
     #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
     pub roots: Vec<PathBuf>,
-    #[structopt(short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
     pub files: Vec<Regex>,
-    #[structopt(short = "d", long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = "d", long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
     pub dirs: Vec<Regex>,
-    #[structopt(short = "i", long = "self", help = "Pattern for the directory itself for it to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = "i", long = "self", help = "Pattern for the directory itself for it to match")]
     pub itself: Vec<Regex>,
 }
 
@@ -47,6 +47,14 @@ pub enum OnErr {
     Warn,
     Abort,
     Ignore,
+}
+
+fn parse_full_str_regex(pattern: &str) -> Result<Regex, String> {
+    let full_pattern = format!("^{}$", pattern);
+    match Regex::new(&full_pattern) {
+        Ok(re) => Ok(re),
+        Err(err) => Err(format!("invalid file/dir pattern '{}'; it should be a valid regular expression, which will be wrapped inbetween ^ and $; err: {}", pattern, err)),
+    }
 }
 
 impl FromStr for OnErr {
@@ -123,7 +131,6 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     //TODO @mark: files
     //TODO @mark: dirs
     //TODO @mark: itself
-    //TODO @mark: on_err
     let mut results = vec![];
     for root in &args.roots {
         let matches = find_matching_dirs(root, &args, args.max_depth)?;
@@ -194,5 +201,10 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
 }
 
 fn is_match(dir: &Path, args: &DirWithArgs) -> bool {
-    false  //TODO @mark:
+    for me in &args.itself {
+        if me.is_match(dir.to_str().unwrap()) {
+            return true
+        }
+    }
+    false
 }
