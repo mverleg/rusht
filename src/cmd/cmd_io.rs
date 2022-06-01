@@ -78,7 +78,7 @@ pub fn write(namespace: String, tasks: &TaskStack) {
                 err
             ));
         }
-        assert_eq!(writer.write(&[b'\n']).unwrap(), 2);
+        writer.write_all(&[b'\n']).unwrap();
         debug!(
             "wrote updated commands file with {} commands to '{}'",
             tasks.len(),
