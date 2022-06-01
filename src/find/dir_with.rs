@@ -1,6 +1,7 @@
 use ::std::fs;
 use ::std::path::Path;
 use ::std::path::PathBuf;
+use std::str::FromStr;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -27,6 +28,8 @@ pub struct DirWithArgs {
     pub order: Order,
     #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
     pub nested: Nested,
+    #[structopt(short = "x", long = "on-error", help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore")]
+    pub on_err: OnErr,
     #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
     pub roots: Vec<PathBuf>,
     #[structopt(short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
@@ -38,6 +41,27 @@ pub struct DirWithArgs {
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum OnErr {
+    #[default]
+    Warn,
+    Abort,
+    Ignore,
+}
+
+impl FromStr for OnErr {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Ok(match value.to_ascii_lowercase().as_str() {
+            "w" | "warn" => OnErr::Warn,
+            "a" | "abort" | "exit" => OnErr::Abort,
+            "i" | "ignore" | "silent" => OnErr::Ignore,
+            _ => return Err(format!("did not understand error handling strategy '{}', try '[w]arn', '[a]bort' or '[i]gnore'", value)),
+        })
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Order {
     #[default]
     Preserve,
@@ -45,6 +69,7 @@ pub enum Order {
 }
 
 impl Order {
+    //TODO @mark: try from string
     fn from_is_sorted(is_sorted: bool) -> Self {
         if is_sorted {
             Order::SortAscending
@@ -62,6 +87,7 @@ pub enum Nested {
 }
 
 impl Nested {
+    //TODO @mark: try from string
     fn from_do_nested(do_nested: bool) -> Self {
         if do_nested {
             Nested::AlwaysRecurse
@@ -96,6 +122,7 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     //TODO @mark: files
     //TODO @mark: dirs
     //TODO @mark: itself
+    //TODO @mark: on_err
     let mut results = vec![];
     for root in &args.roots {
         let matches = find_matching_dirs(root, &args, args.max_depth)?;
