@@ -30,7 +30,7 @@ pub struct DirWithArgs {
     pub order: Order,
     #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
     pub nested: Nested,
-    #[structopt(short = "x", long = "on-error", help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore")]
+    #[structopt(short = "x", long = "on-error", default_value = "warn", help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore")]
     pub on_err: OnErr,
     #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
     pub roots: Vec<PathBuf>,
