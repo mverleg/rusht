@@ -156,18 +156,22 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     } else {
         smallvec![]
     };
-    for sub in content {
+    let content = read_content(parent, args.on_err)?;
+    // separate loop so as not to recurse when early-exit is enabled
+    for sub in &content {
         if ! current_is_match && is_content_match(sub, &args.files, &args.dirs) {
             let found = parent.canonicalize().expect("failed to create absolute path");
             if args.nested == StopOnMatch {
                 debug!("found a match based on child name: {}, not recursing deeper", sub.to_str().unwrap());
-                return Ok(smallvec![found]);  // throws away matches so far
+                return Ok(smallvec![found]);
             }
             debug!("found a match based on parent name: {}, searching deeper", sub.to_str().unwrap());
             current_is_match = true;
             results.push(found)
         }
-        if ! entry.path().is_dir() {
+    }
+    for sub in content {
+        if ! sub.is_dir() {
             continue;
         }
         let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
@@ -218,7 +222,7 @@ fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
         return false
     }
     let dir_name = dir.to_str().unwrap();
-    for me in &patterns {
+    for me in patterns {
         if me.is_match(&dir_name) {
             return true
         }
@@ -227,12 +231,18 @@ fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
 }
 
 /// Check if this content item is a match (which causes the parent to be flagged).
-fn is_content_match(item: &Path, files: &Vec<Regex>, dirs: &Vec<Regex>) -> bool {
-    //TODO @mark: files
-    //TODO @mark: dirs
-    let dir_name = dir.to_str().unwrap();
-    for me in &args.itself {
-        if me.is_match(&dir_name) {
+fn is_content_match(item: &Path, file_res: &Vec<Regex>, dir_res: &Vec<Regex>) -> bool {
+    if file_res.is_empty() && dir_res.is_empty() {
+        return false
+    }
+    let item_name = item.to_str().unwrap();
+    for re in file_res {
+        if re.is_match(&item_name) && item.is_file() {
+            return true
+        }
+    }
+    for re in dir_res {
+        if re.is_match(&item_name) && item.is_dir() {
             return true
         }
     }
