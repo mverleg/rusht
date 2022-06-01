@@ -1,8 +1,8 @@
 use ::std::env;
-use ::std::io::{stdin, BufRead};
+use ::std::io::{BufRead, stdin};
 use ::std::process::exit;
-use ::std::sync::atomic::{AtomicBool, Ordering};
 use ::std::sync::Arc;
+use ::std::sync::atomic::{AtomicBool, Ordering};
 use ::std::thread::{sleep, spawn};
 use ::std::time::Duration;
 

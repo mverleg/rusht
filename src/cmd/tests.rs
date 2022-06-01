@@ -1,15 +1,15 @@
 use ::std::fs;
-use ::std::io::stdin;
 use ::std::io::Read;
+use ::std::io::stdin;
 use ::std::sync::Once;
 
-use ::rand::thread_rng;
 use ::rand::Rng;
-use ::tempfile::tempfile;
+use ::rand::thread_rng;
 use ::tempfile::NamedTempFile;
+use ::tempfile::tempfile;
 
 use crate::cmd::{
-    add_cmd, do_cmd, drop_cmd, list_cmds, AddArgs, AddArgsExtra, DoArgs, DropArgs, ListArgs,
+    add_cmd, AddArgs, AddArgsExtra, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs,
 };
 
 static INIT: Once = Once::new();

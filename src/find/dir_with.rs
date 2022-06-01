@@ -11,7 +11,7 @@ use ::ustr::UstrSet;
     about = "Find directories that contain certain files or directories."
 )]
 pub struct DirWithArgs {
-    #[structopt(short = "d", long, help = "Maximum directory depth to recurse into")]
+    #[structopt(short = "l", long, help = "Maximum directory depth to recurse into")]
     pub max_depth: u32,
     #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sort", help = "Sort the results alphabetically")]
     pub order: Order,

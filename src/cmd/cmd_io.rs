@@ -1,7 +1,7 @@
 use ::std::fs::create_dir_all;
-use ::std::fs::remove_file;
 use ::std::fs::File;
 use ::std::fs::OpenOptions;
+use ::std::fs::remove_file;
 use ::std::io::BufReader;
 use ::std::io::BufWriter;
 use ::std::io::Write;
@@ -14,7 +14,6 @@ use ::std::time::Instant;
 use ::std::time::SystemTime;
 use ::std::time::UNIX_EPOCH;
 
-use crate::common::fail;
 use ::log::debug;
 use ::log::warn;
 use ::memoize::memoize;
@@ -22,9 +21,10 @@ use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 
+use crate::cmd::cmd_type::DATA_VERSION;
 use crate::cmd::cmd_type::RunningTask;
 use crate::cmd::cmd_type::TaskStack;
-use crate::cmd::cmd_type::DATA_VERSION;
+use crate::common::fail;
 
 pub fn read(namespace: String) -> TaskStack {
     debug!("going to read commands for namespace '{}'", &namespace);
