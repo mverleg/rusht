@@ -1,7 +1,7 @@
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
 
-use ::rusht::common::{EmptyLineHandling, stdin_lines};
+use ::rusht::common::{stdin_lines, EmptyLineHandling};
 use ::rusht::find::{unique, unique_prefix, UniqueArgs};
 
 fn main() {

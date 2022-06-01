@@ -1,5 +1,3 @@
-#![allow(unused)] //TODO @mverleg: TEMPORARY! REMOVE THIS!
-
 pub use cmd_add::add_cmd;
 pub use cmd_add::AddArgs;
 pub use cmd_do::do_cmd;

@@ -1,11 +1,7 @@
 use ::std::collections::HashMap;
-use ::std::process::Command;
-use ::std::process::exit;
-use ::std::process::Stdio;
-use ::std::time::Instant;
+
 use std::process::ExitStatus;
 
-use ::itertools::Itertools;
 use ::log::debug;
 use ::rand::Rng;
 use ::structopt::StructOpt;
@@ -17,7 +13,6 @@ use crate::cmd::cmd_type::RunId;
 use crate::cmd::cmd_type::RunningTask;
 use crate::cmd::cmd_type::TaskStack;
 use crate::cmd::cmd_type::TaskType;
-use crate::common::fail;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

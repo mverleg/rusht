@@ -1,20 +1,10 @@
 use ::std::fmt;
-use ::std::fs::File;
-use ::std::fs::OpenOptions;
-use ::std::fs::remove_file;
-use ::std::io::BufReader;
-use ::std::io::BufWriter;
+
 use ::std::iter::Rev;
-use ::std::path::Path;
-use ::std::path::PathBuf;
-use ::std::process::exit;
+
 use ::std::slice::Iter;
 use ::std::slice::IterMut;
 
-use ::log::debug;
-use ::log::warn;
-use ::memoize::memoize;
-use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 
@@ -67,11 +57,8 @@ pub struct RunningTask {
 }
 
 impl RunningTask {
-    pub fn new(task: Task, run_id: RunId,) -> Self {
-        RunningTask {
-            task,
-            run_id
-        }
+    pub fn new(task: Task, run_id: RunId) -> Self {
+        RunningTask { task, run_id }
     }
 
     pub fn as_cmd_str(&self) -> String {
@@ -101,8 +88,7 @@ impl TaskType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TaskStack {
-    //TODO @mark: back to private
-    pub(crate) tasks: Vec<TaskType>,
+    tasks: Vec<TaskType>,
 }
 
 impl TaskStack {
@@ -122,10 +108,6 @@ impl TaskStack {
 impl TaskStack {
     pub fn add(&mut self, task: Task) {
         self.tasks.push(TaskType::Pending(task));
-    }
-
-    pub fn add_running(&mut self, task: RunningTask) {
-        self.tasks.push(TaskType::Running(task));
     }
 
     pub fn add_end(&mut self, task: Task) {

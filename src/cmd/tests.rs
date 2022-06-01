@@ -1,16 +1,12 @@
 use ::std::fs;
-use ::std::io::Read;
-use ::std::io::stdin;
+
 use ::std::sync::Once;
 
-use ::rand::Rng;
 use ::rand::thread_rng;
+use ::rand::Rng;
 use ::tempfile::NamedTempFile;
-use ::tempfile::tempfile;
 
-use crate::cmd::{
-    add_cmd, AddArgs, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs,
-};
+use crate::cmd::{add_cmd, do_cmd, drop_cmd, list_cmds, AddArgs, DoArgs, DropArgs, ListArgs};
 use crate::common::CommandArgs;
 
 static INIT: Once = Once::new();
@@ -96,7 +92,7 @@ fn add_one(namespace: &str, args: Vec<String>) {
 #[test]
 fn onebyone_add_run() {
     let namespace = init_test();
-    let mut outfile = NamedTempFile::new();
+    let outfile = NamedTempFile::new();
     let out_path = outfile
         .as_ref()
         .unwrap()

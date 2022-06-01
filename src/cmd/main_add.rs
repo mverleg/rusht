@@ -1,7 +1,7 @@
 use ::structopt::StructOpt;
 
 use ::rusht::cmd::{add_cmd, AddArgs};
-use ::rusht::common::{EmptyLineHandling, stdin_lines};
+use ::rusht::common::{stdin_lines, EmptyLineHandling};
 
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?

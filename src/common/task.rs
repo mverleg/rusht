@@ -27,7 +27,11 @@ pub struct Task {
 
 impl Task {
     pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
-        Task { cmd, args, working_dir }
+        Task {
+            cmd,
+            args,
+            working_dir,
+        }
     }
 
     pub fn new_split_in_cwd(parts: Vec<String>) -> Self {
@@ -47,7 +51,6 @@ impl Task {
     pub fn execute(&self, quiet: bool) -> ExitStatus {
         let t0 = Instant::now();
         let cmd_str = self.as_cmd_str();
-        dbg!(&self.working_dir);  //TODO @mark: TEMPORARY! REMOVE THIS!
         let mut child = match Command::new(&self.cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)

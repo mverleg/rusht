@@ -1,28 +1,24 @@
 use ::std::fs::create_dir_all;
+use ::std::fs::remove_file;
 use ::std::fs::File;
 use ::std::fs::OpenOptions;
-use ::std::fs::remove_file;
 use ::std::io::BufReader;
 use ::std::io::BufWriter;
 use ::std::io::Write;
-use ::std::iter::Rev;
+
 use ::std::path::Path;
 use ::std::path::PathBuf;
-use ::std::process::exit;
-use ::std::slice::Iter;
-use ::std::time::Instant;
+
 use ::std::time::SystemTime;
 use ::std::time::UNIX_EPOCH;
 
 use ::log::debug;
-use ::log::warn;
+
 use ::memoize::memoize;
 use ::regex::Regex;
-use ::serde::Deserialize;
-use ::serde::Serialize;
 
 use crate::cmd::cmd_type::DATA_VERSION;
-use crate::cmd::cmd_type::RunningTask;
+
 use crate::cmd::cmd_type::TaskStack;
 use crate::common::fail;
 
@@ -82,7 +78,7 @@ pub fn write(namespace: String, tasks: &TaskStack) {
                 err
             ));
         }
-        writer.write(&[b'\n']);
+        assert_eq!(writer.write(&[b'\n']).unwrap(), 2);
         debug!(
             "wrote updated commands file with {} commands to '{}'",
             tasks.len(),

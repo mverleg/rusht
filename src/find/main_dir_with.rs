@@ -2,8 +2,8 @@ use ::std::process::exit;
 
 use ::structopt::StructOpt;
 
-use ::rusht::find::DirWithArgs;
 use ::rusht::find::find_dir_with;
+use ::rusht::find::DirWithArgs;
 use ::rusht::find::PathModification;
 
 fn main() {

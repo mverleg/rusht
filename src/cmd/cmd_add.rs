@@ -1,6 +1,5 @@
-use ::std::io::BufRead;
-use ::std::io::Read;
 use ::std::io::stdin;
+use ::std::io::Read;
 use ::std::thread::spawn;
 use std::env::current_dir;
 use std::path::PathBuf;
@@ -10,7 +9,7 @@ use ::structopt::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
-use crate::common::{CommandArgs, EmptyLineHandling, fail, stdin_lines, Task};
+use crate::common::{fail, CommandArgs, Task};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -69,7 +68,10 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
             if let Some(templ) = args.lines_with {
                 assert!(!templ.is_empty());
                 let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
-                if ! has_placeholder && ( args.working_dir.is_some() && args.working_dir.as_ref().unwrap().contains(&templ)) {
+                if !has_placeholder
+                    && (args.working_dir.is_some()
+                        && args.working_dir.as_ref().unwrap().contains(&templ))
+                {
                     has_placeholder = true
                 }
                 if !has_placeholder {
@@ -87,7 +89,10 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                     .collect()
             } else {
                 spawn(stdin_warning);
-                let working_dir = args.working_dir.map(|pth| PathBuf::from(pth)).unwrap_or_else(|| current_dir().unwrap());
+                let working_dir = args
+                    .working_dir
+                    .map(PathBuf::from)
+                    .unwrap_or_else(|| current_dir().unwrap());
                 vec![Task::new_split(cmd, working_dir)]
             }
         }
@@ -113,15 +118,19 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     write(args.namespace, &stored_tasks);
 }
 
-fn task_from_template(cmd: &[String], input: &str, templ: &str, working_dir: &Option<String>) -> Task {
+fn task_from_template(
+    cmd: &[String],
+    input: &str,
+    templ: &str,
+    working_dir: &Option<String>,
+) -> Task {
     let parts = cmd.iter().map(|part| part.replace(templ, input)).collect();
     let working_dir = match working_dir {
-        Some(dir) => PathBuf::from(dir.replace(templ, input)).canonicalize()
+        Some(dir) => PathBuf::from(dir.replace(templ, input))
+            .canonicalize()
             .expect("failed to get absolute path for working directory"),
         None => current_dir().unwrap(),
     };
-    let task = Task::new_split(cmd.iter().map(|part| part.replace(templ, input)).collect(), working_dir.clone());  //TODO @mark: TEMPORARY! REMOVE THIS!
-    dbg!(task);  //TODO @mark: TEMPORARY! REMOVE THIS!
     Task::new_split(parts, working_dir)
 }
 
