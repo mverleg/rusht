@@ -1,5 +1,14 @@
+use ::std::fs;
+use ::std::path::PathBuf;
+
+use ::itertools::Itertools;
+use ::regex::Regex;
 use ::structopt::StructOpt;
-use regex::Regex;
+use ::ustr::Ustr;
+
+use crate::find::unique::Keep;
+use crate::find::unique::Order as UniqueOrder;
+use crate::find::unique_prefix;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -13,6 +22,8 @@ pub struct DirWithArgs {
     pub order: Order,
     #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
     pub nested: Nested,
+    #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
+    pub roots: Vec<PathBuf>,
     #[structopt(short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
     pub files: Vec<Regex>,
     #[structopt(short = "d", long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
@@ -53,4 +64,28 @@ impl Nested {
             Nested::StopOnMatch
         }
     }
+}
+
+fn root_parser(root: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(root);
+    if fs::metadata(&path).is_err() {
+        return Err(format!("did not find root '{}'", root))
+    }
+    Ok(path)
+}
+
+fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
+    let unique_roots = unique_prefix(
+        roots.iter().map(|p| Ustr::from(p.to_string_lossy().as_ref())).collect(),
+        UniqueOrder::SortAscending, Keep::First);
+    if unique_roots.len() < roots.len() {
+        return Err(format!("root directories (-r) overlap; unique ones are: {}", unique_roots.iter().join(", ")))
+    }
+    Ok(())
+}
+
+pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<String>, String> {
+    validate_roots_unique(&args.roots)?;
+
+    unimplemented!()
 }
