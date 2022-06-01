@@ -68,11 +68,16 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         CommandArgs::Cmd(cmd) => {
             if let Some(templ) = args.lines_with {
                 assert!(!templ.is_empty());
-                if !cmd.iter().any(|part| part.contains(&templ)) {
+                let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
+                if ! has_placeholder && ( args.working_dir.is_some() && args.working_dir.as_ref().unwrap().contains(&templ)) {
+                    has_placeholder = true
+                }
+                if !has_placeholder {
                     fail(format!(
-                        "did not find template string '{}' in task: {}",
+                        "did not find template string '{}' in task or working dir: {}, {:?}",
                         templ,
-                        cmd.join(" ")
+                        cmd.join(" "),
+                        &args.working_dir,
                     ))
                 }
                 debug!("going to read stdin lines");
