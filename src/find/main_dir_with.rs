@@ -12,7 +12,7 @@ fn main() {
     match find_dir_with(args) {
         Ok(lines) => {
             for line in lines {
-                println!("{}", line);
+                println!("{}", line.to_str().unwrap());
             }
         }
         Err(err) => {

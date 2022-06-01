@@ -8,6 +8,7 @@ use ::structopt::StructOpt;
 use ::ustr::Ustr;
 use log::debug;
 use smallvec::{SmallVec, smallvec};
+use crate::find::Nested::StopOnMatch;
 
 use crate::find::unique::Keep;
 use crate::find::unique::Order as UniqueOrder;
@@ -35,7 +36,7 @@ pub struct DirWithArgs {
     pub itself: Vec<Regex>,
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Order {
     #[default]
     Preserve,
@@ -52,7 +53,7 @@ impl Order {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Nested {
     #[default]
     StopOnMatch,
@@ -89,17 +90,20 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
 
 type Dirs = SmallVec<[PathBuf; 2]>;
 
-pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<String>, String> {
+pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
-    //TODO @mark: order
-    //TODO @mark: nested
     //TODO @mark: files
     //TODO @mark: dirs
     //TODO @mark: itself
+    let mut results = vec![];
     for root in &args.roots {
-        find_matching_dirs(root, &args, args.max_depth);
+        let matches = find_matching_dirs(root, &args, args.max_depth)?;
+        results.extend(matches);
     }
-    unimplemented!()
+    if args.order == Order::SortAscending {
+        results.sort_unstable();
+    }
+    Ok(results)
 }
 
 fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -> Result<Dirs, String> {
@@ -108,20 +112,24 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     }
     let mut results: Dirs = SmallVec::new();
     for sub in read_subdirs(parent)? {
-        if is_match(sub) {
-            debug!("found a match: {}", sub.as_str_lossy());
-            results.push(sub);
+        if is_match(&sub) {
+            results.push(sub.canonicalize().expect("failed to create absolute path"));
+            if args.nested == StopOnMatch {
+                debug!("found a match: {}, not recursing deeper", sub.to_str().unwrap());
+                continue;
+            }
+            debug!("found a match: {}, searching deeper", sub.to_str().unwrap());
         }
-        let found = find_matching_dirs(sub, args, depth_remaining - 1)?;
+        let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
         results.extend(found);
     }
     Ok(results)
 }
 
-fn read_subdirs(dir: &Path) -> Dirs {
-
+fn read_subdirs(dir: &Path) -> Result<Dirs, String> {
+    unimplemented!()
 }
 
 fn is_match(dir: &Path) -> bool {
-
+    false  //TODO @mark:
 }
