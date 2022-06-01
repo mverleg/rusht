@@ -1,19 +1,20 @@
+use ::std::fs::{create_dir_all, OpenOptions};
+use ::std::io::BufReader;
 use ::std::path::PathBuf;
-use std::fs::{create_dir_all, OpenOptions};
-use std::io::BufReader;
-use std::time::SystemTime;
+use ::std::time::SystemTime;
+
+use ::chrono::{DateTime, Local};
+use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use chrono::{DateTime, Local};
-use log::debug;
 
 use crate::cached::CachedArgs;
 use crate::common::{fail, Task, unique_filename};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CacheStatus {
-    RanSuccessfully,
-    FromCache,
+    RanSuccessfully(String),
+    FromCache(String),
     Failed(i32),
 }
 
@@ -44,6 +45,13 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     match cache {
         Ok(Ok(cache)) => {
             debug!("found cached entry from {} at {}", &cache.time, cache_pth.to_string_lossy());
+            let age = Local::now().signed_duration_since(cache.time).to_std().unwrap();
+            if age > args.duration {
+                debug!("cached entry is too old, {}s > {}s", &age.as_secs(), &args.duration.as_secs());
+            } else {
+                debug!("valid cache ({}s); was created with task: {}", age.as_secs(), cache.task.as_cmd_str());
+                return Ok(CacheStatus::FromCache(cache.output))
+            }
         }
         Ok(Err(err)) => {
             fail("failed to parse cache file");
@@ -54,6 +62,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     }
     eprintln!("cache not ready; always running");  //TODO @mark: TEMPORARY! REMOVE THIS!
     task.execute(false);
+    //TODO @mark: update cache
     unimplemented!()
 }
 
