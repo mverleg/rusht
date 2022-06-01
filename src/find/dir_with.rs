@@ -1,7 +1,8 @@
 use ::std::fs;
 use ::std::path::Path;
 use ::std::path::PathBuf;
-use std::str::FromStr;
+use ::std::str::FromStr;
+use std::fs::DirEntry;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -54,8 +55,8 @@ impl FromStr for OnErr {
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         Ok(match value.to_ascii_lowercase().as_str() {
             "w" | "warn" => OnErr::Warn,
-            "a" | "abort" | "exit" => OnErr::Abort,
-            "i" | "ignore" | "silent" => OnErr::Ignore,
+            "a" | "abort" | "exit" | "stop" => OnErr::Abort,
+            "i" | "ignore" | "silent" | "skip" => OnErr::Ignore,
             _ => return Err(format!("did not understand error handling strategy '{}', try '[w]arn', '[a]bort' or '[i]gnore'", value)),
         })
     }
@@ -139,7 +140,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
         return Ok(smallvec![])
     }
     let mut results: Dirs = SmallVec::new();
-    for sub in read_subdirs(parent)? {
+    for sub in read_subdirs(parent, args.on_err)? {
         if is_match(&sub, &args) {
             results.push(sub.canonicalize().expect("failed to create absolute path"));
             if args.nested == StopOnMatch {
@@ -154,17 +155,42 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     Ok(results)
 }
 
-fn read_subdirs(parent: &Path) -> Result<Dirs, String> {
-    let content = fs::read_dir(parent)
-        .map_err(|err| format!("failed to scan directory {}, err {}", parent.to_str().unwrap(), err))?;
+fn read_subdirs(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
+    let content = read_dir_err_handling(parent, on_err)?;
     let mut subdirs = smallvec![];
     for entry in content {
-        let entry = entry.map_err(|err| format!("failed to an entry in {}, err {}", parent.to_str().unwrap(), err))?;
         if entry.path().is_dir() {
             subdirs.push(entry.path().to_path_buf())
         }
     }
     Ok(subdirs)
+}
+
+fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry; 2]>, String> {
+    match fs::read_dir(dir) {
+        Ok(res) => {
+            let mut entries = smallvec![];
+            for entry in res {
+                match entry {
+                    Ok(entry) => entries.push(entry),
+                    Err(err) => match on_err {
+                        OnErr::Ignore => {}
+                        OnErr::Warn => eprintln!("failed to read an entry in '{}', err {}; continuing (use -x=a to abort)", dir.to_str().unwrap(), err),
+                        OnErr::Abort => eprintln!("failed to read an entry in '{}', err {}; stopping", dir.to_str().unwrap(), err),
+                    }
+                }
+            }
+            Ok(entries)
+        },
+        Err(err) => match on_err {
+            OnErr::Ignore => Ok(smallvec![]),
+            OnErr::Warn => {
+                eprintln!("failed to scan directory '{}', err {}; continuing (use -x=a to abort)", dir.to_str().unwrap(), err);
+                Ok(smallvec![])
+            },
+            OnErr::Abort => return Err(format!("failed to scan directory '{}', err {}; stopping", dir.to_str().unwrap(), err)),
+        }
+    }
 }
 
 fn is_match(dir: &Path, args: &DirWithArgs) -> bool {
