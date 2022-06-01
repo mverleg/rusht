@@ -26,7 +26,7 @@ impl CommandArgs {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Task {
     pub cmd: String,
     pub args: Vec<String>,
