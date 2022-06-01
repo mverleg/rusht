@@ -8,8 +8,7 @@ use ::structopt::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
-use crate::cmd::cmd_type::PendingTask;
-use crate::common::{EmptyLineHandling, fail, stdin_lines};
+use crate::common::{EmptyLineHandling, fail, stdin_lines, Task};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -82,7 +81,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                     .collect()
             } else {
                 spawn(stdin_warning);
-                vec![PendingTask::new_split(cmd)]
+                vec![Task::new_split(cmd)]
             }
         }
     };
@@ -107,8 +106,8 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     write(args.namespace, &stored_tasks);
 }
 
-fn task_from_template(cmd: &[String], input: &str, templ: &str) -> PendingTask {
-    PendingTask::new_split(cmd.iter().map(|part| part.replace(templ, input)).collect())
+fn task_from_template(cmd: &[String], input: &str, templ: &str) -> Task {
+    Task::new_split(cmd.iter().map(|part| part.replace(templ, input)).collect())
 }
 
 fn stdin_warning() {

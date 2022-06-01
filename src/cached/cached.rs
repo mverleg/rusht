@@ -1,5 +1,4 @@
 use ::std::time::Duration;
-use std::process::ExitCode;
 
 use ::parse_duration::parse as parse_dur;
 use ::structopt::StructOpt;

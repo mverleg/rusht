@@ -3,6 +3,7 @@ use ::std::process::Command;
 use ::std::process::exit;
 use ::std::process::Stdio;
 use ::std::time::Instant;
+use std::process::ExitStatus;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -91,7 +92,8 @@ pub fn do_cmd(args: DoArgs) -> bool {
             println!("run: {}", task.as_cmd_str());
         }
         let run_id = task.run_id;
-        let status = execute(task, args.quiet);
+        let status = task.task.execute(args.quiet);
+        let status = Status::from(status);
         statuses.insert(run_id, status);
         if status != Status::Success {
             break;
@@ -117,6 +119,16 @@ enum Status {
     Success,
     Failed,
     Skipped,
+}
+
+impl From<ExitStatus> for Status {
+    fn from(exit: ExitStatus) -> Self {
+        if exit.success() {
+            Status::Success
+        } else {
+            Status::Failed
+        }
+    }
 }
 
 fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<RunningTask> {
@@ -147,7 +159,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
             run_id,
             pending.as_cmd_str()
         );
-        let run_task = pending.with_run_id(run_id);
+        let run_task = RunningTask::new(pending, run_id);
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
         run_nr += 1;
@@ -156,40 +168,6 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         }
     }
     to_run
-}
-
-fn execute(task: RunningTask, quiet: bool) -> Status {
-    let t0 = Instant::now();
-    let cmd_str = task.as_cmd_str();
-    let mut child = match Command::new(task.task.cmd)
-        .args(&task.task.args)
-        //.shell(true)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()
-    {
-        Ok(child) => child,
-        Err(err) => fail(format!(
-            "failed to start command '{}', error {}",
-            cmd_str, err
-        )),
-    };
-    let status = match child.wait() {
-        Ok(status) => status,
-        Err(err) => fail(format!(
-            "failed to finish command '{}', error {}",
-            cmd_str, err
-        )),
-    };
-    if !quiet {
-        let duration = t0.elapsed().as_millis();
-        println!("took {} ms to run: {}", duration, cmd_str);
-    }
-    if status.success() {
-        Status::Success
-    } else {
-        Status::Failed
-    }
 }
 
 fn remove_completed_tasks(

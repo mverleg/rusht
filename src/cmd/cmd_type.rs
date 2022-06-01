@@ -17,6 +17,7 @@ use ::memoize::memoize;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use crate::common::Task;
 
 /// Increment for breaking changes, to avoid loading old task stack files
 pub const DATA_VERSION: u32 = 2;
@@ -58,41 +59,20 @@ impl fmt::Display for RunId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PendingTask {
-    pub cmd: String,
-    pub args: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunningTask {
     #[serde(flatten)]
-    pub task: PendingTask,
+    pub task: Task,
     pub run_id: RunId,
 }
 
-impl PendingTask {
-    pub fn new(cmd: String, args: Vec<String>) -> Self {
-        PendingTask { cmd, args }
-    }
-
-    pub fn new_split(parts: Vec<String>) -> Self {
-        let (cmd, args) = parts.split_first().unwrap();
-        PendingTask::new(cmd.to_owned(), args.to_vec())
-    }
-
-    pub fn with_run_id(self, run: RunId) -> RunningTask {
+impl RunningTask {
+    pub fn new(task: Task, run_id: RunId,) -> Self {
         RunningTask {
-            task: self,
-            run_id: run,
+            task,
+            run_id
         }
     }
 
-    pub fn as_cmd_str(&self) -> String {
-        format!("{} {}", self.cmd, self.args.join(" "))
-    }
-}
-
-impl RunningTask {
     pub fn as_cmd_str(&self) -> String {
         self.task.as_cmd_str()
     }
@@ -101,7 +81,7 @@ impl RunningTask {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum TaskType {
-    Pending(PendingTask),
+    Pending(Task),
     Running(RunningTask),
 }
 
@@ -139,7 +119,7 @@ impl TaskStack {
 }
 
 impl TaskStack {
-    pub fn add(&mut self, task: PendingTask) {
+    pub fn add(&mut self, task: Task) {
         self.tasks.push(TaskType::Pending(task));
     }
 
@@ -147,7 +127,7 @@ impl TaskStack {
         self.tasks.push(TaskType::Running(task));
     }
 
-    pub fn add_end(&mut self, task: PendingTask) {
+    pub fn add_end(&mut self, task: Task) {
         self.tasks.insert(0, TaskType::Pending(task));
     }
 
