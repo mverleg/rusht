@@ -59,6 +59,8 @@ rand = "*"
 ustr = "*"
 parse_duration = "*"
 smallvec = "*"
+sha2 = "*"
+base64 = "*"
 
 [dev-dependencies]
 tempfile = "*"

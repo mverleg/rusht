@@ -7,3 +7,4 @@ pub use self::task::Task;
 mod err;
 mod stdin;
 mod task;
+mod files;
