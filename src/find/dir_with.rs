@@ -6,11 +6,11 @@ use ::std::str::FromStr;
 
 use ::itertools::Itertools;
 use ::log::debug;
+use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{SmallVec, smallvec};
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
-use log::trace;
 
 use crate::find::Nested::StopOnMatch;
 use crate::find::unique::Keep;
@@ -32,6 +32,8 @@ pub struct DirWithArgs {
     pub nested: Nested,
     #[structopt(short = "x", long = "on-error", default_value = "warn", help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore")]
     pub on_err: OnErr,
+    #[structopt(parse(from_flag = PathModification::from_is_relative), short = "z", long = "relative", help = "Results are relative to roots, instead of absolute")]
+    pub path_modification: PathModification,
     #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
     pub roots: Vec<PathBuf>,
     #[structopt(parse(try_from_str = parse_full_str_regex), short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
@@ -40,14 +42,24 @@ pub struct DirWithArgs {
     pub dirs: Vec<Regex>,
     #[structopt(parse(try_from_str = parse_full_str_regex), short = "i", long = "self", help = "Pattern for the directory itself for it to match")]
     pub itself: Vec<Regex>,
+    //TODO @mark: write to a file
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum OnErr {
+pub enum PathModification {
+    Relative,
     #[default]
-    Warn,
-    Abort,
-    Ignore,
+    Canonical,
+}
+
+impl PathModification {
+    fn from_is_relative(is_relative: bool) -> Self {
+        if is_relative {
+            PathModification::Relative
+        } else {
+            PathModification::Canonical
+        }
+    }
 }
 
 fn parse_full_str_regex(pattern: &str) -> Result<Regex, String> {
@@ -56,6 +68,14 @@ fn parse_full_str_regex(pattern: &str) -> Result<Regex, String> {
         Ok(re) => Ok(re),
         Err(err) => Err(format!("invalid file/dir pattern '{}'; it should be a valid regular expression, which will be wrapped inbetween ^ and $; err: {}", pattern, err)),
     }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum OnErr {
+    #[default]
+    Warn,
+    Abort,
+    Ignore,
 }
 
 impl FromStr for OnErr {
@@ -79,7 +99,6 @@ pub enum Order {
 }
 
 impl Order {
-    //TODO @mark: try from string
     fn from_is_sorted(is_sorted: bool) -> Self {
         if is_sorted {
             Order::SortAscending
@@ -147,7 +166,11 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     }
     let mut current_is_match = false;
     let mut results: Dirs = if is_parent_match(parent, &args.itself) {
-        let found = parent.canonicalize().expect("failed to create absolute path");
+        let found = if args.path_modification == PathModification::Canonical {
+            parent.canonicalize().expect("failed to create absolute path")
+        } else {
+            parent.to_path_buf()
+        };
         if args.nested == StopOnMatch {
             debug!("found a match based on parent name: {}, not recursing deeper", parent.to_str().unwrap());
             return Ok(smallvec![found]);
@@ -163,7 +186,11 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if ! current_is_match && is_content_match(sub, &args.files, &args.dirs) {
-            let found = parent.canonicalize().expect("failed to create absolute path");
+            let found = if args.path_modification == PathModification::Canonical {
+                parent.canonicalize().expect("failed to create absolute path")
+            } else {
+                parent.to_path_buf()
+            };
             if args.nested == StopOnMatch {
                 debug!("found a match based on child name: {}, not recursing deeper", sub.to_str().unwrap());
                 return Ok(smallvec![found]);
