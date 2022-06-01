@@ -58,6 +58,7 @@ memoize = "*"
 rand = "*"
 ustr = "*"
 parse_duration = "*"
+smallvec = "*"
 
 [dev-dependencies]
 tempfile = "*"

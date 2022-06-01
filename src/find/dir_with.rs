@@ -7,6 +7,7 @@ use ::regex::Regex;
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
 use log::debug;
+use smallvec::{SmallVec, smallvec};
 
 use crate::find::unique::Keep;
 use crate::find::unique::Order as UniqueOrder;
@@ -86,6 +87,8 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
     Ok(())
 }
 
+type Dirs = SmallVec<[PathBuf; 2]>;
+
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<String>, String> {
     validate_roots_unique(&args.roots)?;
     //TODO @mark: order
@@ -94,26 +97,28 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<String>, String> {
     //TODO @mark: dirs
     //TODO @mark: itself
     for root in &args.roots {
-        let mut matches = vec![];
-        find_matching_dirs(root, &mut |dir| matches.push(dir), args.max_depth);
+        find_matching_dirs(root, &args, args.max_depth);
     }
     unimplemented!()
 }
 
-fn find_matching_dirs(parent: &Path, collect: &mut impl FnMut(PathBuf), depth_remaining: u32) {
+fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -> Result<Dirs, String> {
     if depth_remaining == 0 {
-        return
+        return Ok(smallvec![])
     }
+    let mut results: Dirs = SmallVec::new();
     for sub in read_subdirs(parent)? {
         if is_match(sub) {
             debug!("found a match: {}", sub.as_str_lossy());
-            collect(sub)
+            results.push(sub);
         }
-        find_matching_dirs(sub, collect, depth_remaining - 1);
+        let found = find_matching_dirs(sub, args, depth_remaining - 1)?;
+        results.extend(found);
     }
+    Ok(results)
 }
 
-fn read_subdirs(dir: &Path) -> SmallVec<[PathBuf; 2]> {
+fn read_subdirs(dir: &Path) -> Dirs {
 
 }
 

@@ -526,6 +526,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "smallvec",
  "structopt",
  "strum",
  "strum_macros",
