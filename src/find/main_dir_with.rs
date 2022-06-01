@@ -1,8 +1,5 @@
 use ::structopt::StructOpt;
-use ::ustr::Ustr;
 
-use ::rusht::common::{EmptyLineHandling, stdin_lines};
-use ::rusht::find::{unique, unique_prefix, UniqueArgs};
 use ::rusht::find::DirWithArgs;
 
 fn main() {

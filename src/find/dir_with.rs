@@ -1,9 +1,5 @@
-use ::std::collections::HashSet;
-
-use ::log::debug;
 use ::structopt::StructOpt;
-use ::ustr::Ustr;
-use ::ustr::UstrSet;
+use regex::Regex;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -12,15 +8,17 @@ use ::ustr::UstrSet;
 )]
 pub struct DirWithArgs {
     #[structopt(short = "l", long, help = "Maximum directory depth to recurse into")]
-    pub max_depth: u32,
+    pub max_depth: Option<u32>,
     #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sort", help = "Sort the results alphabetically")]
     pub order: Order,
     #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
     pub nested: Nested,
-    #[structopt(short = "f", long = "file", help = "File that must exist in the directory to match")]
-    pub files: Vec<String>,
-    #[structopt(short = "d", long = "dir", help = "Subdirectory that must exist in the directory to match")]
-    pub dirs: Vec<String>,
+    #[structopt(short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
+    pub files: Vec<Regex>,
+    #[structopt(short = "d", long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
+    pub dirs: Vec<Regex>,
+    #[structopt(short = "i", long = "self", help = "Pattern for the directory itself for it to match")]
+    pub itself: Vec<Regex>,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
