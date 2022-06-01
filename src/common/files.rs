@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 /// Turn a text into a safe filename, trying to keep it unique.
-pub fn to_filename(text: &str) -> String {
+pub fn unique_filename(text: &str) -> String {
     let clean = INVALID_CHARS.replace_all(text, "_");
     let squash = SQUASH_CHARS.replace_all(clean.as_ref(), "_");
     let trim = INVALID_EDGES.replace_all(squash.as_ref(), "");
@@ -29,13 +29,13 @@ mod tests {
 
     #[test]
     fn short_legal_filename() {
-        let res = to_filename("Hello world");
+        let res = unique_filename("Hello world");
         assert_eq!(res, "Hello_world_zoyiygcyaow6gjvnihtt");
     }
 
     #[test]
     fn long_illegal_filename() {
-        let res = to_filename(" _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123");
+        let res = unique_filename(" _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123");
         assert_eq!(res, "hello_WORLD_hello_world_hello_wo_zc4zyofxrnr1onvipg5w");
     }
 }
