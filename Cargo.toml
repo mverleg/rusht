@@ -29,6 +29,10 @@ name = "cmdrop"
 path = "src/cmd/main_drop.rs"
 
 [[bin]]
+name = "cached"
+path = "src/cached/main_cached.rs"
+
+[[bin]]
 name = "unique"
 path = "src/find/main_unique.rs"
 

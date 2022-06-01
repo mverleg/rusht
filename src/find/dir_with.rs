@@ -16,8 +16,8 @@ use crate::find::unique_prefix;
     about = "Find directories that contain certain files or directories."
 )]
 pub struct DirWithArgs {
-    #[structopt(short = "l", long, help = "Maximum directory depth to recurse into")]
-    pub max_depth: Option<u32>,
+    #[structopt(short = "l", long, default_value = "10000", help = "Maximum directory depth to recurse into")]
+    pub max_depth: u32,
     #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sort", help = "Sort the results alphabetically")]
     pub order: Order,
     #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
@@ -86,6 +86,15 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<String>, String> {
     validate_roots_unique(&args.roots)?;
+    //TODO @mark: max_depth
+    //TODO @mark: order
+    //TODO @mark: nested
+    //TODO @mark: roots
+    //TODO @mark: files
+    //TODO @mark: dirs
+    //TODO @mark: itself
+    for root in &args.roots {
 
+    }
     unimplemented!()
 }
