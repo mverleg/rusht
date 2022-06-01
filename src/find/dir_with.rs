@@ -1,8 +1,8 @@
 use ::std::fs;
+use ::std::fs::DirEntry;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
-use std::fs::DirEntry;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -143,18 +143,10 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     if depth_remaining == 0 {
         return Ok(smallvec![])
     }
-    let content = read_content(parent, args.on_err)?;
-    let mut results: Dirs = if is_match(&parent, &content, &args) {
-        let found = parent.canonicalize().expect("failed to create absolute path");
-        if args.nested == StopOnMatch {
-            debug!("found a match: {}, not recursing deeper", sub.to_str().unwrap());
-            return Ok(smallvec![found]);
-        }
-        debug!("found a match: {}, searching deeper", sub.to_str().unwrap());
-        smallvec![found]
-    } else {
-        smallvec![]
-    };
+    if is_parent_match(&parent, &args.itself) {
+        return Ok(handle_parent_is_match(parent, args, depth_remaining));
+    }
+    let mut results: Dirs = smallvec![];
     for sub in content {
         if ! entry.path().is_dir() {
             continue;
@@ -163,6 +155,24 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
         results.extend(found);
     }
     Ok(results)
+}
+
+fn handle_parent_is_match(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -> Dirs {
+    let found = parent.canonicalize().expect("failed to create absolute path");
+    if args.nested == StopOnMatch {
+        debug!("found a match based on parent name: {}, not recursing deeper", sub.to_str().unwrap());
+        return smallvec![found];
+    }
+    debug!("found a match based on parent name: {}, searching deeper", sub.to_str().unwrap());
+    let mut results: Dirs = smallvec![found];
+    for sub in content {
+        if !entry.path().is_dir() {
+            continue;
+        }
+        let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
+        results.extend(found);
+    }
+    return results;
 }
 
 fn read_content(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
@@ -201,12 +211,27 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
     }
 }
 
-fn is_match(dir: &Path, content: &Dirs, args: &DirWithArgs) -> bool {
+/// Check if the parent itself matches one of the patterns.
+fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
+    if patterns.is_empty() {
+        return false
+    }
+    let dir_name = dir.to_str().unwrap();
+    for me in &patterns {
+        if me.is_match(&dir_name) {
+            return true
+        }
+    }
+    false
+}
+
+/// Check if this content item is a match (which causes the parent to be flagged).
+fn is_content_match(item: &Path, args: &DirWithArgs) -> bool {
     //TODO @mark: files
     //TODO @mark: dirs
-    //TODO @mark: itself
+    let dir_name = dir.to_str().unwrap();
     for me in &args.itself {
-        if me.is_match(dir.to_str().unwrap()) {
+        if me.is_match(&dir_name) {
             return true
         }
     }
