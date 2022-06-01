@@ -57,6 +57,7 @@ env_logger = "*"
 memoize = "*"
 rand = "*"
 ustr = "*"
+parse_duration = "*"
 
 [dev-dependencies]
 tempfile = "*"
