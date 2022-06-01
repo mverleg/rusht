@@ -18,6 +18,14 @@ pub enum CommandArgs {
     Cmd(Vec<String>),
 }
 
+impl CommandArgs {
+    pub fn unpack(self) -> Vec<String> {
+        match self {
+            CommandArgs::Cmd(cmd) => cmd,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     pub cmd: String,
