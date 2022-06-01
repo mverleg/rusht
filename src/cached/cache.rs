@@ -1,4 +1,3 @@
-use ::std::env::current_dir;
 use ::std::path::PathBuf;
 use ::serde::Deserialize;
 use ::serde::Serialize;
@@ -10,7 +9,7 @@ use crate::common::Task;
 pub enum CacheStatus {
     RanSuccessfully,
     FromCache,
-    Failed(u8),
+    Failed(i32),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -30,6 +29,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     let cache_pth = get_cache_path(&args.key, &task);
     eprintln!("cache not ready; always running");  //TODO @mark: TEMPORARY! REMOVE THIS!
     task.execute(false);
+    unimplemented!()
 }
 
 fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
