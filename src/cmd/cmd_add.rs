@@ -57,11 +57,6 @@ pub struct AddArgs {
     pub cmd: CommandArgs,
 }
 
-//TODO: option to deduplicate tasks
-//TODO: run inside Docker?
-//TODO: source bashrc/profile
-//TODO: set default command for when stack is empty
-
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     let cmd = args.cmd.unpack();
     let new_tasks = if let Some(templ) = args.lines_with {
@@ -75,7 +70,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         }
         if !has_placeholder {
             fail(format!(
-                "did not find template string '{}' in task or working dir: {}, {:?}",
+                "did not filter template string '{}' in task or working dir: {}, {:?}",
                 templ,
                 cmd.join(" "),
                 &args.working_dir,

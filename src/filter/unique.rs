@@ -13,7 +13,7 @@ use ::ustr::UstrSet;
 pub struct UniqueArgs {
     #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sorted", help = "Sort the entries")]
     pub order: Order,
-    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "find-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
+    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
     #[structopt(
         short = "p",
@@ -88,7 +88,7 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
 pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     if matches!(order, Order::SortAscending) && matches!(keep, Keep::Subsequent) {
-        panic!("--find-duplicates, --sorted and --prefix cannot all be used together");
+        panic!("--filter-duplicates, --sorted and --prefix cannot all be used together");
     };
     if texts.is_empty() {
         debug!("empty input while removing items that have other items as prefix");

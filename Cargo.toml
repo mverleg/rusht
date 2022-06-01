@@ -34,7 +34,7 @@ path = "src/cached/main_cached.rs"
 
 [[bin]]
 name = "unique"
-path = "src/find/main_unique.rs"
+path = "src/filter/main_unique.rs"
 
 [[bin]]
 name = "dir_with"

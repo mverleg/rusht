@@ -12,9 +12,8 @@ use ::smallvec::{smallvec, SmallVec};
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
 
-use crate::find::unique::Keep;
-use crate::find::unique::Order as UniqueOrder;
-use crate::find::unique_prefix;
+use crate::filter::{Keep, Order as UniqueOrder};
+use crate::filter::unique_prefix;
 use crate::find::Nested::StopOnMatch;
 
 #[derive(StructOpt, Debug, Default)]
@@ -137,7 +136,7 @@ impl Nested {
 fn root_parser(root: &str) -> Result<PathBuf, String> {
     let path = PathBuf::from(root);
     if fs::metadata(&path).is_err() {
-        return Err(format!("did not find root '{}'", root));
+        return Err(format!("did not filter root '{}'", root));
     }
     Ok(path)
 }

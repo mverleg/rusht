@@ -67,7 +67,7 @@ fn read_timeout_env() -> u64 {
             }
         }
         Err(_) => {
-            debug!("did not find STDIN_READ_TIMEOUT in env, using default");
+            debug!("did not filter STDIN_READ_TIMEOUT in env, using default");
             30
         }
     }
