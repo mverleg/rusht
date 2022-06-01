@@ -143,11 +143,30 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     if depth_remaining == 0 {
         return Ok(smallvec![])
     }
-    if is_parent_match(&parent, &args.itself) {
-        return Ok(handle_parent_is_match(parent, args, depth_remaining));
-    }
-    let mut results: Dirs = smallvec![];
+    let mut current_is_match = false;
+    let mut results: Dirs = if is_parent_match(&parent, &args.itself) {
+        let found = parent.canonicalize().expect("failed to create absolute path");
+        if args.nested == StopOnMatch {
+            debug!("found a match based on parent name: {}, not recursing deeper", parent.to_str().unwrap());
+            return Ok(smallvec![found]);
+        }
+        debug!("found a match based on parent name: {}, searching deeper", parent.to_str().unwrap());
+        current_is_match = true;
+        smallvec![found]
+    } else {
+        smallvec![]
+    };
     for sub in content {
+        if ! current_is_match && is_content_match(sub, &args.files, &args.dirs) {
+            let found = parent.canonicalize().expect("failed to create absolute path");
+            if args.nested == StopOnMatch {
+                debug!("found a match based on child name: {}, not recursing deeper", sub.to_str().unwrap());
+                return Ok(smallvec![found]);  // throws away matches so far
+            }
+            debug!("found a match based on parent name: {}, searching deeper", sub.to_str().unwrap());
+            current_is_match = true;
+            results.push(found)
+        }
         if ! entry.path().is_dir() {
             continue;
         }
@@ -155,24 +174,6 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
         results.extend(found);
     }
     Ok(results)
-}
-
-fn handle_parent_is_match(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -> Dirs {
-    let found = parent.canonicalize().expect("failed to create absolute path");
-    if args.nested == StopOnMatch {
-        debug!("found a match based on parent name: {}, not recursing deeper", sub.to_str().unwrap());
-        return smallvec![found];
-    }
-    debug!("found a match based on parent name: {}, searching deeper", sub.to_str().unwrap());
-    let mut results: Dirs = smallvec![found];
-    for sub in content {
-        if !entry.path().is_dir() {
-            continue;
-        }
-        let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
-        results.extend(found);
-    }
-    return results;
 }
 
 fn read_content(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
@@ -226,7 +227,7 @@ fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
 }
 
 /// Check if this content item is a match (which causes the parent to be flagged).
-fn is_content_match(item: &Path, args: &DirWithArgs) -> bool {
+fn is_content_match(item: &Path, files: &Vec<Regex>, dirs: &Vec<Regex>) -> bool {
     //TODO @mark: files
     //TODO @mark: dirs
     let dir_name = dir.to_str().unwrap();
