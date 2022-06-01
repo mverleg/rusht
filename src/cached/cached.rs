@@ -3,6 +3,8 @@ use ::std::time::Duration;
 use ::parse_duration::parse as parse_dur;
 use ::structopt::StructOpt;
 
+use crate::common::CommandArgs;
+
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "cached",
@@ -14,14 +16,7 @@ pub struct CachedArgs {
     #[structopt(short = "k", long = "key", default_value = "${pwd}_${cmd}.cache", help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders. If it contains a / it will be considered a full path.")]
     pub key: String,
     #[structopt(subcommand)]
-    pub cmd: CachedArgsExtra,
-}
-
-#[derive(Debug, PartialEq, Eq, StructOpt)]
-#[structopt(name = "command")]
-pub enum CachedArgsExtra {
-    #[structopt(external_subcommand)]
-    Cmd(Vec<String>),
+    pub cmd: CommandArgs,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -5,8 +5,16 @@ use std::process::ExitStatus;
 
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use ::structopt::StructOpt;
 
 use crate::common::fail;
+
+#[derive(Debug, Clone, PartialEq, Eq, StructOpt)]
+#[structopt(name = "command")]
+pub enum CommandArgs {
+    #[structopt(external_subcommand)]
+    Cmd(Vec<String>),
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {

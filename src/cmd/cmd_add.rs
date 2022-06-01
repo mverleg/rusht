@@ -8,7 +8,7 @@ use ::structopt::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
-use crate::common::{EmptyLineHandling, fail, stdin_lines, Task};
+use crate::common::{CommandArgs, EmptyLineHandling, fail, stdin_lines, Task};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -47,7 +47,7 @@ pub struct AddArgs {
     )]
     pub lines_with: Option<String>,
     #[structopt(subcommand)]
-    pub cmd: AddArgsExtra,
+    pub cmd: CommandArgs,
 }
 
 //TODO: option to deduplicate tasks
@@ -55,16 +55,9 @@ pub struct AddArgs {
 //TODO: source bashrc/profile
 //TODO: set default command for when stack is empty
 
-#[derive(Debug, PartialEq, Eq, StructOpt)]
-#[structopt(name = "command")]
-pub enum AddArgsExtra {
-    #[structopt(external_subcommand)]
-    Cmd(Vec<String>),
-}
-
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     let new_tasks = match args.cmd {
-        AddArgsExtra::Cmd(cmd) => {
+        CommandArgs::Cmd(cmd) => {
             if let Some(templ) = args.lines_with {
                 assert!(!templ.is_empty());
                 if !cmd.iter().any(|part| part.contains(&templ)) {

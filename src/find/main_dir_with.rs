@@ -8,7 +8,6 @@ use ::rusht::find::find_dir_with;
 fn main() {
     env_logger::init();
     let args = DirWithArgs::from_args();
-    dbg!(&args);  //TODO @mark:
     match find_dir_with(args) {
         Ok(lines) => {
             for line in lines {
