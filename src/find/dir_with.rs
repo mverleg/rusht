@@ -1,15 +1,15 @@
 use ::std::fs;
+use ::std::path::Path;
 use ::std::path::PathBuf;
-use std::path::Path;
 
 use ::itertools::Itertools;
+use ::log::debug;
 use ::regex::Regex;
+use ::smallvec::{SmallVec, smallvec};
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
-use log::debug;
-use smallvec::{SmallVec, smallvec};
-use crate::find::Nested::StopOnMatch;
 
+use crate::find::Nested::StopOnMatch;
 use crate::find::unique::Keep;
 use crate::find::unique::Order as UniqueOrder;
 use crate::find::unique_prefix;
@@ -17,7 +17,8 @@ use crate::find::unique_prefix;
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
     name = "dir_with",
-    about = "Find directories that contain certain files or directories."
+    about = "Find directories that contain certain files or directories.",
+    long_about = "Find directories that contain certain files or directories. Only supports utf8, sensible filenames.",
 )]
 pub struct DirWithArgs {
     #[structopt(short = "l", long, default_value = "10000", help = "Maximum directory depth to recurse into")]
@@ -112,7 +113,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     }
     let mut results: Dirs = SmallVec::new();
     for sub in read_subdirs(parent)? {
-        if is_match(&sub) {
+        if is_match(&sub, &args) {
             results.push(sub.canonicalize().expect("failed to create absolute path"));
             if args.nested == StopOnMatch {
                 debug!("found a match: {}, not recursing deeper", sub.to_str().unwrap());
@@ -126,10 +127,19 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     Ok(results)
 }
 
-fn read_subdirs(dir: &Path) -> Result<Dirs, String> {
-    unimplemented!()
+fn read_subdirs(parent: &Path) -> Result<Dirs, String> {
+    let content = fs::read_dir(parent)
+        .map_err(|err| format!("failed to scan directory {}, err {}", parent.to_str().unwrap(), err))?;
+    let mut subdirs = smallvec![];
+    for entry in content {
+        let entry = entry.map_err(|err| format!("failed to an entry in {}, err {}", parent.to_str().unwrap(), err))?;
+        if entry.path().is_dir() {
+            subdirs.push(entry.path().to_path_buf())
+        }
+    }
+    Ok(subdirs)
 }
 
-fn is_match(dir: &Path) -> bool {
+fn is_match(dir: &Path, args: &DirWithArgs) -> bool {
     false  //TODO @mark:
 }
