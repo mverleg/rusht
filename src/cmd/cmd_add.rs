@@ -51,7 +51,7 @@ pub struct AddArgs {
     #[structopt(
         short = "P",
         long,
-        help = "Working directory when running the command. Can use placeholder if -l or -L is used."
+        help = "Working directory when running the command. Can use placeholder with -l/-L."
     )]
     pub working_dir: Option<String>,
     #[structopt(subcommand)]
@@ -82,7 +82,8 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
                     .collect()
             } else {
                 spawn(stdin_warning);
-                vec![Task::new_split_in_cwd(cmd)]
+                let working_dir = args.working_dir.map(|pth| PathBuf::from(pth)).unwrap_or_else(|| current_dir().unwrap());
+                vec![Task::new_split(cmd, working_dir)]
             }
         }
     };
@@ -110,9 +111,12 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
 fn task_from_template(cmd: &[String], input: &str, templ: &str, working_dir: &Option<String>) -> Task {
     let parts = cmd.iter().map(|part| part.replace(templ, input)).collect();
     let working_dir = match working_dir {
-        Some(dir) => PathBuf::from(dir.replace(templ, input)),
+        Some(dir) => PathBuf::from(dir.replace(templ, input)).canonicalize()
+            .expect("failed to get absolute path for working directory"),
         None => current_dir().unwrap(),
     };
+    let task = Task::new_split(cmd.iter().map(|part| part.replace(templ, input)).collect(), working_dir.clone());  //TODO @mark: TEMPORARY! REMOVE THIS!
+    dbg!(task);  //TODO @mark: TEMPORARY! REMOVE THIS!
     Task::new_split(parts, working_dir)
 }
 
