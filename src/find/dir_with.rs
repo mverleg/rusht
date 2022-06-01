@@ -128,9 +128,6 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
-    //TODO @mark: files
-    //TODO @mark: dirs
-    //TODO @mark: itself
     let mut results = vec![];
     for root in &args.roots {
         let matches = find_matching_dirs(root, &args, args.max_depth)?;
@@ -146,15 +143,21 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     if depth_remaining == 0 {
         return Ok(smallvec![])
     }
-    let mut results: Dirs = SmallVec::new();
-    for sub in read_subdirs(parent, args.on_err)? {
-        if is_match(&sub, &args) {
-            results.push(sub.canonicalize().expect("failed to create absolute path"));
-            if args.nested == StopOnMatch {
-                debug!("found a match: {}, not recursing deeper", sub.to_str().unwrap());
-                continue;
-            }
-            debug!("found a match: {}, searching deeper", sub.to_str().unwrap());
+    let content = read_content(parent, args.on_err)?;
+    let mut results: Dirs = if is_match(&parent, &content, &args) {
+        let found = parent.canonicalize().expect("failed to create absolute path");
+        if args.nested == StopOnMatch {
+            debug!("found a match: {}, not recursing deeper", sub.to_str().unwrap());
+            return Ok(smallvec![found]);
+        }
+        debug!("found a match: {}, searching deeper", sub.to_str().unwrap());
+        smallvec![found]
+    } else {
+        smallvec![]
+    };
+    for sub in content {
+        if ! entry.path().is_dir() {
+            continue;
         }
         let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
         results.extend(found);
@@ -162,13 +165,11 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
     Ok(results)
 }
 
-fn read_subdirs(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
+fn read_content(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
     let content = read_dir_err_handling(parent, on_err)?;
     let mut subdirs = smallvec![];
     for entry in content {
-        if entry.path().is_dir() {
-            subdirs.push(entry.path().to_path_buf())
-        }
+        subdirs.push(entry.path().to_path_buf())
     }
     Ok(subdirs)
 }
@@ -200,7 +201,10 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
     }
 }
 
-fn is_match(dir: &Path, args: &DirWithArgs) -> bool {
+fn is_match(dir: &Path, content: &Dirs, args: &DirWithArgs) -> bool {
+    //TODO @mark: files
+    //TODO @mark: dirs
+    //TODO @mark: itself
     for me in &args.itself {
         if me.is_match(dir.to_str().unwrap()) {
             return true
