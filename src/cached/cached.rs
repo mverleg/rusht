@@ -26,7 +26,7 @@ pub enum CacheString {
     Failed(u8),
 }
 
-fn cached(args: CachedArgs) -> Result<CacheString, String> {
+fn cached(_args: CachedArgs) -> Result<CacheString, String> {
     //TODO @mark: The key to use for the cache. Can use ${pwd} and ${cmd} placeholders. If it contains a / it will be considered a full path.
 
 

@@ -146,7 +146,7 @@ fn find_matching_dirs(parent: &Path, args: &DirWithArgs, depth_remaining: u32) -
         return Ok(smallvec![])
     }
     let mut current_is_match = false;
-    let mut results: Dirs = if is_parent_match(&parent, &args.itself) {
+    let mut results: Dirs = if is_parent_match(parent, &args.itself) {
         let found = parent.canonicalize().expect("failed to create absolute path");
         if args.nested == StopOnMatch {
             debug!("found a match based on parent name: {}, not recursing deeper", parent.to_str().unwrap());
@@ -227,7 +227,7 @@ fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
     if let Some(dir_name) = dir.file_name() {
         let dir_name = dir_name.to_str().unwrap();
         for re in patterns {
-            if re.is_match(&dir_name) {
+            if re.is_match(dir_name) {
                 debug!("parent match: '{}' matches '{}'", dir_name, re);
                 return true
             }
@@ -244,13 +244,13 @@ fn is_content_match(item: &Path, file_res: &Vec<Regex>, dir_res: &Vec<Regex>) ->
     if let Some(item_name) = item.file_name() {
         let item_name = item_name.to_str().unwrap();
         for re in file_res {
-            if re.is_match(&item_name) && item.is_file() {
+            if re.is_match(item_name) && item.is_file() {
                 debug!("match: '{}' matches '{}'", item_name, re);
                 return true
             }
         }
         for re in dir_res {
-            if re.is_match(&item_name) && item.is_dir() {
+            if re.is_match(item_name) && item.is_dir() {
                 debug!("match: '{}' matches '{}'", item_name, re);
                 return true
             }
