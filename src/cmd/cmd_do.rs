@@ -44,33 +44,32 @@ pub struct DoArgs {
         short = "p",
         long,
         default_value = "1",
-        help = "How many tasks to run in parallel at any time"
+        help = "How many parallel tasks to run"
     )]
     pub parallel: u32,
     #[structopt(
-        short = "x",
-        long = "on-err",
-        help = "What to do when a command fails: [a]bort, [c]ontinue but keep on stack, or continue and [d]rop it",
+        short = "f",
+        long,
+        help = "Keep running tasks even if one fails (it stays on stack unless -r)",
         conflicts_with = "keep"
     )]
-    pub on_err: OnErr,
+    pub continue_on_error: bool,
+    #[structopt(
+        short = "r",
+        long,
+        help = "Remove tasks from the stack when ran, even if they fail",
+        conflicts_with = "keep"
+    )]
+    pub drop_failed: bool,
     #[structopt(
         short = "k",
         long,
-        help = "Execute the command but keep it on the stack",
+        help = "Keep the task on the stack when ran, even when successful",
         conflicts_with = "always_pop"
     )]
     pub keep: bool,
     #[structopt(short = "q", long, help = "Do not log command and timing")]
     pub quiet: bool,
-}
-
-#[derive(StructOpt, Debug, Clone, Default)]
-pub enum OnErr {
-    #[default]
-    Abort,
-    KeepContinue,
-    DropContinue,
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {

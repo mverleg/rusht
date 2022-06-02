@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+#[[bin]]
+#name = "logcount"
+#path = "src/log_stats.rs"
+
 [lib]
 name = "rusht"
 path = "src/lib.rs"

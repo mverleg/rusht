@@ -33,7 +33,7 @@ pub struct ListArgs {
     #[structopt(
         short = "e",
         long,
-        help = "Instead of printing output, use exit code 0 if there are pending commands (1 otherwise)",
+        help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)",
         conflicts_with = "file_path"
     )]
     pub exit_code: bool,
