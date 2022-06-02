@@ -53,14 +53,14 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
                 return Ok(CacheStatus::FromCache(cache.output))
             }
         }
-        Ok(Err(err)) => {
+        Ok(Err(_)) => {
             fail("failed to parse cache file");
         }
         Err(err) => {
             debug!("no cached entry at {}", cache_pth.to_string_lossy());
         }
     }
-    task.execute(false);
+    task.execute(args.quiet);
     //TODO @mark: update cache
     unimplemented!()
 }
