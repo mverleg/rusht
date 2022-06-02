@@ -1,13 +1,11 @@
 
 # Rusht
 
-Small shell utilities coded in Rust, mostly for personal use.
+Small shell utilities coded in Rust.
 
 Examples:
 
-* `cmadd`
-* `cmdo`
-* `cmlist`
-* `cmdrop`
-* `unique`
-
+* `cmadd`, `cmdo`, `cmlist`, `cmdrop` - push commands onto a stack, directly or from output, and run them one by one or all at once.
+* `unique` - filters or shows duplicate lines, including duplicate by prefix (i.e. `/a` and `/a/b` are duplicate).
+* `dir_with` - search for directories that contain specific files or subdirs, e.g. all the Rust projects or git repos.
+* `cached` - cache the output of a command for a given amount of time.
