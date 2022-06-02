@@ -74,8 +74,6 @@ pub struct DoArgs {
 }
 
 pub fn do_cmd(mut args: DoArgs) -> bool {
-    //TODO @mark: parallel: u32
-    //TODO @mark: continue_on_error: bool
     //TODO @mark: drop_failed: bool
     //TODO @mark: keep_successful: bool
     if args.parallel > 1 && ! args.continue_on_error {
@@ -102,14 +100,12 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
         .for_each(|(id, status)| { statuses.insert(id, status); });
 
     if args.continue_on_error {
-        let to_run_clone = to_run.clone();
-        let statuses_clone = statuses.clone();
         ThreadPoolBuilder::new().num_threads(args.parallel as usize)
             .build().expect("failed to create thread pool")
             .install(|| {
-                to_run_clone.into_par_iter()
+                to_run.into_par_iter()
                     .map(|task| exec(&args, task))
-                    .for_each(|(id, status)| { statuses_clone.insert(id, status); });
+                    .for_each(|(id, status)| { statuses.insert(id, status); });
             });
     } else {
         assert!(args.parallel <= 1, "cannot use parallel mode when continue-on-error is true");
