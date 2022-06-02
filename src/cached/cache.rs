@@ -3,6 +3,7 @@ use ::std::io::BufReader;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::Duration;
+use std::io::Write;
 
 use ::chrono::{DateTime, Local};
 use ::log::debug;
@@ -30,28 +31,25 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     //TODO @mark: duration
     let task = Task::new_split_in_cwd(args.cmd.unpack());
     let cache_pth = get_cache_path(&args.key, &task);
-    let write = false;
-    let mut opts = OpenOptions::new();
-    if write {
-        opts.write(true).truncate(true).create(true)
-    } else {
-        opts.read(true)
-    };
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output))
     }
     let mut output = String::new();
-    task.execute_with_stdout(args.quiet, |line| {
+    let exit_code = task.execute_with_stdout(args.quiet, |line| {
         println!("{}", line);
         output.push_str(line);
     });
-    //TODO @mark: update cache
-    unimplemented!()
+    if ! exit_code.success() {
+        return Ok(CacheStatus::Failed(exit_code.code().unwrap_or(1)))
+    }
+    update_cache(output, task, &cache_pth);
+    Ok(CacheStatus::RanSuccessfully)
 }
 
 fn try_read_cache(max_age: &Duration, cache_pth: &Path) -> Option<String> {
-    let cache = OpenOptions::new().read(true)
+    let cache = OpenOptions::new()
+        .read(true)
         .open(cache_pth)
         .map(|rdr| BufReader::new(rdr))
         .map(|rdr| serde_json::from_reader::<_, Cache>(rdr));
@@ -76,6 +74,24 @@ fn try_read_cache(max_age: &Duration, cache_pth: &Path) -> Option<String> {
     None
 }
 
+fn update_cache(output: String, task: Task, cache_pth: &Path) {
+    let mut cache_file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(cache_pth)
+        .unwrap_or_else(|err| panic!("failed to create/open cache file at {}, err {}", cache_pth.to_string_lossy(), err));
+    let cache = Cache {
+        time: Local::now(),
+        task,
+        output,
+    };
+    let cache_json = serde_json::to_string(&cache).expect("failed to serialize cache");
+    debug!("writing output ({} bytes json) to cache at {}", cache_json.len(), cache_pth.to_string_lossy());
+    cache_file.write_all(cache_json.as_bytes())
+        .unwrap_or_else(|err| panic!("failed to write to cache file at {}, err {}", cache_pth.to_string_lossy(), err));
+
+}
 
 fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
     let key = key_templ
