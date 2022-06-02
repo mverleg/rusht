@@ -18,7 +18,7 @@ fn main() {
                 }
             }
             CacheStatus::FromCache(out) => {
-                println!("{}", out);
+                print!("{}", out);
                 if verbose {
                     eprintln!("loaded from cache")
                 }
