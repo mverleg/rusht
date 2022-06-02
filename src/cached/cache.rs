@@ -60,7 +60,6 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
             debug!("no cached entry at {}", cache_pth.to_string_lossy());
         }
     }
-    eprintln!("cache not ready; always running");  //TODO @mark: TEMPORARY! REMOVE THIS!
     task.execute(false);
     //TODO @mark: update cache
     unimplemented!()
