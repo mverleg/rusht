@@ -27,7 +27,7 @@ impl CommandArgs {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     pub cmd: String,
     pub args: Vec<String>,
@@ -58,13 +58,12 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {
-        self.execute_with_stdout(quiet, |line| {
-            println!("{}", line)
-        })
+        self.execute_with_stdout(quiet, |line| println!("{}", line))
     }
 
     pub fn execute_with_stdout(
-        &self, quiet: bool,
+        &self,
+        quiet: bool,
         mut out_line_handler: impl FnMut(&str),
     ) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
@@ -90,7 +89,11 @@ impl Task {
             match out.read_line(&mut line) {
                 Ok(0) => break,
                 Ok(_) => out_line_handler(&line),
-                Err(err) => panic!("failed to read output of the task, task: {}, err: {}", self.as_cmd_str(), err),
+                Err(err) => panic!(
+                    "failed to read output of the task, task: {}, err: {}",
+                    self.as_cmd_str(),
+                    err
+                ),
             }
         }
         let status = match child.wait() {

@@ -1,8 +1,8 @@
+use ::std::env::current_dir;
 use ::std::io::stdin;
 use ::std::io::Read;
+use ::std::path::PathBuf;
 use ::std::thread::spawn;
-use std::env::current_dir;
-use std::path::PathBuf;
 
 use ::log::debug;
 use ::structopt::StructOpt;
@@ -13,44 +13,44 @@ use crate::common::{fail, CommandArgs, Task};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
-name = "cmadd",
-about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
+    name = "cmadd",
+    about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
 )]
 pub struct AddArgs {
     #[structopt(
-    short = "n",
-    long,
-    default_value = "",
-    help = "Use the stack from the given namespace instead of the global one"
+        short = "n",
+        long,
+        default_value = "",
+        help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
     #[structopt(short = "q", long, help = "Do not log the command")]
     pub quiet: bool,
     #[structopt(
-    short = "e",
-    long,
-    help = "Add command at the end (last) instead of as the next"
+        short = "e",
+        long,
+        help = "Add command at the end (last) instead of as the next"
     )]
     pub end: bool,
     #[structopt(short = "f", long, help = "Do not check that the command is known")]
     pub skip_validation: bool,
     #[structopt(
-    short = "l",
-    long,
-    help = "Add command for each line of stdin, replacing '{}' by the line"
+        short = "l",
+        long,
+        help = "Add command for each line of stdin, replacing '{}' by the line"
     )]
     pub lines: bool,
     #[structopt(
-    short = "L",
-    long,
-    help = "Like --lines, but use given replacement placeholder instead of '{}'",
-    conflicts_with = "lines"
+        short = "L",
+        long,
+        help = "Like --lines, but use given replacement placeholder instead of '{}'",
+        conflicts_with = "lines"
     )]
     pub lines_with: Option<String>,
     #[structopt(
-    short = "P",
-    long,
-    help = "Working directory when running the command. Can use placeholder with -l/-L."
+        short = "P",
+        long,
+        help = "Working directory when running the command. Can use placeholder with -l/-L."
     )]
     pub working_dir: Option<String>,
     #[structopt(subcommand)]
@@ -63,8 +63,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         assert!(!templ.is_empty());
         let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
         if !has_placeholder
-            && (args.working_dir.is_some()
-            && args.working_dir.as_ref().unwrap().contains(&templ))
+            && (args.working_dir.is_some() && args.working_dir.as_ref().unwrap().contains(&templ))
         {
             has_placeholder = true
         }

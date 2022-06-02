@@ -1,7 +1,5 @@
 use ::std::fmt;
-
 use ::std::iter::Rev;
-
 use ::std::slice::Iter;
 use ::std::slice::IterMut;
 

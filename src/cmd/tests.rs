@@ -1,5 +1,4 @@
 use ::std::fs;
-
 use ::std::sync::Once;
 
 use ::rand::thread_rng;

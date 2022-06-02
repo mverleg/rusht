@@ -35,7 +35,9 @@ mod tests {
 
     #[test]
     fn long_illegal_filename() {
-        let res = unique_filename(" _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123");
+        let res = unique_filename(
+            " _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123",
+        );
         assert_eq!(res, "hello_WORLD_hello_world_hello_wo_zc4zyofxrnr1onvipg5w");
     }
 }

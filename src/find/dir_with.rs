@@ -12,8 +12,8 @@ use ::smallvec::{smallvec, SmallVec};
 use ::structopt::StructOpt;
 use ::ustr::Ustr;
 
-use crate::filter::{Keep, Order as UniqueOrder};
 use crate::filter::unique_prefix;
+use crate::filter::{Keep, Order as UniqueOrder};
 use crate::find::Nested::StopOnMatch;
 
 #[derive(StructOpt, Debug, Default)]
