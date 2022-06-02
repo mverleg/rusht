@@ -58,12 +58,12 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {
-        self.execute_with_out_err(quiet, |line| {
+        self.execute_with_stdout(quiet, |line| {
             println!("{}", line)
         })
     }
 
-    pub fn execute_with_out_err(
+    pub fn execute_with_stdout(
         &self, quiet: bool,
         mut out_line_handler: impl FnMut(&str),
     ) -> ExitStatus {

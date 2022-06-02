@@ -12,17 +12,16 @@ fn main() {
     let verbose = ! args.quiet;
     match cached(args) {
         Ok(status) => match status {
-            CacheStatus::RanSuccessfully(out) => {
+            CacheStatus::RanSuccessfully => {
                 if verbose {
-                    println!("{}", out);
+                    eprintln!("successfully ran")
                 }
-                eprintln!("successfully ran")
             },
             CacheStatus::FromCache(out) => {
+                println!("{}", out);
                 if verbose {
-                    println!("{}", out);
+                    eprintln!("loaded from cache")
                 }
-                eprintln!("loaded from cache")
             },
             CacheStatus::Failed(exit_code) => {
                 eprintln!("the command ran, but it failed and was not cached (code: {})", exit_code);
@@ -30,7 +29,7 @@ fn main() {
             }
         }
         Err(err) => {
-            eprintln!("{}", err);
+            eprintln!("failed: {}", err);
             exit(1)
         }
     }

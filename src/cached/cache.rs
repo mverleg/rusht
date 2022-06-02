@@ -1,6 +1,8 @@
 use ::std::fs::{create_dir_all, OpenOptions};
 use ::std::io::BufReader;
+use ::std::path::Path;
 use ::std::path::PathBuf;
+use ::std::time::Duration;
 
 use ::chrono::{DateTime, Local};
 use ::log::debug;
@@ -12,7 +14,7 @@ use crate::common::{fail, Task, unique_filename};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CacheStatus {
-    RanSuccessfully(String),
+    RanSuccessfully,
     FromCache(String),
     Failed(i32),
 }
@@ -28,7 +30,6 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     //TODO @mark: duration
     let task = Task::new_split_in_cwd(args.cmd.unpack());
     let cache_pth = get_cache_path(&args.key, &task);
-    let pth = &cache_pth;
     let write = false;
     let mut opts = OpenOptions::new();
     if write {
@@ -36,19 +37,33 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     } else {
         opts.read(true)
     };
+    let cached_output = try_read_cache(&args.duration, &cache_pth);
+    if let Some(output) = cached_output {
+        return Ok(CacheStatus::FromCache(output))
+    }
+    let mut output = String::new();
+    task.execute_with_stdout(args.quiet, |line| {
+        println!("{}", line);
+        output.push_str(line);
+    });
+    //TODO @mark: update cache
+    unimplemented!()
+}
+
+fn try_read_cache(max_age: &Duration, cache_pth: &Path) -> Option<String> {
     let cache = OpenOptions::new().read(true)
-        .open(pth)
+        .open(cache_pth)
         .map(|rdr| BufReader::new(rdr))
         .map(|rdr| serde_json::from_reader::<_, Cache>(rdr));
     match cache {
         Ok(Ok(cache)) => {
             debug!("found cached entry from {} at {}", &cache.time, cache_pth.to_string_lossy());
             let age = Local::now().signed_duration_since(cache.time).to_std().unwrap();
-            if age > args.duration {
-                debug!("cached entry is too old, {}s > {}s", &age.as_secs(), &args.duration.as_secs());
+            if &age > max_age {
+                debug!("cached entry is too old, {}s > {}s", &age.as_secs(), &max_age.as_secs());
             } else {
                 debug!("valid cache ({}s); was created with task: {}", age.as_secs(), cache.task.as_cmd_str());
-                return Ok(CacheStatus::FromCache(cache.output))
+                return Some(cache.output)
             }
         }
         Ok(Err(_)) => {
@@ -58,9 +73,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
             debug!("no cached entry at {}", cache_pth.to_string_lossy());
         }
     }
-    task.execute(args.quiet);
-    //TODO @mark: update cache
-    unimplemented!()
+    None
 }
 
 
