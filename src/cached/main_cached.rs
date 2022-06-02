@@ -9,7 +9,7 @@ use ::rusht::cached::CachedArgs;
 fn main() {
     env_logger::init();
     let args = CachedArgs::from_args();
-    let verbose = !args.quiet;
+    let verbose = args.verbose;
     match cached(args) {
         Ok(status) => match status {
             CacheStatus::RanSuccessfully => {

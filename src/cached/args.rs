@@ -20,8 +20,12 @@ pub struct CachedArgs {
         help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders. If it contains a / it will be considered a full path."
     )]
     pub key: String,
-    #[structopt(short = "q", long, help = "Less verbose output")]
-    pub quiet: bool,
+    #[structopt(
+        short = "v",
+        long,
+        help = "Print extra information, e.g. whether the command was run or not"
+    )]
+    pub verbose: bool,
     #[structopt(subcommand)]
     pub cmd: CommandArgs,
 }

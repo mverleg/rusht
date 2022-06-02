@@ -35,7 +35,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
         return Ok(CacheStatus::FromCache(output));
     }
     let mut output = String::new();
-    let exit_code = task.execute_with_stdout(args.quiet, |line| {
+    let exit_code = task.execute_with_stdout(!args.verbose, |line| {
         print!("{}", line);
         output.push_str(line);
     });
