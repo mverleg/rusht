@@ -1,7 +1,6 @@
 use ::std::fs::{create_dir_all, OpenOptions};
 use ::std::io::BufReader;
 use ::std::path::PathBuf;
-use ::std::time::SystemTime;
 
 use ::chrono::{DateTime, Local};
 use ::log::debug;
@@ -29,7 +28,6 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     //TODO @mark: duration
     let task = Task::new_split_in_cwd(args.cmd.unpack());
     let cache_pth = get_cache_path(&args.key, &task);
-    let now = SystemTime::now();
     let pth = &cache_pth;
     let write = false;
     let mut opts = OpenOptions::new();
@@ -56,7 +54,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
         Ok(Err(_)) => {
             fail("failed to parse cache file");
         }
-        Err(err) => {
+        Err(_) => {
             debug!("no cached entry at {}", cache_pth.to_string_lossy());
         }
     }

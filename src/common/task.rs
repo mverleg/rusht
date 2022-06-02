@@ -6,6 +6,7 @@ use ::std::process::ExitStatus;
 use ::std::process::Stdio;
 use ::std::thread;
 use ::std::time::Instant;
+use std::sync::Arc;
 
 use ::serde::Deserialize;
 use ::serde::Serialize;
@@ -80,14 +81,16 @@ impl Task {
             .stderr(Stdio::piped())
             .spawn()
         {
-            Ok(child) => child,
+            Ok(child) => Arc::new(child),
             Err(err) => fail(format!(
                 "failed to start command '{}', error {}",
                 cmd_str, err
             )),
         };
-        thread::spawn(move || continuous_reader(child.stdout.unwrap(), out_line_handler));
-        thread::spawn(move || continuous_reader(child.stderr.unwrap(), err_line_handler));
+        let child_for_out = child.clone();
+        let child_for_err = child.clone();
+        thread::spawn(move || continuous_reader(|| child_for_out.stdout.unwrap(), out_line_handler));
+        thread::spawn(move || continuous_reader(|| child_for_err.stderr.unwrap(), err_line_handler));
         let status = match child.wait() {
             Ok(status) => status,
             Err(err) => fail(format!(
@@ -103,8 +106,8 @@ impl Task {
     }
 }
 
-fn continuous_reader(readable: impl Read, mut handler: impl FnMut(&str)) {
-    let mut out = BufReader::new(readable);
+fn continuous_reader<R: Read>(readable: impl FnOnce() -> R, mut handler: impl FnMut(&str)) {
+    let mut out = BufReader::new(readable());
     let mut line = String::new();
     loop {
         line.clear();
