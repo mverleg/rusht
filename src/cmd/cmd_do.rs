@@ -20,13 +20,6 @@ use crate::cmd::cmd_type::TaskType;
 )]
 pub struct DoArgs {
     #[structopt(
-        short = "c",
-        long,
-        default_value = "1",
-        help = "Number of commands to run"
-    )]
-    pub count: u32,
-    #[structopt(
         short = "n",
         long,
         default_value = "",
@@ -34,27 +27,33 @@ pub struct DoArgs {
     )]
     pub namespace: String,
     #[structopt(
+        short = "c",
+        long,
+        default_value = "1",
+        help = "Number of commands to run"
+    )]
+    pub count: u32,
+    #[structopt(
         short = "a",
         long,
-        help = "Keep running commands until one fails or the stack is empty",
-        conflicts_with = "count",
-        conflicts_with = "parallel"
+        help = "Try to run all the commands",
+        conflicts_with = "count"
     )]
-    pub autorun: bool,
+    pub all: bool,
     #[structopt(
         short = "p",
         long,
         default_value = "1",
-        help = "How many parallel tasks to run"
+        help = "How many tasks to run in parallel at any time"
     )]
     pub parallel: u32,
     #[structopt(
-        short = "r",
-        long,
-        help = "Always remove the command(s) from the stack, even if they fail",
+        short = "x",
+        long = "on-err",
+        help = "What to do when a command fails: [a]bort, [c]ontinue but keep on stack, or continue and [d]rop it",
         conflicts_with = "keep"
     )]
-    pub always_pop: bool,
+    pub on_err: OnErr,
     #[structopt(
         short = "k",
         long,
@@ -64,6 +63,14 @@ pub struct DoArgs {
     pub keep: bool,
     #[structopt(short = "q", long, help = "Do not log command and timing")]
     pub quiet: bool,
+}
+
+#[derive(StructOpt, Debug, Clone, Default)]
+pub enum OnErr {
+    #[default]
+    Abort,
+    KeepContinue,
+    DropContinue,
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {
