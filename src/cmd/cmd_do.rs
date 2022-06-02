@@ -2,6 +2,7 @@ use ::std::collections::HashMap;
 use ::std::process::ExitStatus;
 
 use ::log::debug;
+use ::log::info;
 use ::rand::Rng;
 use ::structopt::StructOpt;
 
@@ -42,37 +43,47 @@ pub struct DoArgs {
     pub all: bool,
     #[structopt(
         short = "p",
-        long,
+        long = "parallel",
         default_value = "1",
-        help = "How many parallel tasks to run"
+        help = "How many parallel tasks to run (implies --continue-on-error)"
     )]
     pub parallel: u32,
     #[structopt(
         short = "f",
-        long,
-        help = "Keep running tasks even if one fails (it stays on stack unless -r)",
-        conflicts_with = "keep"
+        long = "continue-on-error",
+        help = "Keep running tasks even if one fails (it stays on stack unless -r)"
     )]
     pub continue_on_error: bool,
     #[structopt(
         short = "r",
-        long,
+        long = "drop-failed",
         help = "Remove tasks from the stack when ran, even if they fail",
-        conflicts_with = "keep"
     )]
     pub drop_failed: bool,
     #[structopt(
         short = "k",
-        long,
+        long = "keep",
         help = "Keep the task on the stack when ran, even when successful",
-        conflicts_with = "always_pop"
+        conflicts_with = "drop_failed"
     )]
     pub keep: bool,
     #[structopt(short = "q", long, help = "Do not log command and timing")]
     pub quiet: bool,
 }
 
-pub fn do_cmd(args: DoArgs) -> bool {
+pub fn do_cmd(mut args: DoArgs) -> bool {
+    //TODO @mark: all: bool
+    //TODO @mark: parallel: u32
+    //TODO @mark: continue_on_error: bool
+    //TODO @mark: drop_failed: bool
+    //TODO @mark: keep: bool
+    if args.parallel > 1 && ! args.continue_on_error {
+        info!("enabling --continue-on-error because of --parallel");
+        args.continue_on_error = true
+    }
+    if args.all {
+        args.count = 0  // to spot bugs
+    }
     let ts_s = current_time_s();
     let mut tasks = read(args.namespace.clone());
     if tasks.is_empty() {
@@ -164,7 +175,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
         run_nr += 1;
-        if !args.autorun && run_nr == args.count {
+        if !args.all && run_nr == args.count {
             break;
         }
     }
@@ -205,9 +216,9 @@ fn should_keep_completed_task(
                 }
             }
             Some(Status::Failed) => {
-                if args.always_pop {
+                if args.drop_failed {
                     debug!(
-                        "removing failed command because all started tasks are removed: {}",
+                        "removing failed command (as requested with --drop-failed): {}",
                         &cmd
                     );
                     None

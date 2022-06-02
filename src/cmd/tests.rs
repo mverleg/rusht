@@ -128,9 +128,10 @@ fn onebyone_add_run() {
     do_cmd(DoArgs {
         namespace: namespace.to_owned(),
         count: 1,
-        autorun: true,
+        all: false,
         parallel: 1,
-        always_pop: false,
+        continue_on_error: false,
+        drop_failed: false,
         keep: false,
         quiet: false,
     });
