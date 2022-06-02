@@ -1,9 +1,12 @@
-use ::std::collections::HashMap;
 use ::std::process::ExitStatus;
+use ::std::sync::Arc;
 
+use ::dashmap::DashMap;
 use ::log::debug;
 use ::log::info;
 use ::rand::Rng;
+use ::rayon::iter::{IntoParallelIterator, ParallelIterator};
+use ::rayon::ThreadPoolBuilder;
 use ::structopt::StructOpt;
 
 use crate::cmd::cmd_io::current_time_s;
@@ -92,17 +95,29 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
     let to_run = mark_tasks_to_run(&args, &mut tasks, ts_s);
     write(args.namespace.clone(), &tasks);
 
-    let mut statuses = to_run
-        .iter()
+    let statuses = Arc::new(DashMap::new());
+    to_run.iter()
         .map(|task| task.run_id)
         .map(|run_id| (run_id, Status::Skipped))
-        .collect::<HashMap<_, _>>();
-
-    to_run.into_iter()
-        .inspect(|task| { if !args.quiet { println!("run: {}", task.as_cmd_str()); }})
-        .map(|task| (task.run_id, Status::from(task.task.execute(args.quiet))))
-        .take_while(|(_, status)| args.continue_on_error || status == &Status::Success)
         .for_each(|(id, status)| { statuses.insert(id, status); });
+
+    if args.continue_on_error {
+        let to_run_clone = to_run.clone();
+        let statuses_clone = statuses.clone();
+        ThreadPoolBuilder::new().num_threads(args.parallel as usize)
+            .build().expect("failed to create thread pool")
+            .install(|| {
+                to_run_clone.into_par_iter()
+                    .map(|task| exec(&args, task))
+                    .for_each(|(id, status)| { statuses_clone.insert(id, status); });
+            });
+    } else {
+        assert!(args.parallel <= 1, "cannot use parallel mode when continue-on-error is true");
+        to_run.into_iter()
+            .map(|task| exec(&args, task))
+            .take_while(|(_, status)| status == &Status::Success)
+            .for_each(|(id, status)| { statuses.insert(id, status); });
+    }
 
     let tasks = read(args.namespace.clone());
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
@@ -115,7 +130,17 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
             println!("{} command(s) left", remaining.len());
         }
     }
-    statuses.values().all(|status| status == &Status::Success)
+    let all_ok = statuses.iter().all(|entry| *entry.value() == Status::Success);
+    all_ok
+}
+
+fn exec(args: &DoArgs, task: RunningTask) -> (RunId, Status) {
+    if !args.quiet {
+        println!("run: {}", task.as_cmd_str());
+    }
+    let id = task.run_id;
+    let status = Status::from(task.task.execute(args.quiet));
+    (id, status)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -177,7 +202,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
 fn remove_completed_tasks(
     args: &DoArgs,
     tasks: TaskStack,
-    statuses: &HashMap<RunId, Status>,
+    statuses: &DashMap<RunId, Status>,
 ) -> TaskStack {
     let filtered_tasks = tasks
         .iter_old2new()
@@ -189,7 +214,7 @@ fn remove_completed_tasks(
 fn should_keep_completed_task(
     task: &TaskType,
     args: &DoArgs,
-    statuses: &HashMap<RunId, Status>,
+    statuses: &DashMap<RunId, Status>,
 ) -> Option<TaskType> {
     let cmd = task.as_cmd_str();
     match task {
@@ -198,30 +223,32 @@ fn should_keep_completed_task(
             Some(TaskType::Pending(pending.clone()))
         }
         TaskType::Running(running) => match statuses.get(&running.run_id) {
-            Some(Status::Success) => {
-                if args.keep_successful {
-                    debug!("keep successful command because all tasks kept: {}", &cmd);
-                    Some(TaskType::Running(running.clone()))
-                } else {
-                    debug!("removing successful command: {}", &cmd);
-                    None
+            Some(value_ref) => match value_ref.value() {
+                Status::Success => {
+                    if args.keep_successful {
+                        debug!("keep successful command because all tasks kept: {}", &cmd);
+                        Some(TaskType::Running(running.clone()))
+                    } else {
+                        debug!("removing successful command: {}", &cmd);
+                        None
+                    }
                 }
-            }
-            Some(Status::Failed) => {
-                if args.drop_failed {
-                    debug!(
+                Status::Failed => {
+                    if args.drop_failed {
+                        debug!(
                         "removing failed command (as requested with --drop-failed): {}",
                         &cmd
                     );
-                    None
-                } else {
-                    debug!("keep failed command to be retried: {}", &cmd);
+                        None
+                    } else {
+                        debug!("keep failed command to be retried: {}", &cmd);
+                        Some(TaskType::Running(running.clone()))
+                    }
+                }
+                Status::Skipped => {
+                    debug!("keep skipped command to be retried: {}", &cmd);
                     Some(TaskType::Running(running.clone()))
                 }
-            }
-            Some(Status::Skipped) => {
-                debug!("keep skipped command to be retried: {}", &cmd);
-                Some(TaskType::Running(running.clone()))
             }
             None => {
                 eprintln!(

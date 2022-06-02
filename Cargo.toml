@@ -61,6 +61,8 @@ parse_duration = "*"
 smallvec = "*"
 sha2 = "*"
 base64 = "*"
+rayon = "*"
+dashmap = "*"
 
 [dev-dependencies]
 tempfile = "*"
