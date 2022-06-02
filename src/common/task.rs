@@ -1,9 +1,9 @@
 use ::std::env::current_dir;
+use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::ExitStatus;
 use ::std::process::Stdio;
-use ::std::sync::Arc;
 use ::std::time::Instant;
 
 use ::serde::Deserialize;
@@ -60,16 +60,15 @@ impl Task {
     pub fn execute(&self, quiet: bool) -> ExitStatus {
         self.execute_with_out_err(quiet, |line| {
             println!("{}", line)
-        }, |line| {
-            eprintln!("{}", line)
         })
     }
 
     pub fn execute_with_out_err(
         &self, quiet: bool,
-        out_line_handler: impl FnMut(&str) + Send + 'static,
-        err_line_handler: impl FnMut(&str) + Send + 'static,
+        mut out_line_handler: impl FnMut(&str),
     ) -> ExitStatus {
+        // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
+        // even with threading so for now do only the stdout.
         let t0 = Instant::now();
         let cmd_str = self.as_cmd_str();
         let mut child = match Command::new(&self.cmd)
@@ -79,13 +78,21 @@ impl Task {
             .stderr(Stdio::piped())
             .spawn()
         {
-            Ok(child) => Arc::new(child),
+            Ok(child) => child,
             Err(err) => fail(format!(
                 "failed to start command '{}', error {}",
                 cmd_str, err
             )),
         };
-        let mut out = child.stdout.unwrap();
+        let mut out = BufReader::new(child.stdout.take().unwrap());
+        loop {
+            let mut line = String::new();
+            match out.read_line(&mut line) {
+                Ok(0) => break,
+                Ok(_) => out_line_handler(&line),
+                Err(err) => panic!("failed to read output of the task, task: {}, err: {}", self.as_cmd_str(), err),
+            }
+        }
         let status = match child.wait() {
             Ok(status) => status,
             Err(err) => fail(format!(

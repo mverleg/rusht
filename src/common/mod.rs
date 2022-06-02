@@ -9,4 +9,3 @@ mod err;
 mod stdin;
 mod task;
 mod files;
-mod pipe_reader;

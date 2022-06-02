@@ -71,7 +71,7 @@ fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push("cmdcache");
-    create_dir_all(&pth);
+    create_dir_all(&pth).unwrap();
     pth.push(filename);
     pth
 }
