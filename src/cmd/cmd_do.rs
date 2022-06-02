@@ -97,18 +97,12 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
         .map(|task| task.run_id)
         .map(|run_id| (run_id, Status::Skipped))
         .collect::<HashMap<_, _>>();
-    for task in to_run {
-        if !args.quiet {
-            println!("run: {}", task.as_cmd_str());
-        }
-        let run_id = task.run_id;
-        let status = task.task.execute(args.quiet);
-        let status = Status::from(status);
-        statuses.insert(run_id, status);
-        if status != Status::Success {
-            break;
-        }
-    }
+
+    to_run.into_iter()
+        .inspect(|task| { if !args.quiet { println!("run: {}", task.as_cmd_str()); }})
+        .map(|task| (task.run_id, Status::from(task.task.execute(args.quiet))))
+        .take_while(|(_, status)| args.continue_on_error || status == &Status::Success)
+        .for_each(|(id, status)| { statuses.insert(id, status); });
 
     let tasks = read(args.namespace.clone());
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
