@@ -14,6 +14,5 @@ fn main() {
     if args.lines {
         args.lines_with = Some("{}".to_owned());
     }
-    assert!(!args.skip_validation, "skip_validation not implemented");
     add_cmd(args, || stdin_lines(EmptyLineHandling::Drop));
 }

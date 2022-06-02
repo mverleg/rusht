@@ -63,20 +63,18 @@ pub struct DoArgs {
     #[structopt(
         short = "k",
         long = "keep",
-        help = "Keep the task on the stack when ran, even when successful",
-        conflicts_with = "drop_failed"
+        help = "Keep the task on the stack when ran when successful",
     )]
-    pub keep: bool,
+    pub keep_successful: bool,
     #[structopt(short = "q", long, help = "Do not log command and timing")]
     pub quiet: bool,
 }
 
 pub fn do_cmd(mut args: DoArgs) -> bool {
-    //TODO @mark: all: bool
     //TODO @mark: parallel: u32
     //TODO @mark: continue_on_error: bool
     //TODO @mark: drop_failed: bool
-    //TODO @mark: keep: bool
+    //TODO @mark: keep_successful: bool
     if args.parallel > 1 && ! args.continue_on_error {
         info!("enabling --continue-on-error because of --parallel");
         args.continue_on_error = true
@@ -175,7 +173,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
         run_nr += 1;
-        if !args.all && run_nr == args.count {
+        if ! args.all && run_nr >= args.count {
             break;
         }
     }
@@ -207,7 +205,7 @@ fn should_keep_completed_task(
         }
         TaskType::Running(running) => match statuses.get(&running.run_id) {
             Some(Status::Success) => {
-                if args.keep {
+                if args.keep_successful {
                     debug!("keep successful command because all tasks kept: {}", &cmd);
                     Some(TaskType::Running(running.clone()))
                 } else {

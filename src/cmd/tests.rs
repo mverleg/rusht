@@ -34,7 +34,6 @@ fn batch_add_drop() {
             namespace: namespace.to_string(),
             quiet: false,
             end: false,
-            skip_validation: false,
             lines: false,
             lines_with: Some("%".to_owned()),
             working_dir: None,
@@ -78,7 +77,6 @@ fn add_one(namespace: &str, args: Vec<String>) {
             namespace: namespace.to_string(),
             quiet: false,
             end: false,
-            skip_validation: false,
             lines: false,
             lines_with: None,
             working_dir: None,
@@ -128,11 +126,11 @@ fn onebyone_add_run() {
     do_cmd(DoArgs {
         namespace: namespace.to_owned(),
         count: 1,
-        all: false,
+        all: true,
         parallel: 1,
         continue_on_error: false,
         drop_failed: false,
-        keep: false,
+        keep_successful: false,
         quiet: false,
     });
     let out = list_cmds(ListArgs {

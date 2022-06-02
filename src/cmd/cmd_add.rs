@@ -32,8 +32,8 @@ pub struct AddArgs {
         help = "Add command at the end (last) instead of as the next"
     )]
     pub end: bool,
-    #[structopt(short = "f", long, help = "Do not check that the command is known")]
-    pub skip_validation: bool,
+    // #[structopt(short = "f", long, help = "Do not check that the command is known")]
+    // pub skip_validation: bool,
     #[structopt(
         short = "l",
         long,
