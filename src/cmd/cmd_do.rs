@@ -74,7 +74,6 @@ pub struct DoArgs {
 }
 
 pub fn do_cmd(mut args: DoArgs) -> bool {
-    //TODO @mark: keep_successful: bool
     if args.parallel > 1 && ! args.continue_on_error {
         info!("enabling --continue-on-error because of --parallel");
         args.continue_on_error = true
