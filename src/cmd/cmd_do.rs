@@ -74,7 +74,6 @@ pub struct DoArgs {
 }
 
 pub fn do_cmd(mut args: DoArgs) -> bool {
-    //TODO @mark: drop_failed: bool
     //TODO @mark: keep_successful: bool
     if args.parallel > 1 && ! args.continue_on_error {
         info!("enabling --continue-on-error because of --parallel");
@@ -104,15 +103,22 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
             .build().expect("failed to create thread pool")
             .install(|| {
                 to_run.into_par_iter()
-                    .map(|task| exec(&args, task))
-                    .for_each(|(id, status)| { statuses.insert(id, status); });
+                    .map(|task| {
+                        let (id, status) = exec(&args, task);
+                        statuses.insert(id, status);
+                    })
+                    .for_each(|_| {});
             });
     } else {
         assert!(args.parallel <= 1, "cannot use parallel mode when continue-on-error is true");
         to_run.into_iter()
-            .map(|task| exec(&args, task))
-            .take_while(|(_, status)| status == &Status::Success)
-            .for_each(|(id, status)| { statuses.insert(id, status); });
+            .map(|task| {
+                let (id, status) = exec(&args, task);
+                statuses.insert(id, status);
+                status
+            })
+            .take_while(|status| status == &Status::Success)
+            .for_each(|_| {});
     }
 
     let tasks = read(args.namespace.clone());
