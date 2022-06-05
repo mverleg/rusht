@@ -73,14 +73,8 @@ pub struct DoArgs {
     pub quiet: bool,
 }
 
-pub fn do_cmd(mut args: DoArgs) -> bool {
-    if args.parallel > 1 && ! args.continue_on_error {
-        info!("enabling --continue-on-error because of --parallel");
-        args.continue_on_error = true
-    }
-    if args.all {
-        args.count = 0  // to spot bugs
-    }
+pub fn do_cmd(args: DoArgs) -> bool {
+    let args = verify_args(args);
     let ts_s = current_time_s();
     let mut tasks = read(args.namespace.clone());
     if tasks.is_empty() {
@@ -133,6 +127,20 @@ pub fn do_cmd(mut args: DoArgs) -> bool {
     }
     let all_ok = statuses.iter().all(|entry| *entry.value() == Status::Success);
     all_ok
+}
+
+fn verify_args(mut args: DoArgs) -> DoArgs {
+    if args.parallel > 1 && !args.continue_on_error {
+        info!("enabling --continue-on-error because of --parallel");
+        args.continue_on_error = true
+    }
+    if args.all {
+        args.count = 0  // to spot bugs
+    }
+    if args.all || args.count < args.parallel {
+        info!("--parallel ({}) is higher than --count ({})", args.parallel, args.count);
+    }
+    args
 }
 
 fn exec(args: &DoArgs, task: RunningTask) -> (RunId, Status) {
@@ -193,7 +201,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
         run_nr += 1;
-        if ! args.all && run_nr >= args.count {
+        if !args.all && run_nr >= args.count {
             break;
         }
     }

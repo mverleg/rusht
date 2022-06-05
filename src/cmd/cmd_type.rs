@@ -1,5 +1,6 @@
 use ::std::fmt;
 use ::std::iter::Rev;
+use ::std::path::Path;
 use ::std::slice::Iter;
 use ::std::slice::IterMut;
 
@@ -80,6 +81,13 @@ impl TaskType {
         match self {
             TaskType::Pending(task) => task.as_cmd_str(),
             TaskType::Running(task) => task.as_cmd_str(),
+        }
+    }
+
+    pub fn working_dir(&self) -> &Path {
+        match self {
+            TaskType::Pending(task) => &task.working_dir,
+            TaskType::Running(task) => &task.task.working_dir,
         }
     }
 }

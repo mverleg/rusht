@@ -1,3 +1,5 @@
+use ::std::env::current_dir;
+
 use ::log::debug;
 use ::structopt::StructOpt;
 
@@ -68,11 +70,13 @@ pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ListErr> {
     } else {
         tasks.iter().take(usize::MAX)
     };
+    let current_dir = current_dir().expect("could not get current working directory");
     Ok(tasks_iter
         .enumerate()
         .map(|(nr, task)| {
             let run_msg = if task.is_running() { "running? " } else { "" };
-            format!("{}  # {}{}", task.as_cmd_str(), run_msg, nr + 1)
+            let workdir_msg = if current_dir != task.working_dir() { format!(" @ {}", task.working_dir().to_string_lossy()) } else { "".to_owned() };
+            format!("{}  # {}{}{}", task.as_cmd_str(), run_msg, nr + 1, workdir_msg)
         })
         .collect())
 }
