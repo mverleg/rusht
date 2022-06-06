@@ -54,7 +54,11 @@ impl Task {
     }
 
     pub fn as_cmd_str(&self) -> String {
-        format!("{} {}", self.cmd, self.args.join(" "))
+        if self.working_dir == current_dir().unwrap() {
+            format!("{} {}", self.cmd, self.args.join(" "))
+        } else {
+            format!("{} {} @ {}", self.cmd, self.args.join(" "), self.working_dir.to_string_lossy())
+        }
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {
