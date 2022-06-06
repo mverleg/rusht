@@ -134,8 +134,6 @@ fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
 #[cfg(test)]
 #[allow(clippy::vec_init_then_push, unused_mut)]
 mod tests {
-    use std::cmp::Ordering;
-
     use super::*;
 
     macro_rules! ustrvec {
@@ -258,24 +256,5 @@ mod tests {
             Keep::First,
         );
         assert_eq!(res, ustrvec!["/a/c", "/b"]);
-    }
-
-    #[ignore]
-    #[test]
-    fn ustr_order_operations() {
-        // problem with ustr, has a fix but not published; doesn't matter anymore since no longer using trees
-        assert_eq!(
-            Ustr::from("/a/b").partial_cmp(&Ustr::from("/a/c")).unwrap(),
-            Ordering::Less
-        );
-        assert_eq!(Ustr::from("/a/b").cmp(&Ustr::from("/a/c")), Ordering::Less);
-        assert_eq!(
-            Ustr::from("/a/c").partial_cmp(&Ustr::from("/a/b")).unwrap(),
-            Ordering::Greater
-        );
-        assert_eq!(
-            Ustr::from("/a/c").cmp(&Ustr::from("/a/b")),
-            Ordering::Greater
-        );
     }
 }
