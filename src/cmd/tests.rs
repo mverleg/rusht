@@ -128,6 +128,7 @@ fn onebyone_add_run() {
         count: 1,
         all: true,
         parallel: 1,
+        restart_running: false,
         continue_on_error: false,
         drop_failed: false,
         keep_successful: false,

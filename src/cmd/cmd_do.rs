@@ -52,6 +52,12 @@ pub struct DoArgs {
     )]
     pub parallel: u32,
     #[structopt(
+        short = "g",
+        long = "restart-running",
+        help = "Run tasks even if they are marked as already running."
+    )]
+    pub restart_running: bool,
+    #[structopt(
         short = "f",
         long = "continue-on-error",
         help = "Keep running tasks even if one fails (it stays on stack unless -r)"
@@ -181,9 +187,13 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
                     running.run_id,
                     running.as_str()
                 );
-                eprintln!("skipping command because it is already running or has failed without contact: {}",
-                          running.as_str());
-                continue;
+                if args.restart_running {
+                    running.task.clone()
+                } else {
+                    eprintln!("skipping command because it is already running or has failed without contact: {}",
+                              running.as_str());
+                    continue;
+                }
             }
             TaskType::Pending(task) => task.clone(),
         };
