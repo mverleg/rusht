@@ -60,8 +60,8 @@ impl RunningTask {
         RunningTask { task, run_id }
     }
 
-    pub fn as_cmd_str(&self) -> String {
-        self.task.as_cmd_str()
+    pub fn as_str(&self) -> String {
+        self.task.as_str()
     }
 }
 
@@ -79,8 +79,8 @@ impl TaskType {
 
     pub fn as_cmd_str(&self) -> String {
         match self {
-            TaskType::Pending(task) => task.as_cmd_str(),
-            TaskType::Running(task) => task.as_cmd_str(),
+            TaskType::Pending(task) => task.as_str(),
+            TaskType::Running(task) => task.as_str(),
         }
     }
 

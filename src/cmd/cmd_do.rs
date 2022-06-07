@@ -145,7 +145,7 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
 
 fn exec(args: &DoArgs, task: RunningTask) -> (RunId, Status) {
     if !args.quiet {
-        println!("run: {}", task.as_cmd_str());
+        println!("run: {}", task.as_str());
     }
     let id = task.run_id;
     let status = Status::from(task.task.execute(args.quiet));
@@ -179,10 +179,10 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
                 debug!(
                     "still running with run-id {}, command {}",
                     running.run_id,
-                    running.as_cmd_str()
+                    running.as_str()
                 );
                 eprintln!("skipping command because it is already running or has failed without contact: {}",
-                          running.as_cmd_str());
+                          running.as_str());
                 continue;
             }
             TaskType::Pending(task) => task.clone(),
@@ -195,7 +195,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         debug!(
             "assigning run-id {} to command {}",
             run_id,
-            pending.as_cmd_str()
+            pending.as_str()
         );
         let run_task = RunningTask::new(pending, run_id);
         to_run.push(run_task.clone());

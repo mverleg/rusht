@@ -95,7 +95,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     let mut stored_tasks = read(args.namespace.clone());
     for task in new_tasks {
         if !args.quiet {
-            println!("{}", task.as_cmd_str());
+            println!("{}", task.as_str());
         }
         if args.end {
             stored_tasks.add_end(task);

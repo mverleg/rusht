@@ -73,7 +73,7 @@ fn try_read_cache(max_age: &Duration, cache_pth: &Path) -> Option<String> {
                 debug!(
                     "valid cache ({}s); was created with task: {}",
                     age.as_secs(),
-                    cache.task.as_cmd_str()
+                    cache.task.as_str()
                 );
                 return Some(cache.output);
             }

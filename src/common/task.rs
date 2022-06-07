@@ -54,10 +54,14 @@ impl Task {
     }
 
     pub fn as_cmd_str(&self) -> String {
+        format!("{} {}", self.cmd, self.args.join(" "))
+    }
+
+    pub fn as_str(&self) -> String {
         if self.working_dir == current_dir().unwrap() {
-            format!("{} {}", self.cmd, self.args.join(" "))
+            self.as_cmd_str()
         } else {
-            format!("{} {} @ {}", self.cmd, self.args.join(" "), self.working_dir.to_string_lossy())
+            format!("{} @ {}", self.as_cmd_str(), self.working_dir.to_string_lossy())
         }
     }
 
@@ -73,7 +77,7 @@ impl Task {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
-        let cmd_str = self.as_cmd_str();
+        let cmd_str = self.as_str();
         let mut child = match Command::new(&self.cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)
@@ -95,7 +99,7 @@ impl Task {
                 Ok(_) => out_line_handler(&line),
                 Err(err) => panic!(
                     "failed to read output of the task, task: {}, err: {}",
-                    self.as_cmd_str(),
+                    self.as_str(),
                     err
                 ),
             }
