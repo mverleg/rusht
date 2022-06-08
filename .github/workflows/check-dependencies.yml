@@ -1,0 +1,53 @@
+
+name: 'Check dependencies'
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 */2 * *'
+
+jobs:
+  checks:
+    name: Check dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: All changed files
+        id: files
+        if: github.event_name != 'workflow_dispatch' && github.event_name != 'schedule'
+        uses: jitterbit/get-changed-files@v1
+        with:
+          format: 'json'
+      - name: Changed?
+        id: is_changed
+        run: |
+          if ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}; then
+              echo "RUN DEPENDENCY CHECK FOR MANUAL OR SCHEDULED RUN (${{ github.event_name }})"
+              echo "::set-output name=IS_CHANGED::1"
+              exit 0
+          fi
+          readarray -t changed_files <<<"$(jq -r '.[]' <<<'${{ steps.files.outputs.all }}')"
+          for changed_file in ${changed_files[@]}; do
+              if expr "$changed_file" : ".*Dockerfile" || expr "$changed_file" : ".*Cargo\..*" ; then
+                  echo "RUN DEPENDENCY CHECK BECAUSE OF $changed_file"
+                  echo "::set-output name=IS_CHANGED::1"
+              fi
+          done
+
+      - name: Log
+        if: ${{ steps.is_changed.outputs.IS_CHANGED == '1' }}
+        run: |
+          cat ./ci/check-dependencies.Dockerfile
+      - name: Run checks
+        if: ${{ steps.is_changed.outputs.IS_CHANGED == '1' }}
+        uses: docker/build-push-action@v2
+        with:
+          file: ./ci/check-dependencies.Dockerfile
+          context: .
+          push: false

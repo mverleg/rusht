@@ -1,0 +1,237 @@
+
+# Note: it is not safe to run this workflow multiple times concurrently.
+
+name: 'Release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        type: choice
+        description: Which semver number to bump
+        options:
+          - major
+          - minor
+          - patch
+        default: minor
+        required: true
+
+jobs:
+  next_version:
+    name: Next version
+    runs-on: ubuntu-latest
+    outputs:
+      previous_version: ${{ steps.prev_ver.outputs.previous_version }}
+      next_version: ${{ steps.next_ver.outputs.next_version }}
+      bump_draft_ref: ${{ steps.commit.outputs.bump_draft_ref }}
+      branch: ${{ steps.commit.outputs.branch }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+      - name: Get current version
+        id: prev_ver
+        run: |
+          set -x
+          git fetch --tags
+          PREV_VER="$({ printf 'v0.0.0\n'; git tag --list; } | grep -E '^v[0-9]+\.[0-9]+\.[0-9]$' | cut -c2- | sort --reverse --version-sort --field-separator=. | head -n1)"
+          echo "current (soon to be previous) version: v$PREV_VER"
+          echo ::set-output name=previous_version::"$PREV_VER"
+      - name: Get next version
+        id: next_ver
+        run: |
+          set -x
+          echo "going to bump ${{ github.event.inputs.bump }} of v${{ steps.prev_ver.outputs.previous_version }}"
+          NEXT_VER="$(curl -f https://next.tryin.top/${{ github.event.inputs.bump }}/${{ steps.prev_ver.outputs.previous_version }})"
+          echo "next (soon to be current) version: v$NEXT_VER"
+          echo ::set-output name=next_version::"$NEXT_VER"
+      - name: Bump Cargo.toml
+        run: |
+          sed -Ei 's/^version\s+=\s+"[^"]*"/version = "${{ steps.next_ver.outputs.next_version }}"/' Cargo.toml
+      - name: Commit on branch
+        id: commit
+        run: |
+          set -x
+          MSG1="Bumped ${{ github.event.inputs.bump }} to v${{ steps.next_ver.outputs.next_version }} from v${{ steps.prev_ver.outputs.previous_version }}."
+          MSG2="Auto-bump by Github Actions workflow '${{ github.workflow }}' job '${{ github.job }}' run '${{ github.run_id }}' triggered by '${{ github.event_name }}/${{ github.event.action }}'."
+          echo "$MSG1\n$MSG2"
+          git config user.name 'Mark release bot'
+          git config user.email 'mverleg.noreply@gmail.com'
+          echo ::set-output name=branch::"$(git rev-parse --abbrev-ref HEAD)"
+          git branch -D release-workflow || true
+          git checkout -b release-workflow
+          git add :/ --all
+          echo 'Create special branch for now, to keep this commit out of main'
+          git commit --allow-empty -m "Version ${{ steps.next_ver.outputs.next_version }}" -m "$MSG1" -m "$MSG2"
+          git push --force origin release-workflow
+          echo ::set-output name=bump_draft_ref::"$(git rev-parse HEAD)"
+
+  create_matrix:
+    name: Make matrix
+    needs: next_version
+    runs-on: ubuntu-latest
+    outputs:
+      bin_targets: ${{ steps.generate_matrix.outputs.bin_targets }}
+      do_artifact: ${{ steps.conf.outputs.do_artifact }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.next_version.outputs.bump_draft_ref }}
+      - name: Check conditions
+        id: conf
+        run: |
+          set -x
+          echo ::set-output name=do_artifact::1;
+          if [ "$(jq .release.artifact -r ci-conf.json)" = false ] || [ "$(jq .release.artifact -r ci-conf.json)" = null ]; then echo 'skipping because no release artifact config'; echo ::set-output name=artifact::0; fi
+          if [ "$(jq .release.artifact.targets -r ci-conf.json)" = false ]; then echo 'skipping because no targets'; echo ::set-output name=artifact::0; fi
+          if [ "$(jq .release.artifact.bins -r ci-conf.json)" = false ]; then echo 'skipping because no binaries'; echo ::set-output name=artifact::0; fi
+      - name: Generate matrix
+        id: generate_matrix
+        if: steps.conf.outputs.do_artifact == 1
+        run: |
+          set -x
+          version_name="$(printf "v${{ needs.next_version.outputs.next_version }}" | sed 's/\./_/g')"
+          mat="$(jq .release.artifact -r ci-conf.json |\
+              jq '.targets[] + (.bins[] | {"bin": .})' |\
+              jq ". + {asset_name: (.bin + \"-\" + \"$version_name\" + \"-\" + .asset_postfix)}" |\
+              jq -sc '{"include":.}')"
+          asset_list="$(jq -r '.include[] | .asset_name' <<< "$mat")"
+          echo $mat | jq
+          echo ::set-output name=bin_targets::"$mat"
+
+  matrix_compile:
+    name: Build binaries
+    needs: [next_version, create_matrix]
+    runs-on: ubuntu-latest
+    if: needs.create_matrix.outputs.do_artifact == 1
+    strategy:
+      matrix: ${{ fromJson(needs.create_matrix.outputs.bin_targets) }}
+    steps:
+      - name: Log matrix
+        run: |
+          echo bin=${{ matrix.bin }}
+          echo target=${{ matrix.target }}
+          echo asset_name=${{ matrix.asset_name }}
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.next_version.outputs.bump_draft_ref }}
+      - name: Build project
+        run: |
+          cat ./ci/release.Dockerfile
+          set -x
+          docker build --build-arg BIN="${{ matrix.bin }}" --build-arg TARGET="${{ matrix.target }}" -t release-image -f ./ci/release.Dockerfile .
+          id=$(docker create release-image)
+          docker cp "$id:/${{ matrix.bin }}" "${{ matrix.asset_name }}"
+          # #TODO @mark: can be simplified once entrypoint works
+          docker run --entrypoint=dockerfile_version_bumper release-image --help | tee CLI_HELP.txt
+          if ! [ -f "${{ matrix.asset_name }}" ]; then exit 1; fi
+      - name: Store binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+      - name: Store binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: CLI_HELP.txt
+          path: CLI_HELP.txt
+
+  create_release:
+    name: Create Github release
+    # include `matrix_compile` in `needs` to prevent creating a release if the build fails
+    needs: [next_version, create_matrix, matrix_compile]
+    runs-on: ubuntu-latest
+    outputs:
+      bump_main_ref: ${{ steps.commit.outputs.bump_main_ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.next_version.outputs.branch }}
+          token: ${{ secrets.ACCESS_TOKEN }}
+          fetch-depth: 0
+      - name: Update readme
+        run: |
+          set -x
+          python3 - <<EOF
+          import re
+          from subprocess import check_output
+          with open('CLI_HELP.txt', 'r') as f:
+              cli_help = f.read()
+          with open('README.md', 'r') as f:
+              readme = f.read()
+          cli_help_re = '\`\`\`cli_help.*?\`\`\`'
+          parts = re.compile(cli_help_re, re.DOTALL).split(readme)
+          if len(parts) > 1:
+              print('updating readme')
+              cli_help = '\`\`\`cli_help\n{}\n\`\`\`'.format(cli_help.strip())
+              with open('README.md', 'w') as f:
+                  f.write(cli_help.join(parts))
+          else:
+              print('not updating readme, no cli_help section')
+          EOF
+          cat README.md
+      - name: Git tag
+        id: tag
+        run: |
+          echo "Move the bump commit to the main branch and tag it"
+          set -x
+          git fetch origin release-workflow
+          git config user.name 'Mark release bot'
+          git config user.email 'mverleg.noreply@gmail.com'
+          git cherry-pick --keep-redundant-commits "${{ needs.next_version.outputs.bump_draft_ref }}"
+          git add :/ --all
+          git commit --amend --no-edit
+          cmt_mgs_pth="$(mktemp)"
+          git log --format=%B -n 1 > "$cmt_mgs_pth"
+          git tag -a v${{ needs.next_version.outputs.next_version }} -F "$cmt_mgs_pth"
+          git push origin ${{ needs.next_version.outputs.branch }}
+          git push --tags
+          git push origin --delete release-workflow
+          echo ::set-output name=bump_main_ref::"$(git rev-parse HEAD)"
+      - name: Create metadata
+        run: |
+          set -ux
+          printf '%s\n%s\n%s\n' \
+            "${{ needs.next_version.outputs.next_version }}" \
+            "${{ steps.tag.outputs.bump_main_ref }}" \
+            "$(date -u +%s)" \
+              > INFO
+          rm CLI_HELP.txt
+      - name: Retrieve all binaries
+        uses: actions/download-artifact@v2
+        with:
+          path: .
+      - name: Store readme
+        uses: actions/upload-artifact@v2
+        with:
+          name: README.md
+          path: README.md
+      - name: Store info file
+        uses: actions/upload-artifact@v2
+        with:
+          name: INFO
+          path: INFO
+      - name: Collect assets
+        run: |
+          set -x
+          tree
+          mkdir -p 'release_assets'
+          cp 'README.md' 'release_assets/README.md'
+          cp 'INFO' 'release_assets/INFO'
+          echo '${{ needs.create_matrix.outputs.bin_targets }}'
+          while IFS= read -r asset; do
+              echo "asset = $asset/*"
+              ls -als "$asset"
+              cp "$asset"/* "release_assets/"
+          done <<< "$(jq -r '.include[] | .asset_name' <<< '${{ needs.create_matrix.outputs.bin_targets }}')"
+          ls -als 'release_assets'
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "v${{ needs.next_version.outputs.next_version }}"
+          files: release_assets/*

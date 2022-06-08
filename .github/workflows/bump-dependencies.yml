@@ -1,0 +1,114 @@
+
+# Automatically update:
+# * Cargo dependency versions
+# * Docker base image versions
+# * CI scripts from https://github.com/mverleg/ci_util/tree/master/github_action
+
+# Note: while it is possible to create PR without special token, the special token
+# is needed for the PR to trigger further Github Actions (like creating PR). To do that use an App:
+# https://github.com/peter-evans/create-pull-request/blob/master/docs/concepts-guidelines.md#triggering-further-workflow-runs
+# https://github.com/peter-evans/create-pull-request/blob/master/docs/concepts-guidelines.md#authenticating-with-github-app-generated-tokens
+# * Create app if you do not have one
+# * In account settings > applications > repository access, add the repo
+# * (The app should now appear in repository > settings > integrations)
+# * From there app settings > general > private keys (bottom) > generate a private key. Also note the app id
+# * Repository > settings > secrets; add: PR_BOT_APP_ID, PR_BOT_PRIV_KEY with the id and content of private key file
+# * The `generate_token` step below should now work. Do not forget to shred private key file.
+
+name: 'Bump dependencies'
+
+on:
+  schedule:
+    - cron: '0 9 1,16 * *'
+  workflow_dispatch:
+
+jobs:
+  checks:
+    name: Bump dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get date
+        id: date
+        run: |
+          echo "::set-output name=DATE_CODE::$(date +'%Y-%m-%d')"
+          echo "::set-output name=DATE_NAME::$(date +'%Oe %B %Y')"
+      - name: Ensure config file exists
+        run: |
+          if [ ! -e ci-conf.json ]; then curl --silent 'https://raw.githubusercontent.com/mverleg/ci_util/main/github_action/ci-conf-example.json' --output './ci-conf.json'; fi
+      - name: Check conditions
+        id: conf
+        run: |
+          if [ $(jq .bump_dependencies.ci -r ci-conf.json) != false ]; then echo ::set-output name=ci::1; fi
+          if [ $(jq .bump_dependencies.dockerfile -r ci-conf.json) != false ]; then echo ::set-output name=dockerfile::1; fi
+          if [ $(jq .bump_dependencies.cargo -r ci-conf.json) != false ]; then echo ::set-output name=cargo::1; fi
+      - name: Self-update bumper action
+        if: steps.conf.outputs.ci == 1
+        run: |
+          function getconf() (
+              set -eEuo pipefail
+              printf '%s' "$(jq "$1" -r ci-conf.json)"
+          )
+          function update() (
+              set -xeEuo pipefail
+              if [ "$(getconf .$1)" != "false" ]
+              then
+                  curl --silent "https://raw.githubusercontent.com/mverleg/ci_util/main/github_action/$2" --output - |\
+                      sed "1s/^/\n# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten\!\n/" >\
+                      "$3"
+              else
+                  rm -f "$3"
+              fi
+          )
+          mkdir -p ./.github/workflows ./ci
+          update bump_dependencies 'bump-dependencies.yml' './.github/workflows/bump-dependencies.yml' &
+          update bump_dependencies 'bump-dependencies.Dockerfile' './ci/bump-dependencies.Dockerfile' &
+          update check_dependencies 'check-dependencies.yml' './.github/workflows/check-dependencies.yml' &
+          update check_dependencies 'check-dependencies.Dockerfile' './ci/check-dependencies.Dockerfile' &
+          update check_dependencies 'release.yml' './.github/workflows/release.yml' &
+          update check_dependencies 'release.Dockerfile' './ci/release.Dockerfile' &
+          update test_lint 'test-lint.yml' './.github/workflows/test-lint.yml' &
+          update test_lint 'test-lint.Dockerfile' './ci/test-lint.Dockerfile' &
+          wait
+      - name: Docker bump
+        #TODO @mark:
+        if: hashFiles('ci/upgrade_docker_base.sh') != '' && steps.conf.outputs.dockerfile == 1
+        run: |
+          sh ci/upgrade_docker_base.sh
+      - name: Cargo bump
+        if: hashFiles('Cargo.toml') != '' && steps.conf.outputs.cargo == 1
+        run: |
+          cat ./ci/bump-dependencies.Dockerfile
+          docker build -t dependencies-image -f ./ci/bump-dependencies.Dockerfile .
+          id=$(docker create dependencies-image)
+          docker cp $id:/volume/Cargo.toml Cargo.toml
+          docker cp $id:/volume/Cargo.lock Cargo.lock
+      - name: Changes?
+        id: is_changed
+        run: |
+          if ! git diff --exit-code Cargo.* ci/*.Dockerfile
+          then
+              echo "CHANGED!"
+              echo "::set-output name=IS_CHANGED::1"
+          else
+              echo "not changed"
+          fi
+      - uses: tibdex/github-app-token@v1
+        id: generate_token
+        with:
+          app_id: ${{ secrets.PR_BOT_APP_ID }}
+          private_key: ${{ secrets.PR_BOT_PRIV_KEY }}
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v3
+        if: ${{ steps.is_changed.outputs.IS_CHANGED == '1' }}
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          commit-message: "Automatic version bump ${{ steps.date.outputs.DATE_NAME }}"
+          title: "Automatic version bump ${{ steps.date.outputs.DATE_NAME }}"
+          body: "Created by Github Action to bump Docker and Cargo versions"
+          author: "DependencyBumper <mverleg.noreply@gmail.com>"
+          committer: "DependencyBumper <mverleg.noreply@gmail.com>"
+          branch: "bump-${{ steps.date.outputs.DATE_CODE }}"
+          assignees: "mverleg"
+          delete-branch: true
