@@ -53,6 +53,12 @@ pub struct DirWithArgs {
     pub itself: Vec<Regex>,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    DirWithArgs::into_app().debug_assert()
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum PathModification {
     Relative,

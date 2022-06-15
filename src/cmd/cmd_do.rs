@@ -79,6 +79,12 @@ pub struct DoArgs {
     pub quiet: bool,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    DoArgs::into_app().debug_assert()
+}
+
 pub fn do_cmd(args: DoArgs) -> bool {
     let args = verify_args(args);
     let ts_s = current_time_s();

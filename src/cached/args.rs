@@ -29,3 +29,9 @@ pub struct CachedArgs {
     #[structopt(subcommand)]
     pub cmd: CommandArgs,
 }
+
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    CachedArgs::into_app().debug_assert()
+}

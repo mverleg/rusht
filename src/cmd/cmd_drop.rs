@@ -41,6 +41,12 @@ pub struct DropArgs {
     pub quiet: bool,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    DropArgs::into_app().debug_assert()
+}
+
 pub fn drop_cmd(args: DropArgs) {
     let mut tasks = read(args.namespace.clone());
     drop_tasks(&mut tasks, args.all, args.count, !args.quiet);

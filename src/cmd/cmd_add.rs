@@ -57,6 +57,12 @@ pub struct AddArgs {
     pub cmd: CommandArgs,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    AddArgs::into_app().debug_assert()
+}
+
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     let cmd = args.cmd.unpack();
     let new_tasks = if let Some(templ) = args.lines_with {

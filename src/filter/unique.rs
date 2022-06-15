@@ -23,6 +23,12 @@ pub struct UniqueArgs {
     pub prefix: bool,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    UniqueArgs::into_app().debug_assert()
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub enum Order {
     #[default]

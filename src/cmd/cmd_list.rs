@@ -41,6 +41,12 @@ pub struct ListArgs {
     pub exit_code: bool,
 }
 
+#[test]
+fn test_cli_args() {
+    use clap::IntoApp;
+    ListArgs::into_app().debug_assert()
+}
+
 #[derive(Debug, Clone)]
 pub enum ListErr {
     Empty,
