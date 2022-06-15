@@ -42,15 +42,15 @@ path = "src/find/main_dir_with.rs"
 
 [dependencies]
 structopt = "*"
-walkdir = "*"
+#walkdir = "*"
 lazy_static = "*"
 regex = "*"
 itertools = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 chrono = { version = "*", features = ["std", "clock", "serde"] }
-strum = "*"
-strum_macros = "*"
+#strum = "*"
+#strum_macros = "*"
 dirs = "*"
 log = "*"
 env_logger = "*"
