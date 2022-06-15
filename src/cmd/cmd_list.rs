@@ -8,7 +8,7 @@ use crate::cmd::cmd_io::stack_pth;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
-    name = "cmadd",
+    name = "cmlist",
     about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
 )]
 pub struct ListArgs {

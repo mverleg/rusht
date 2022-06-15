@@ -6,8 +6,8 @@ use crate::cmd::cmd_type::TaskStack;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
-    name = "cmdo",
-    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
+    name = "cmdrop",
+    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist"
 )]
 pub struct DropArgs {
     #[structopt(
