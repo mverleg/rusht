@@ -42,7 +42,7 @@ path = "src/find/main_dir_with.rs"
 
 [dependencies]
 #structopt = "*"
-clap = { version = "3.0", default-features = true, features = ["std", "derive"] }
+clap = { version = "3.0", default-features = true, features = ["std", "derive", "unicode"] }
 #walkdir = "*"
 lazy_static = "*"
 regex = { version = "*", default-features = false, features = ["std"] }

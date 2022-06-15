@@ -29,14 +29,14 @@ pub struct ListArgs {
         short = 'c',
         long,
         help = "Maximum number of (newest) commands to show",
-        conflicts_with = "file_path"
+        conflicts_with = "file-path"
     )]
     pub count: Option<u32>,
     #[structopt(
         short = 'e',
         long,
         help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)",
-        conflicts_with = "file_path"
+        conflicts_with = "file-path"
     )]
     pub exit_code: bool,
 }
