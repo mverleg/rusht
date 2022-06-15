@@ -11,12 +11,12 @@ use ::ustr::UstrSet;
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
 pub struct UniqueArgs {
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sorted", help = "Sort the entries")]
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", help = "Sort the entries")]
     pub order: Order,
-    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = "d", long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
+    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
     #[structopt(
-        short = "p",
+        short = 'p',
         long = "prefix",
         help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter."
     )]

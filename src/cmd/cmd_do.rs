@@ -24,58 +24,58 @@ use crate::cmd::cmd_type::TaskType;
 )]
 pub struct DoArgs {
     #[structopt(
-        short = "n",
+        short = 'n',
         long,
         default_value = "",
         help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
     #[structopt(
-        short = "c",
+        short = 'c',
         long,
         default_value = "1",
         help = "Number of commands to run"
     )]
     pub count: u32,
     #[structopt(
-        short = "a",
+        short = 'a',
         long,
         help = "Try to run all the commands",
         conflicts_with = "count"
     )]
     pub all: bool,
     #[structopt(
-        short = "p",
+        short = 'p',
         long = "parallel",
         default_value = "1",
         help = "How many parallel tasks to run (implies --continue-on-error)"
     )]
     pub parallel: u32,
     #[structopt(
-        short = "g",
+        short = 'g',
         long = "restart-running",
         help = "Run tasks even if they are marked as already running."
     )]
     pub restart_running: bool,
     #[structopt(
-        short = "f",
+        short = 'f',
         long = "continue-on-error",
         help = "Keep running tasks even if one fails (it stays on stack unless -r)"
     )]
     pub continue_on_error: bool,
     #[structopt(
-        short = "r",
+        short = 'r',
         long = "drop-failed",
         help = "Remove tasks from the stack when ran, even if they fail",
     )]
     pub drop_failed: bool,
     #[structopt(
-        short = "k",
+        short = 'k',
         long = "keep",
         help = "Keep the task on the stack when ran when successful",
     )]
     pub keep_successful: bool,
-    #[structopt(short = "q", long, help = "Do not log command and timing")]
+    #[structopt(short = 'q', long, help = "Do not log command and timing")]
     pub quiet: bool,
 }
 

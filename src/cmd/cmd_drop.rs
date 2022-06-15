@@ -11,33 +11,33 @@ use crate::cmd::cmd_type::TaskStack;
 )]
 pub struct DropArgs {
     #[structopt(
-        short = "n",
+        short = 'n',
         long,
         default_value = "",
         help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
     #[structopt(
-        short = "a",
+        short = 'a',
         long,
         help = "Drop the entire stack of commands to run",
         conflicts_with = "count"
     )]
     pub all: bool,
     #[structopt(
-        short = "c",
+        short = 'c',
         long,
         default_value = "1",
         help = "Number of commands to drop"
     )]
     pub count: u32,
     #[structopt(
-        short = "e",
+        short = 'e',
         long,
         help = "Drop command from the end (last) instead of as the next"
     )]
     pub end: bool,
-    #[structopt(short = "q", long, help = "Do not log command(s)")]
+    #[structopt(short = 'q', long, help = "Do not log command(s)")]
     pub quiet: bool,
 }
 

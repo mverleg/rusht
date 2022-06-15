@@ -18,37 +18,37 @@ use crate::common::{fail, CommandArgs, Task};
 )]
 pub struct AddArgs {
     #[structopt(
-        short = "n",
+        short = 'n',
         long,
         default_value = "",
         help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
-    #[structopt(short = "q", long, help = "Do not log the command")]
+    #[structopt(short = 'q', long, help = "Do not log the command")]
     pub quiet: bool,
     #[structopt(
-        short = "e",
+        short = 'e',
         long,
         help = "Add command at the end (last) instead of as the next"
     )]
     pub end: bool,
-    // #[structopt(short = "f", long, help = "Do not check that the command is known")]
+    // #[structopt(short = 'f', long, help = "Do not check that the command is known")]
     // pub skip_validation: bool,
     #[structopt(
-        short = "l",
+        short = 'l',
         long,
         help = "Add command for each line of stdin, replacing '{}' by the line"
     )]
     pub lines: bool,
     #[structopt(
-        short = "L",
+        short = 'L',
         long,
         help = "Like --lines, but use given replacement placeholder instead of '{}'",
         conflicts_with = "lines"
     )]
     pub lines_with: Option<String>,
     #[structopt(
-        short = "P",
+        short = 'P',
         long,
         help = "Working directory when running the command. Can use placeholder with -l/-L."
     )]

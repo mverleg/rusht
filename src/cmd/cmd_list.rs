@@ -13,27 +13,27 @@ use crate::cmd::cmd_io::stack_pth;
 )]
 pub struct ListArgs {
     #[structopt(
-        short = "n",
+        short = 'n',
         long,
         default_value = "",
         help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
     #[structopt(
-        short = "p",
+        short = 'p',
         long,
         help = "Show the path to the stack file, instead of commands"
     )]
     pub file_path: bool,
     #[structopt(
-        short = "c",
+        short = 'c',
         long,
         help = "Maximum number of (newest) commands to show",
         conflicts_with = "file_path"
     )]
     pub count: Option<u32>,
     #[structopt(
-        short = "e",
+        short = 'e',
         long,
         help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)",
         conflicts_with = "file_path"

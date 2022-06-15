@@ -24,32 +24,32 @@ use crate::find::Nested::StopOnMatch;
 )]
 pub struct DirWithArgs {
     #[structopt(
-        short = "l",
+        short = 'l',
         long,
         default_value = "10000",
         help = "Maximum directory depth to recurse into"
     )]
     pub max_depth: u32,
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = "s", long = "sort", help = "Sort the results alphabetically")]
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort", help = "Sort the results alphabetically")]
     pub order: Order,
-    #[structopt(parse(from_flag = Nested::from_do_nested), short = "n", long = "nested", help = "Keep recursing even if a directory matches")]
+    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested", help = "Keep recursing even if a directory matches")]
     pub nested: Nested,
     #[structopt(
-        short = "x",
+        short = 'x',
         long = "on-error",
         default_value = "warn",
         help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore"
     )]
     pub on_err: OnErr,
-    #[structopt(parse(from_flag = PathModification::from_is_relative), short = "z", long = "relative", help = "Results are relative to roots, instead of absolute")]
+    #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative", help = "Results are relative to roots, instead of absolute")]
     pub path_modification: PathModification,
-    #[structopt(parse(try_from_str = root_parser), short = "r", long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
+    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
     pub roots: Vec<PathBuf>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = "f", long = "file", help = "File pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file", help = "File pattern that must exist in the directory to match")]
     pub files: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = "d", long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
     pub dirs: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = "i", long = "self", help = "Pattern for the directory itself for it to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self", help = "Pattern for the directory itself for it to match")]
     pub itself: Vec<Regex>,
 }
 
