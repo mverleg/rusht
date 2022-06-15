@@ -44,7 +44,7 @@ path = "src/find/main_dir_with.rs"
 structopt = "*"
 #walkdir = "*"
 lazy_static = "*"
-regex = "*"
+regex = { version = "*", default_features = false, features = ["std"] }
 itertools = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
