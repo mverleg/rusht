@@ -1,4 +1,4 @@
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;

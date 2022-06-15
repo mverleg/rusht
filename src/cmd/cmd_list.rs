@@ -1,7 +1,7 @@
 use ::std::env::current_dir;
 
 use ::log::debug;
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::stack_pth;

@@ -1,4 +1,4 @@
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use ::rusht::cmd::{drop_cmd, DropArgs};
 

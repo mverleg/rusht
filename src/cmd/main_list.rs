@@ -1,6 +1,6 @@
 use ::std::process::exit;
 
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use ::rusht::cmd::list_cmds;
 use ::rusht::cmd::ListArgs;

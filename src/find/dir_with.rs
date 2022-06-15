@@ -9,7 +9,7 @@ use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 use ::ustr::Ustr;
 
 use crate::filter::unique_prefix;

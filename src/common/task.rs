@@ -8,7 +8,7 @@ use ::std::time::Instant;
 
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::common::fail;
 

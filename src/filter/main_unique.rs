@@ -1,4 +1,4 @@
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 use ::ustr::Ustr;
 
 use ::rusht::common::{stdin_lines, EmptyLineHandling};

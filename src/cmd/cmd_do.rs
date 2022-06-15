@@ -7,7 +7,7 @@ use ::log::info;
 use ::rand::Rng;
 use ::rayon::iter::{IntoParallelIterator, ParallelIterator};
 use ::rayon::ThreadPoolBuilder;
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::cmd::cmd_io::current_time_s;
 use crate::cmd::cmd_io::read;

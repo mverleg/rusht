@@ -1,4 +1,4 @@
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use ::rusht::cmd::{add_cmd, AddArgs};
 use ::rusht::common::{stdin_lines, EmptyLineHandling};

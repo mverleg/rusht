@@ -41,10 +41,11 @@ name = "dir_with"
 path = "src/find/main_dir_with.rs"
 
 [dependencies]
-structopt = "*"
+#structopt = "*"
+clap = { version = "3.0", default-features = true, features = ["std", "derive"] }
 #walkdir = "*"
 lazy_static = "*"
-regex = { version = "*", default_features = false, features = ["std"] }
+regex = { version = "*", default-features = false, features = ["std"] }
 itertools = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"

@@ -1,7 +1,7 @@
 use ::std::time::Duration;
 
 use ::parse_duration::parse as parse_dur;
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::common::CommandArgs;
 

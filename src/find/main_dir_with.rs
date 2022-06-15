@@ -1,6 +1,6 @@
 use ::std::process::exit;
 
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use ::rusht::find::{find_dir_with, DirWithArgs, PathModification};
 

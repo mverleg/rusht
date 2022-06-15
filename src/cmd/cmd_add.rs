@@ -5,7 +5,7 @@ use ::std::path::PathBuf;
 use ::std::thread::spawn;
 
 use ::log::debug;
-use ::structopt::StructOpt;
+use ::clap::StructOpt;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
