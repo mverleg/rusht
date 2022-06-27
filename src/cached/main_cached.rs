@@ -1,6 +1,7 @@
 use ::std::process::exit;
 
 use ::clap::StructOpt;
+use ::env_logger;
 
 use ::rusht::cached::cached;
 use ::rusht::cached::CacheStatus;

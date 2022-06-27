@@ -40,6 +40,10 @@ path = "src/filter/main_unique.rs"
 name = "dir_with"
 path = "src/find/main_dir_with.rs"
 
+[[bin]]
+name = "locked"
+path = "src/wait/main_locked.rs"
+
 [dependencies]
 #structopt = "*"
 clap = { version = "3.0", default-features = true, features = ["std", "derive", "unicode"] }

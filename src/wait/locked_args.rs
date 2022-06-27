@@ -35,14 +35,14 @@ pub struct LockedArgs {
     //TODO @mverleg: impl
     pub show_progress: bool,
     #[structopt(
-        short = "r",
+        short = 'r',
         long = "read",
         help = "Mark the current process as a reader instead of a writer. Multiple readers may hold the lock simultaneously. The process should not make any changes."
     )]
     //TODO @mverleg: impl
     pub read: bool,
     #[structopt(
-        short = "s",
+        short = 's',
         long = "show",
         help = "Instead of running a command, show the command(s) that currently hold the lock."
     )]
