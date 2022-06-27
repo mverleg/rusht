@@ -10,7 +10,7 @@ use crate::common::CommandArgs;
     name = "locked",
     about = "Do not start a command until a given lock is released."
 )]
-pub struct DirLockedArgs {
+pub struct LockedArgs {
     #[structopt(
         short = 'f',
         long = "lock-key",
@@ -19,46 +19,49 @@ pub struct DirLockedArgs {
     )]
     //TODO @mverleg: impl
     pub lock_key: String,
-    #[structopt(parse(try_from_str = parse_dur), short = 't', long = "timeout", default_value = "15 min", help = "Duration after which the waiting stops and the command fails. E.g. \"30 min\" or \"1 day -1 hour\".")]
+    #[structopt(
+        parse(try_from_str = parse_dur),
+        short = 't',
+        long = "timeout",
+        default_value = "15 min",
+        help = "Duration after which the waiting stops and the command fails. E.g. \"30 min\" or \"1 day -1 hour\".")]
     //TODO @mverleg: impl
     pub timeout: Duration,
     #[structopt(
-    short = 'p',
-    long = "progress",
-    help = "Show an indicator that we are still waiting, what is running, and how frequently we are checking."
+        short = 'p',
+        long = "progress",
+        help = "Show an indicator that we are still waiting, what is running, and how frequently we are checking."
     )]
     //TODO @mverleg: impl
     pub show_progress: bool,
     #[structopt(
-    long = "progress",
-    help = "Show an indicator that we are still waiting, what is running, and how frequently we are checking."
+        short = "r",
+        long = "read",
+        help = "Mark the current process as a reader instead of a writer. Multiple readers may hold the lock simultaneously. The process should not make any changes."
+    )]
+    //TODO @mverleg: impl
+    pub read: bool,
+    #[structopt(
+        short = "s",
+        long = "show",
+        help = "Instead of running a command, show the command(s) that currently hold the lock."
+    )]
+    //TODO @mverleg: impl
+    pub show: bool,
+    #[structopt(
+        long = "unlock",
+        help = "Instead of running a command, remove the current lockfile. Should only be used if you are confident that the lock is held incorrectly."
     )]
     //TODO @mverleg: impl
     pub unlock: bool,
     #[structopt(subcommand)]
     //TODO @mverleg: impl
     pub cmd: CommandArgs,
-
-    #[structopt(parse(try_from_str = parse_dur), short = 'd', long = "duration", default_value = "15 min", help = "Duration the cache should be valid for, e.g. \"30 min\" or \"1 day -1 hour\".")]
-    pub duration: Duration,
-    #[structopt(
-    short = 'k',
-    long = "key",
-    default_value = "${pwd}_${cmd}.cache",
-    help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders. If it contains a / it will be considered a full path."
-    )]
-    pub key: String,
-    #[structopt(
-    short = 'v',
-    long,
-    help = "Print extra information, e.g. whether the command was run or not"
-    )]
-    pub verbose: bool,
-
 }
+//TODO @mverleg: allow multiple readers or one writer
 
 #[test]
 fn test_cli_args() {
     use clap::IntoApp;
-    DirLockedArgs::into_app().debug_assert()
+    LockedArgs::into_app().debug_assert()
 }
