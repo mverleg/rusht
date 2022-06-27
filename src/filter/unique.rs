@@ -7,7 +7,7 @@ use ::ustr::UstrSet;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
-    name = "unique_prefix",
+    name = "unique",
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
 pub struct UniqueArgs {
