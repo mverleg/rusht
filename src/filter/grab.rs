@@ -26,7 +26,7 @@ fn test_cli_args() {
 pub fn grab(
     args: GrabArgs,
     mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
-    mut consumer: impl FnMut(String),
+    mut consume: impl FnMut(String),
 ) -> Result<(), String> {
     while let Some(line_res) = line_supplier() {
         let line = match line_res {
@@ -35,7 +35,18 @@ pub fn grab(
         };
         match args.pattern.captures(&line) {
             Some(captures) => {
-                consumer(line)
+                let mut caps = captures.iter();
+                let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
+                let mut any_groups = false;
+                while let Some(mtch_opt) = caps.next() {
+                    any_groups = true;
+                    if let Some(mtch) = mtch_opt {
+                        consume(mtch.as_str().to_owned());
+                    }
+                }
+                if ! any_groups {
+                    consume(full_match);
+                }
             }
             None => {}
         }
@@ -47,12 +58,16 @@ pub fn grab(
 mod tests {
     use super::*;
 
-    fn run_grab(input: Vec<String>) -> Vec<String> {
-        let args = GrabArgs {
+    fn run_grab<S: Into<String>>(input: Vec<S>) -> Vec<String> {
+        run_grab_arg(GrabArgs {
             pattern: Regex::new("(a+)b").unwrap(),
-        };
+        }, input)
+    }
+
+    fn run_grab_arg<S: Into<String>>(args: GrabArgs, input: Vec<S>) -> Vec<String> {
         let mut res = vec![];
-        let mut lines = input.into_iter().map(|v| Ok(v));
+        let mut lines = input.into_iter()
+            .map(|v| Ok(v.into()));
         grab(
             args,
             || lines.next(),
@@ -61,9 +76,60 @@ mod tests {
     }
 
     #[test]
-    fn test_empty() {
-        let res = run_grab(vec![]);
+    fn no_lines() {
+        let empty: Vec<String> = vec![];
+        let res = run_grab(empty.clone());
+        assert_eq!(res, empty);
+    }
+    #[test]
+    fn empty_line() {
+        let res = run_grab(vec![""]);
         let expected: Vec<String> = vec![];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn ignore_not_matching() {
+        let res = run_grab(vec!["c"]);
+        let expected: Vec<String> = vec![];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn ignore_only_group_matches() {
+        let res = run_grab(vec!["aa"]);
+        let expected: Vec<String> = vec![];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn match_single_group() {
+        let res = run_grab(vec!["aab"]);
+        let expected: Vec<String> = vec!["aa".to_owned()];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn match_some_lines() {
+        let res = run_grab(vec!["aab", "", "cab", "AAB"]);
+        let expected: Vec<String> = vec!["aa".to_owned(), "a".to_owned()];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn first_of_multi_per_line() {
+        let res = run_grab(vec!["aabab"]);
+        let expected: Vec<String> = vec!["aa".to_owned()];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn full_match_if_no_group() {
+        let input = vec!["aab"];
+        let res = run_grab_arg(GrabArgs {
+            pattern: Regex::new("a+b").unwrap(),
+        }, input);
+        let expected: Vec<String> = vec!["aab".to_owned()];
         assert_eq!(res, expected);
     }
 }
