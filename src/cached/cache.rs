@@ -28,7 +28,7 @@ struct Cache {
 }
 
 pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
-    let task = Task::new_split_in_cwd(args.cmd.unpack());
+    let task = args.cmd.into_task();
     let cache_pth = get_cache_path(&args.key, &task);
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {

@@ -25,6 +25,10 @@ impl CommandArgs {
             CommandArgs::Cmd(cmd) => cmd,
         }
     }
+
+    pub fn into_task(self) -> Task {
+        Task::new_split_in_cwd(self.unpack())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
