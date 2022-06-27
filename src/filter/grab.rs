@@ -11,10 +11,10 @@ about = "Filter lines by regular expression, keeping only the matching capture g
 )]
 pub struct GrabArgs {
     //TODO @mverleg: keep unmatching lines
-    //TODO @mverleg: able to match multiple times per line
-    //TODO @mverleg: case-insensitive
     #[structopt(help = "Regular expression to match. Returns the capture group if any, or the whole match otherwise.")]
     pub pattern: Regex,
+    #[structopt(short = '1', long, help = "Only print the first capture group, even if there are multiple", )]
+    pub first_only: bool,
 }
 
 #[test]
@@ -39,9 +39,12 @@ pub fn grab(
                 let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
                 let mut any_groups = false;
                 while let Some(mtch_opt) = caps.next() {
-                    any_groups = true;
                     if let Some(mtch) = mtch_opt {
                         consume(mtch.as_str().to_owned());
+                    }
+                    any_groups = true;
+                    if args.first_only {
+                        break;
                     }
                 }
                 if ! any_groups {
@@ -61,6 +64,7 @@ mod tests {
     fn run_grab<S: Into<String>>(input: Vec<S>) -> Vec<String> {
         run_grab_arg(GrabArgs {
             pattern: Regex::new("(a+)b").unwrap(),
+            first_only: false,
         }, input)
     }
 
@@ -128,8 +132,31 @@ mod tests {
         let input = vec!["aab"];
         let res = run_grab_arg(GrabArgs {
             pattern: Regex::new("a+b").unwrap(),
+            first_only: false,
         }, input);
         let expected: Vec<String> = vec!["aab".to_owned()];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn match_multiple_groups() {
+        let input = vec!["aabccd"];
+        let res = run_grab_arg(GrabArgs {
+            pattern: Regex::new("(a+)b(c{2})").unwrap(),
+            first_only: false,
+        }, input);
+        let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned()];
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn match_only_first_groups() {
+        let input = vec!["aabccd"];
+        let res = run_grab_arg(GrabArgs {
+            pattern: Regex::new("(a+)b(c{2})").unwrap(),
+            first_only: true,
+        }, input);
+        let expected: Vec<String> = vec!["aa".to_owned()];
         assert_eq!(res, expected);
     }
 }
