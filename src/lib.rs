@@ -3,3 +3,4 @@ pub mod cmd;
 pub mod common;
 pub mod filter;
 pub mod find;
+pub mod wait;
