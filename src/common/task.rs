@@ -70,7 +70,7 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {
-        self.execute_with_stdout(quiet, |line| println!("{}", line))
+        self.execute_with_stdout(quiet, |line| print!("{}", line))
     }
 
     pub fn execute_with_stdout(
