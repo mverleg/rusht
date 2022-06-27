@@ -48,6 +48,10 @@ path = "src/find/main_dir_with.rs"
 name = "locked"
 path = "src/wait/main_locked.rs"
 
+[[bin]]
+name = "rusht"
+path = "src/main_all.rs"
+
 [dependencies]
 #structopt = "*"
 clap = { version = "3.0", default-features = true, features = ["std", "derive", "unicode"] }
