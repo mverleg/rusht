@@ -1,6 +1,6 @@
 use ::clap::StructOpt;
 
-use ::rusht::cmd::{drop_cmd, DropArgs};
+use ::rusht::cmd::DropArgs;
 use ::rusht::cmd::handle_drop;
 
 fn main() {

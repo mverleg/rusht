@@ -4,12 +4,14 @@ use ::env_logger;
 
 use ::rusht::cached::cached;
 use ::rusht::cached::CachedArgs;
+use ::rusht::cached::handle_cached;
 use ::rusht::cmd::{add_cmd, AddArgs, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs};
+use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 use ::rusht::filter::{grab, GrabArgs, unique, UniqueArgs};
+use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::find::{DirWithArgs, find_dir_with};
+use ::rusht::find::handle_dir_with;
 use ::rusht::wait::{locked, LockedArgs};
-use rusht::cached::handle_cached;
-use rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -30,8 +32,8 @@ enum SubCmd {
     CmDrop(DropArgs),
     DirWith(DirWithArgs),
     Grab(GrabArgs),
-    Locked(LockedArgs),
     Unique(UniqueArgs),
+    Locked(LockedArgs),
 }
 
 #[test]
@@ -50,10 +52,10 @@ fn main() {
         SubCmd::CmDo(sub_args) => handle_do(sub_args),
         SubCmd::CmList(sub_args) => handle_list(sub_args),
         SubCmd::CmDrop(sub_args) => handle_drop(sub_args),
-        SubCmd::DirWith(sub_args) => todo!(),  // find_dir_with(sub_args),
-        SubCmd::Grab(sub_args) => todo!(),  // grab(sub_args),
-        SubCmd::Locked(sub_args) => todo!(),  // locked(sub_args),
-        SubCmd::Unique(sub_args) => todo!(),  // unique(sub_args),
+        SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
+        SubCmd::Grab(sub_args) => handle_grab(sub_args),
+        SubCmd::Unique(sub_args) => handle_unique(sub_args),
+        SubCmd::Locked(sub_args) => handle_locked(sub_args),
     }
     dbg!(args);
 }
