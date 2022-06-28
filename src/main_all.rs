@@ -26,10 +26,11 @@ pub struct RushtArgs {
 #[derive(Subcommand, Debug)]
 enum SubCmd {
     Cached(CachedArgs),
-    CmAdd(AddArgs),
-    CmDo(DoArgs),
-    CmList(ListArgs),
-    CmDrop(DropArgs),
+    Cmadd(AddArgs),
+    Cmdo(DoArgs),
+    Cmlist(ListArgs),
+    Cmdrop(DropArgs),
+    //TODO @mverleg: get this to use dir_with
     DirWith(DirWithArgs),
     Grab(GrabArgs),
     Unique(UniqueArgs),
