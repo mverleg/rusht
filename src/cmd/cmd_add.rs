@@ -106,7 +106,10 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     };
     debug!("finished constructing {} new tasks", new_tasks.len());
     if new_tasks.is_empty() {
-        fail("no tasks found, was stdin empty?");
+        if ! args.quiet {
+            eprintln!("no tasks found, was stdin empty?");
+        }
+        return;
     }
     let mut stored_tasks = read(args.namespace.clone());
     for task in new_tasks {
