@@ -49,10 +49,11 @@ fn main() {
     let args = RushtArgs::from_args();
     match args.subcommand {
         SubCmd::Cached(sub_args) => handle_cached(sub_args),
-        SubCmd::CmAdd(sub_args) => handle_add(sub_args),
-        SubCmd::CmDo(sub_args) => handle_do(sub_args),
-        SubCmd::CmList(sub_args) => handle_list(sub_args),
-        SubCmd::CmDrop(sub_args) => handle_drop(sub_args),
+        SubCmd::Cmadd(sub_args) => handle_add(sub_args),
+        SubCmd::Cmadd(sub_args) => handle_add(sub_args),
+        SubCmd::Cmdo(sub_args) => handle_do(sub_args),
+        SubCmd::Cmlist(sub_args) => handle_list(sub_args),
+        SubCmd::Cmdrop(sub_args) => handle_drop(sub_args),
         SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
         SubCmd::Grab(sub_args) => handle_grab(sub_args),
         SubCmd::Unique(sub_args) => handle_unique(sub_args),

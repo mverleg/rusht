@@ -48,6 +48,12 @@ pub struct AddArgs {
     )]
     pub lines_with: Option<String>,
     #[structopt(
+        short = 'u',
+        long,
+        help = "With --lines or --lines-with, skip any duplicate placeholders",
+    )]
+    pub unique: bool,
+    #[structopt(
         short = 'P',
         long,
         help = "Working directory when running the command. Can use placeholder with -l/-L."
@@ -64,6 +70,7 @@ fn test_cli_args() {
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
+    assert!(!args.unique || args.lines || args.lines_with.is_some(), "--unique can only be used with --lines or --lines-with");
     let cmd = args.cmd.unpack();
     let new_tasks = if let Some(templ) = args.lines_with {
         assert!(!templ.is_empty());
