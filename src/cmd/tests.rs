@@ -36,11 +36,11 @@ fn batch_add_drop() {
             end: false,
             lines: false,
             lines_with: Some("%".to_owned()),
-            unique: false,
+            unique: true,
             working_dir: None,
             cmd: CommandArgs::Cmd(vec!["echo".to_owned(), "hello".to_owned(), "%".to_owned()]),
         },
-        || vec!["Leonardo".to_owned(), "Benjamin".to_owned()],
+        || vec!["Leonardo".to_owned(), "Benjamin".to_owned(), "Leonardo".to_owned(), ],
     );
     let out = list_cmds(ListArgs {
         namespace: namespace.to_owned(),

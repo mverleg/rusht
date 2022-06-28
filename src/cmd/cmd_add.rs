@@ -3,6 +3,7 @@ use ::std::io::stdin;
 use ::std::io::Read;
 use ::std::path::PathBuf;
 use ::std::thread::spawn;
+use std::collections::HashSet;
 
 use ::log::debug;
 use ::clap::StructOpt;
@@ -70,7 +71,7 @@ fn test_cli_args() {
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
-    assert!(!args.unique || args.lines || args.lines_with.is_some(), "--unique can only be used with --lines or --lines-with");
+    assert!(!args.unique || args.lines_with.is_some(), "--unique can only be used with --lines or --lines-with");
     let cmd = args.cmd.unpack();
     let new_tasks = if let Some(templ) = args.lines_with {
         assert!(!templ.is_empty());
@@ -89,12 +90,14 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
             ))
         }
         debug!("going to read stdin lines");
+        let mut seen: HashSet<&String> = HashSet::new();
         line_reader()
             .iter()
+            .filter(|line| !args.unique || seen.insert(line))
             .map(|input| task_from_template(&cmd, input, &templ, &args.working_dir))
             .collect()
     } else {
-        spawn(stdin_warning);
+        spawn(stdin_ignored_warning);
         let working_dir = args
             .working_dir
             .map(PathBuf::from)
@@ -138,7 +141,7 @@ fn task_from_template(
     Task::new_split(parts, working_dir)
 }
 
-fn stdin_warning() {
+fn stdin_ignored_warning() {
     let mut buffer = [0u8; 1];
     if let Err(err) = stdin().lock().read(&mut buffer) {
         debug!("failed to read stdin, error {}", err)
