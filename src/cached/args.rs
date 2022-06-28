@@ -8,7 +8,7 @@ use crate::common::CommandArgs;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "cached",
-    about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired."
+    about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired. Stderr is only shown on first run."
 )]
 pub struct CachedArgs {
     #[structopt(parse(try_from_str = parse_dur), short = 'd', long = "duration", default_value = "15 min", help = "Duration the cache should be valid for, e.g. \"30 min\" or \"1 day -1 hour\".")]

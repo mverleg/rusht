@@ -86,7 +86,7 @@ impl Task {
             .args(&self.args)
             .current_dir(&self.working_dir)
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::inherit())
             .spawn()
         {
             Ok(child) => child,
