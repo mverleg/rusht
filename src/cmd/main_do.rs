@@ -1,8 +1,6 @@
-use ::std::process::exit;
-
 use ::clap::StructOpt;
 
-use ::rusht::cmd::{do_cmd, DoArgs};
+use ::rusht::cmd::DoArgs;
 use ::rusht::cmd::handle_do;
 
 fn main() {

@@ -1,9 +1,6 @@
-use ::std::process::exit;
-
 use ::clap::StructOpt;
 
-use ::rusht::filter::{unique, unique_prefix, UniqueArgs};
-use ::rusht::filter::{grab, GrabArgs};
+use ::rusht::filter::GrabArgs;
 use ::rusht::filter::handle_grab;
 
 fn main() {

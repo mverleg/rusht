@@ -1,8 +1,6 @@
 use ::clap::StructOpt;
-use ::ustr::Ustr;
 
-use ::rusht::common::{EmptyLineHandling, stdin_lines};
-use ::rusht::filter::{unique, unique_prefix, UniqueArgs};
+use ::rusht::filter::UniqueArgs;
 use ::rusht::filter::handle_unique;
 
 fn main() {

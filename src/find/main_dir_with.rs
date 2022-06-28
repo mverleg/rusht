@@ -1,9 +1,7 @@
-use ::std::process::exit;
-
 use ::clap::StructOpt;
 
-use ::rusht::find::{DirWithArgs, find_dir_with, PathModification};
 use ::rusht::find::handle_dir_with;
+use ::rusht::find::DirWithArgs;
 
 fn main() {
     env_logger::init();

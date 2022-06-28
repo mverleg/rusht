@@ -2,16 +2,16 @@ use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::cached;
 use ::rusht::cached::CachedArgs;
 use ::rusht::cached::handle_cached;
-use ::rusht::cmd::{add_cmd, AddArgs, do_cmd, DoArgs, drop_cmd, DropArgs, list_cmds, ListArgs};
+use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
-use ::rusht::filter::{grab, GrabArgs, unique, UniqueArgs};
+use ::rusht::filter::{GrabArgs, UniqueArgs};
 use ::rusht::filter::{handle_grab, handle_unique};
-use ::rusht::find::{DirWithArgs, find_dir_with};
+use ::rusht::find::DirWithArgs;
 use ::rusht::find::handle_dir_with;
-use ::rusht::wait::{locked, LockedArgs};
+use ::rusht::wait::LockedArgs;
+use ::rusht::wait::handle_locked;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -57,5 +57,4 @@ fn main() {
         SubCmd::Unique(sub_args) => handle_unique(sub_args),
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
     }
-    dbg!(args);
 }

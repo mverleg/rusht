@@ -1,10 +1,6 @@
-use ::std::process::exit;
-
 use ::clap::StructOpt;
 
-use ::rusht::cmd::list_cmds;
 use ::rusht::cmd::ListArgs;
-use ::rusht::cmd::ListErr;
 use ::rusht::cmd::handle_list;
 
 fn main() {
