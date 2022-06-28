@@ -1,10 +1,10 @@
 use ::clap::StructOpt;
 
 use ::rusht::cmd::{drop_cmd, DropArgs};
+use ::rusht::cmd::handle_drop;
 
 fn main() {
     env_logger::init();
     let args = DropArgs::from_args();
-    assert!(!args.end, "end not implemented"); //TODO
-    drop_cmd(args);
+    handle_drop(args)
 }

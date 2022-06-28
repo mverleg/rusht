@@ -1,7 +1,8 @@
 use ::clap::StructOpt;
 
 use ::rusht::cmd::{add_cmd, AddArgs};
-use ::rusht::common::{stdin_lines, EmptyLineHandling};
+use ::rusht::cmd::handle_add;
+use ::rusht::common::{EmptyLineHandling, stdin_lines};
 
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?
@@ -11,8 +12,5 @@ use ::rusht::common::{stdin_lines, EmptyLineHandling};
 fn main() {
     env_logger::init();
     let mut args = AddArgs::from_args();
-    if args.lines {
-        args.lines_with = Some("{}".to_owned());
-    }
-    add_cmd(args, || stdin_lines(EmptyLineHandling::Drop));
+    handle_add(args)
 }

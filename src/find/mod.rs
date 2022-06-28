@@ -5,3 +5,4 @@ pub use self::dir_with::Order;
 pub use self::dir_with::PathModification;
 
 mod dir_with;
+mod handle;
