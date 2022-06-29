@@ -12,6 +12,16 @@
         { "target": "x86_64-unknown-linux-musl", "asset_postfix": "linux-x86-64" }
       ],
       "bins": [
+        "cmadd",
+        "cmdo",
+        "cmlist",
+        "cmdrop",
+        "cached",
+        "unique",
+        "grab",
+        "dir_with",
+        "locked",
+        "rusht"
       ]
     }
   }
