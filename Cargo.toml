@@ -1,12 +1,12 @@
 [package]
 name = "rusht"
+description = "Shell commands written in Rust"
 version = "1.0.0"
 edition = "2021"
-publish = false
-
-#[[bin]]
-#name = "logcount"
-#path = "src/log_stats.rs"
+authors = ["Mark <mverleg.noreply@gmail.com>"]
+homepage = "https://github.com/mverleg/rusht"
+license = "BSD-3-Clause"
+publish = true
 
 [lib]
 name = "rusht"
