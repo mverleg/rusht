@@ -1,7 +1,7 @@
 use ::clap::StructOpt;
 
-use ::rusht::filter::GrabArgs;
 use ::rusht::filter::handle_grab;
+use ::rusht::filter::GrabArgs;
 
 fn main() {
     env_logger::init();

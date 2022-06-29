@@ -3,11 +3,11 @@ use crate::wait::LockedArgs;
 pub fn locked(args: LockedArgs) -> Result<(), String> {
     if args.show {
         unimplemented!();
-        return Ok(())
+        return Ok(());
     }
     if args.unlock {
         unimplemented!();
-        return Ok(())
+        return Ok(());
     }
     let task = args.cmd.into_task();
     let status = task.execute(false);

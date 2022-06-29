@@ -1,7 +1,7 @@
 use ::std::collections::HashSet;
 
-use ::log::debug;
 use ::clap::StructOpt;
+use ::log::debug;
 use ::ustr::Ustr;
 use ::ustr::UstrSet;
 

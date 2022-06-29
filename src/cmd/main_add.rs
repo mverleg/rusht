@@ -1,7 +1,7 @@
 use ::clap::StructOpt;
 
-use ::rusht::cmd::AddArgs;
 use ::rusht::cmd::handle_add;
+use ::rusht::cmd::AddArgs;
 
 //TODO: option to deduplicate tasks
 //TODO: run inside Docker?

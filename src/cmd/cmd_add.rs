@@ -5,8 +5,8 @@ use ::std::path::PathBuf;
 use ::std::thread::spawn;
 use std::collections::HashSet;
 
-use ::log::debug;
 use ::clap::StructOpt;
+use ::log::debug;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
@@ -51,7 +51,7 @@ pub struct AddArgs {
     #[structopt(
         short = 'u',
         long,
-        help = "With --lines or --lines-with, skip any duplicate placeholders",
+        help = "With --lines or --lines-with, skip any duplicate placeholders"
     )]
     pub unique: bool,
     #[structopt(
@@ -71,7 +71,10 @@ fn test_cli_args() {
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
-    assert!(!args.unique || args.lines_with.is_some(), "--unique can only be used with --lines or --lines-with");
+    assert!(
+        !args.unique || args.lines_with.is_some(),
+        "--unique can only be used with --lines or --lines-with"
+    );
     let cmd = args.cmd.unpack();
     let new_tasks = if let Some(templ) = args.lines_with {
         assert!(!templ.is_empty());
@@ -106,7 +109,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     };
     debug!("finished constructing {} new tasks", new_tasks.len());
     if new_tasks.is_empty() {
-        if ! args.quiet {
+        if !args.quiet {
             eprintln!("no tasks found, was stdin empty?");
         }
         return;

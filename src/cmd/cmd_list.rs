@@ -1,7 +1,7 @@
 use ::std::env::current_dir;
 
-use ::log::debug;
 use ::clap::StructOpt;
+use ::log::debug;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::stack_pth;
@@ -81,8 +81,18 @@ pub fn list_cmds(args: ListArgs) -> Result<Vec<String>, ListErr> {
         .enumerate()
         .map(|(nr, task)| {
             let run_msg = if task.is_running() { "running? " } else { "" };
-            let workdir_msg = if current_dir != task.working_dir() { format!(" @ {}", task.working_dir().to_string_lossy()) } else { "".to_owned() };
-            format!("{}  # {}{}{}", task.as_cmd_str(), run_msg, nr + 1, workdir_msg)
+            let workdir_msg = if current_dir != task.working_dir() {
+                format!(" @ {}", task.working_dir().to_string_lossy())
+            } else {
+                "".to_owned()
+            };
+            format!(
+                "{}  # {}{}{}",
+                task.as_cmd_str(),
+                run_msg,
+                nr + 1,
+                workdir_msg
+            )
         })
         .collect())
 }

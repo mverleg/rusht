@@ -10,7 +10,7 @@ fn main() {
     env_logger::init();
     let args = LockedArgs::from_args();
     match locked(args) {
-        Ok(()) => {},
+        Ok(()) => {}
         Err(err) => {
             eprintln!("failed: {}", err);
             exit(1)

@@ -1,13 +1,13 @@
 use ::std::process::exit;
 
-use crate::common::{EmptyLineHandling, stdin_lines};
+use crate::common::{stdin_lines, EmptyLineHandling};
 
-use super::{add_cmd, AddArgs};
-use super::{do_cmd, DoArgs};
-use super::{drop_cmd, DropArgs};
 use super::list_cmds;
 use super::ListArgs;
 use super::ListErr;
+use super::{add_cmd, AddArgs};
+use super::{do_cmd, DoArgs};
+use super::{drop_cmd, DropArgs};
 
 pub fn handle_add(mut args: AddArgs) {
     if args.lines {

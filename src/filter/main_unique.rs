@@ -1,7 +1,7 @@
 use ::clap::StructOpt;
 
-use ::rusht::filter::UniqueArgs;
 use ::rusht::filter::handle_unique;
+use ::rusht::filter::UniqueArgs;
 
 fn main() {
     env_logger::init();

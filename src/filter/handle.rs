@@ -1,12 +1,12 @@
-use ::std::io::{BufRead, BufReader, stdin};
+use ::std::io::{stdin, BufRead, BufReader};
 use ::std::process::exit;
 
 use ::ustr::Ustr;
 
 use crate::common::EmptyLineHandling;
 
-use super::{unique, unique_prefix, UniqueArgs};
 use super::{grab, GrabArgs};
+use super::{unique, unique_prefix, UniqueArgs};
 
 pub fn handle_grab(args: GrabArgs) {
     let mut lines = BufReader::new(stdin().lock()).lines();
@@ -16,7 +16,7 @@ pub fn handle_grab(args: GrabArgs) {
         Err(err) => {
             eprintln!("{}", err);
             exit(1);
-        },
+        }
     }
 }
 

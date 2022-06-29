@@ -4,12 +4,12 @@ use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
+use ::clap::StructOpt;
 use ::itertools::Itertools;
 use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
-use ::clap::StructOpt;
 use ::ustr::Ustr;
 
 use crate::filter::unique_prefix;
@@ -288,13 +288,11 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
                 );
                 Ok(smallvec![])
             }
-            OnErr::Abort => {
-                return Err(format!(
-                    "failed to scan directory '{}', err {}; stopping",
-                    dir.to_str().unwrap(),
-                    err
-                ))
-            }
+            OnErr::Abort => Err(format!(
+                "failed to scan directory '{}', err {}; stopping",
+                dir.to_str().unwrap(),
+                err
+            )),
         },
     }
 }

@@ -2,16 +2,16 @@ use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::CachedArgs;
 use ::rusht::cached::handle_cached;
-use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
+use ::rusht::cached::CachedArgs;
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
-use ::rusht::filter::{GrabArgs, UniqueArgs};
+use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
 use ::rusht::filter::{handle_grab, handle_unique};
-use ::rusht::find::DirWithArgs;
+use ::rusht::filter::{GrabArgs, UniqueArgs};
 use ::rusht::find::handle_dir_with;
-use ::rusht::wait::LockedArgs;
+use ::rusht::find::DirWithArgs;
 use ::rusht::wait::handle_locked;
+use ::rusht::wait::LockedArgs;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -42,7 +42,6 @@ fn test_cli_args() {
     use clap::IntoApp;
     RushtArgs::into_app().debug_assert()
 }
-
 
 fn main() {
     env_logger::init();

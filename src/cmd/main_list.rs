@@ -1,7 +1,7 @@
 use ::clap::StructOpt;
 
-use ::rusht::cmd::ListArgs;
 use ::rusht::cmd::handle_list;
+use ::rusht::cmd::ListArgs;
 
 fn main() {
     env_logger::init();

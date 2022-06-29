@@ -1,8 +1,8 @@
 use ::std::process::exit;
 
 use super::cached;
-use super::CachedArgs;
 use super::CacheStatus;
+use super::CachedArgs;
 
 pub fn handle_cached(args: CachedArgs) {
     let verbose = args.verbose;

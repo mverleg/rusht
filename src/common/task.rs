@@ -6,9 +6,9 @@ use ::std::process::ExitStatus;
 use ::std::process::Stdio;
 use ::std::time::Instant;
 
+use ::clap::StructOpt;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::clap::StructOpt;
 
 use crate::common::fail;
 
@@ -65,7 +65,11 @@ impl Task {
         if self.working_dir == current_dir().unwrap() {
             self.as_cmd_str()
         } else {
-            format!("{} @ {}", self.as_cmd_str(), self.working_dir.to_string_lossy())
+            format!(
+                "{} @ {}",
+                self.as_cmd_str(),
+                self.working_dir.to_string_lossy()
+            )
         }
     }
 

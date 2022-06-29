@@ -9,8 +9,8 @@ pub use self::cmd_list::ListArgs;
 pub use self::cmd_list::ListErr;
 pub use self::handle::handle_add;
 pub use self::handle::handle_do;
-pub use self::handle::handle_list;
 pub use self::handle::handle_drop;
+pub use self::handle::handle_list;
 
 mod cmd_add;
 mod cmd_do;

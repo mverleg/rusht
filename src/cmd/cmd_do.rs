@@ -1,13 +1,13 @@
 use ::std::process::ExitStatus;
 use ::std::sync::Arc;
 
+use ::clap::StructOpt;
 use ::dashmap::DashMap;
 use ::log::debug;
 use ::log::info;
 use ::rand::Rng;
 use ::rayon::iter::{IntoParallelIterator, ParallelIterator};
 use ::rayon::ThreadPoolBuilder;
-use ::clap::StructOpt;
 
 use crate::cmd::cmd_io::current_time_s;
 use crate::cmd::cmd_io::read;
@@ -66,13 +66,13 @@ pub struct DoArgs {
     #[structopt(
         short = 'r',
         long = "drop-failed",
-        help = "Remove tasks from the stack when ran, even if they fail",
+        help = "Remove tasks from the stack when ran, even if they fail"
     )]
     pub drop_failed: bool,
     #[structopt(
         short = 'k',
         long = "keep",
-        help = "Keep the task on the stack when ran when successful",
+        help = "Keep the task on the stack when ran when successful"
     )]
     pub keep_successful: bool,
     #[structopt(short = 'q', long, help = "Do not log command and timing")]
@@ -98,16 +98,22 @@ pub fn do_cmd(args: DoArgs) -> bool {
     write(args.namespace.clone(), &tasks);
 
     let statuses = Arc::new(DashMap::new());
-    to_run.iter()
+    to_run
+        .iter()
         .map(|task| task.run_id)
         .map(|run_id| (run_id, Status::Skipped))
-        .for_each(|(id, status)| { statuses.insert(id, status); });
+        .for_each(|(id, status)| {
+            statuses.insert(id, status);
+        });
 
     if args.continue_on_error {
-        ThreadPoolBuilder::new().num_threads(args.parallel as usize)
-            .build().expect("failed to create thread pool")
+        ThreadPoolBuilder::new()
+            .num_threads(args.parallel as usize)
+            .build()
+            .expect("failed to create thread pool")
             .install(|| {
-                to_run.into_par_iter()
+                to_run
+                    .into_par_iter()
                     .map(|task| {
                         let (id, status) = exec(&args, task);
                         statuses.insert(id, status);
@@ -115,8 +121,12 @@ pub fn do_cmd(args: DoArgs) -> bool {
                     .for_each(|_| {});
             });
     } else {
-        assert!(args.parallel <= 1, "cannot use parallel mode when continue-on-error is true");
-        to_run.into_iter()
+        assert!(
+            args.parallel <= 1,
+            "cannot use parallel mode when continue-on-error is true"
+        );
+        to_run
+            .into_iter()
             .map(|task| {
                 let (id, status) = exec(&args, task);
                 statuses.insert(id, status);
@@ -137,7 +147,9 @@ pub fn do_cmd(args: DoArgs) -> bool {
             println!("{} command(s) left", remaining.len());
         }
     }
-    let all_ok = statuses.iter().all(|entry| *entry.value() == Status::Success);
+    let all_ok = statuses
+        .iter()
+        .all(|entry| *entry.value() == Status::Success);
     all_ok
 }
 
@@ -147,10 +159,13 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
         args.continue_on_error = true
     }
     if args.all {
-        args.count = 0  // to spot bugs
+        args.count = 0 // to spot bugs
     }
     if args.all || args.count < args.parallel {
-        info!("--parallel ({}) is higher than --count ({})", args.parallel, args.count);
+        info!(
+            "--parallel ({}) is higher than --count ({})",
+            args.parallel, args.count
+        );
     }
     args
 }
@@ -261,9 +276,9 @@ fn should_keep_completed_task(
                 Status::Failed => {
                     if args.drop_failed {
                         debug!(
-                        "removing failed command (as requested with --drop-failed): {}",
-                        &cmd
-                    );
+                            "removing failed command (as requested with --drop-failed): {}",
+                            &cmd
+                        );
                         None
                     } else {
                         debug!("keep failed command to be retried: {}", &cmd);
@@ -274,7 +289,7 @@ fn should_keep_completed_task(
                     debug!("keep skipped command to be retried: {}", &cmd);
                     Some(TaskType::Running(running.clone()))
                 }
-            }
+            },
             None => {
                 eprintln!(
                     "command is running but not started by current run: {}",
