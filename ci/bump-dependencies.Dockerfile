@@ -1,5 +1,5 @@
 
-FROM mverleg/rust_nightly_musl_base:nodeps_2022-01-01_24
+FROM mverleg/rust_nightly_musl_base:nodeps_2022-04-01_29
 
 COPY ./ ./
 

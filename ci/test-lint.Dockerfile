@@ -1,5 +1,5 @@
 
-FROM mverleg/rust_nightly_musl_base:deps_2022-01-01_5
+FROM mverleg/rust_nightly_musl_base:deps_2022-04-01_29
 
 # Copy the code (all except .dockerignore).
 COPY ./ ./
