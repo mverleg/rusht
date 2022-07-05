@@ -5,5 +5,5 @@ pub use self::locked_args::LockedArgs;
 mod handle;
 mod locked;
 mod locked_args;
-mod locked_lock;
+mod lockfile;
 mod portwait;
