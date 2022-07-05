@@ -6,4 +6,5 @@ mod handle;
 mod locked;
 mod locked_args;
 mod lockfile;
+mod locked_io;
 mod portwait;
