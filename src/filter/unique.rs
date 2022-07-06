@@ -83,9 +83,11 @@ impl Keep {
     }
 }
 
-pub fn unique_live(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, mut out_line_handler: impl FnMut(&str)) {
+//TODO @mverleg: input is still buffered
+pub fn unique_nosort(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, out_line_handler: impl FnMut(&str)) {
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
+        //TODO @mverleg: can this use a borrow somehow?
         let mut key = txt.to_string();
         if let Some(re) = pattern {
             get_matches(re, txt.as_str(), &mut |mtch| key = mtch, true, true)
@@ -95,21 +97,6 @@ pub fn unique_live(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, mut ou
         }
         out_line_handler(txt.as_str())
     }
-}
-
-pub fn unique_buffered(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
-    let mut result = Vec::with_capacity(texts.len());
-    let mut seen = HashSet::with_capacity(texts.len());
-    for txt in texts {
-        if !keep.keep_is_first(seen.insert(txt)) {
-            continue;
-        }
-        result.push(txt)
-    }
-    if Order::SortAscending == order {
-        order_inplace(&mut result);
-    }
-    result
 }
 
 /// Removes strings that have another string as prefix, preserving order.
@@ -178,7 +165,7 @@ mod tests {
 
     #[test]
     fn unique_first() {
-        let res = unique_buffered(
+        let res = unique_nosort(
             ustrvec!["/a", "/c", "/a", "/b"],
             Order::Preserve,
             Keep::First,
@@ -188,7 +175,7 @@ mod tests {
 
     #[test]
     fn unique_sorted() {
-        let res = unique_buffered(
+        let res = unique_nosort(
             ustrvec!["/a", "/c", "/a", "/b"],
             Order::SortAscending,
             Keep::First,
@@ -198,7 +185,7 @@ mod tests {
 
     #[test]
     fn unique_duplicates() {
-        let res = unique_buffered(
+        let res = unique_nosort(
             ustrvec!["/a", "/c", "/a", "/a", "/b", "/c"],
             Order::Preserve,
             Keep::Subsequent,
@@ -209,7 +196,7 @@ mod tests {
     #[test]
     fn unique_by() {
         let mut res = vec![];
-        unique_live(
+        unique_live_preserve_order(
             ustrvec!["hello world", "hello moon", "bye moon"],
             Keep::First,
             &Some(Regex::new("^[a-z]+").unwrap()),
