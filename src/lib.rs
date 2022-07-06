@@ -16,18 +16,20 @@ mod tests {
 
     #[test]
     fn implement_test() {
-        let inp = VecReader::new(vec![
+        let mut inp = VecReader::new(vec![
             "hello world",
             "hello Mars",
             "hello Venus",
             "bye world",
         ]);
-        let out = VecWriter::new();
+        let mut out = VecWriter::new();
         grab(GrabArgs {
             pattern: Regex::new("^hello ").unwrap(),
             first_only: true,
             keep_unmatched: true
-        }, inp, out);
+        },
+             &mut inp,
+             &mut out);
 
     }
 }

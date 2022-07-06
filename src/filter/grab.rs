@@ -2,7 +2,7 @@ use ::std::io;
 
 use ::clap::StructOpt;
 use ::regex::Regex;
-use crate::common::get_matches;
+use crate::common::{get_matches, LineReader, LineWriter};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -46,8 +46,8 @@ fn test_cli_args() {
 
 pub fn grab(
     args: GrabArgs,
-    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
-    mut consume: impl FnMut(String),
+    reader: &mut impl LineReader,
+    writer: &mut impl LineWriter,
 ) -> Result<(), String> {
     while let Some(line_res) = line_supplier() {
         let line = match line_res {

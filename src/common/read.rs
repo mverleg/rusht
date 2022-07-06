@@ -12,6 +12,28 @@ pub trait LineReader {
 }
 
 #[derive(Debug)]
+struct LineReaderIterator<'a, R: LineReader> {
+    reader: &'a R
+}
+
+impl <'a, R: LineReader> Iterator for LineReaderIterator<'a, R> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<&'a str> {
+        self.reader.read_line().await
+    }
+}
+
+// impl <'a> IntoIterator for LineReader {
+//     type Item = &'a str;
+//     type IntoIter = ReaderIterator;
+//
+//     fn into_iter(self) -> ReaderIterator {
+//         ReaderIterator
+//     }
+// }
+
+#[derive(Debug)]
 pub struct StdinReader {
     reader: BufReader<Stdin>,
     buffer: String,
