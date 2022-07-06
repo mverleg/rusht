@@ -2,6 +2,7 @@ use ::std::collections::HashSet;
 
 use ::clap::StructOpt;
 use ::log::debug;
+use ::regex::Regex;
 use ::ustr::Ustr;
 use ::ustr::UstrSet;
 
@@ -15,6 +16,11 @@ pub struct UniqueArgs {
     pub order: Order,
     #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
+    #[structopt(
+        long,
+        help = "Use a given regular expression that captures the key to deduplicate by. Uses the first capture group if any, or the whole match otherwise. Only buffers per-line, i.e. near-real-time."
+    )]
+    pub by: Option<Regex>,
     #[structopt(
         short = 'p',
         long = "prefix",
