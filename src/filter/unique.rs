@@ -1,11 +1,12 @@
 use ::std::collections::HashSet;
-use ::std::io;
 
 use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
 
-use crate::common::get_matches;
+use crate::common::{FirstItemWriter, get_matches, VecWriter};
+use crate::common::LineReader;
+use crate::common::LineWriter;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -83,51 +84,51 @@ impl Keep {
     }
 }
 
-pub fn unique(
+pub async fn unique(
     args: UniqueArgs,
-    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
-    mut out_line_handler: impl FnMut(&str)
+    reader: &mut impl LineReader,
+    writer: &mut impl LineWriter,
 ) {
     if args.prefix {
-        let mut lines = vec![];
-        while let Some(line_res) = line_supplier() {
-            lines.push(line_res.expect("could not read line"))
+        let lines = reader.collect_all().await;
+        for line in unique_prefix(lines, args.order, args.keep) {
+            writer.write_line(line).await
         }
-        unique_prefix(lines, args.order, args.keep).iter()
-            .for_each(|line| out_line_handler(line.as_str()));
     } else {
         if Order::SortAscending == args.order {
-            let mut matches = vec![];
-            unique_nosort(args.keep, &args.by, line_supplier, |line| matches.push(line.to_owned()));
+            let mut vec_writer = VecWriter::new();
+            unique_nosort(args.keep, &args.by, reader, &mut vec_writer);
+            let mut matches = vec_writer.get();
             order_inplace(&mut matches);
-            matches.into_iter().for_each(|line| out_line_handler(&line))
+            //TODO @mark: make this into function:
+            for line in matches {
+                writer.write_line(&line).await
+            }
         } else {
-            unique_nosort(args.keep, &args.by, line_supplier, |line| out_line_handler(line))
+            unique_nosort(args.keep, &args.by, reader, writer).await
         }
     };
 }
 
-fn unique_nosort(
+async fn unique_nosort(
     keep: Keep,
     unique_by_pattern: &Option<Regex>,
-    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
-    mut out_line_handler: impl FnMut(&str),
+    reader: &mut impl LineReader,
+    writer: &mut impl LineWriter,
 ) {
     let mut seen = HashSet::new();
-    while let Some(line_res) = line_supplier() {
-        let line = match line_res {
-            Ok(line) => line,
-            Err(err) => panic!("failed to read line: {}", err),
-        };
+    while let Some(line) = reader.read_line().await {
         //TODO @mverleg: can this use a borrow somehow?
-        let mut key = line.clone();
+        let mut key = line.to_owned();
         if let Some(re) = unique_by_pattern {
-            get_matches(re, &line, &mut |mtch| key = mtch, true, true).await
+            let mut first_writer = FirstItemWriter::new();
+            get_matches(re, &line, &mut first_writer, true, true).await;
+            first_writer.get().map(|val| key = val);
         }
         if !keep.keep_is_first(seen.insert(key)) {
             continue;
         }
-        out_line_handler(&line)
+        writer.write_line(&line).await
     }
 }
 
@@ -179,151 +180,152 @@ fn unique_prefix_sorted(mut texts: Vec<String>, mut collect: impl FnMut(String))
     }
 }
 
-#[cfg(test)]
-#[allow(clippy::vec_init_then_push, unused_mut)]
-mod tests {
-    use super::*;
-
-    macro_rules! strvec {
-        ($($element: expr),*) => {
-            {
-                let mut txts: Vec<String> = Vec::new();
-                $(
-                    txts.push($element.to_owned());
-                )*
-                txts
-            }
-        };
-    }
-
-    fn unique_collect(lines: Vec<String>, order: Order, keep: Keep) -> Vec<String> {
-        let args = UniqueArgs { order, keep, by: None, prefix: false };
-        let mut res = vec![];
-        let mut line_iter = lines.into_iter().map(|line| io::Result::Ok(line));
-        unique(args, || line_iter.next(), |line| res.push(line.to_owned()));
-        res
-    }
-
-    #[test]
-    fn unique_first() {
-        let res = unique_collect(
-            strvec!["/a", "/c", "/a", "/b"],
-            Order::Preserve,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/a", "/c", "/b"]);
-    }
-
-    #[test]
-    fn unique_sorted() {
-        let res = unique_collect(
-            strvec!["/a", "/c", "/a", "/b"],
-            Order::SortAscending,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/a", "/b", "/c"]);
-    }
-
-    #[test]
-    fn unique_duplicates() {
-        let res = unique_collect(
-            strvec!["/a", "/c", "/a", "/a", "/b", "/c"],
-            Order::Preserve,
-            Keep::Subsequent,
-        );
-        assert_eq!(res, strvec!["/a", "/a", "/c"]);
-    }
-
-    //TODO @mverleg:
-    // #[test]
-    // fn unique_by() {
-    //     let mut res = vec![];
-    //     unique_live_preserve_order(
-    //         strvec!["hello world", "hello moon", "bye moon"],
-    //         Keep::First,
-    //         &Some(Regex::new("^[a-z]+").unwrap()),
-    //         |line| res.push(line.to_owned())
-    //     );
-    //     assert_eq!(res, vec!["hello world".to_owned(), "bye moon".to_owned()]);
-    // }
-
-    #[test]
-    fn unique_prefix_empty() {
-        let res = unique_prefix(strvec![], Order::Preserve, Keep::First);
-        assert_eq!(res, strvec![]);
-    }
-
-    #[test]
-    fn unique_prefix_first() {
-        let res = unique_prefix(
-            strvec!["/a", "/a/b", "/a/c", "/a"],
-            Order::Preserve,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/a"]);
-    }
-
-    #[test]
-    fn unique_prefix_drop_duplicates() {
-        let res = unique_prefix(strvec!["/a", "/a", "/a"], Order::Preserve, Keep::First);
-        assert_eq!(res, strvec!["/a"]);
-    }
-
-    #[test]
-    fn unique_prefix_middle() {
-        let res = unique_prefix(strvec!["/a/c", "/a", "/a/b"], Order::Preserve, Keep::First);
-        assert_eq!(res, strvec!["/a"]);
-    }
-
-    #[test]
-    fn unique_prefix_keep_duplicates() {
-        let res = unique_prefix(
-            strvec!["/a/c", "/a", "/a/b", "/a/c", "/a", "/a"],
-            Order::Preserve,
-            Keep::Subsequent,
-        );
-        assert_eq!(res, strvec!["/a", "/a"]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn unique_prefix_keep_duplicates_not_supported_with_sort() {
-        let _ = unique_prefix(strvec![], Order::SortAscending, Keep::Subsequent);
-    }
-
-    #[test]
-    fn unique_prefix_preserve_order() {
-        let res = unique_prefix(
-            strvec!["/d", "/b", "/a", "/c", "/a/a"],
-            Order::Preserve,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/d", "/b", "/a", "/c"]);
-    }
-
-    #[test]
-    fn unique_prefix_sorted() {
-        let res = unique_prefix(
-            strvec!["/a/c", "/a/b", "/a/c/q"],
-            Order::SortAscending,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/a/b", "/a/c"]);
-    }
-
-    #[test]
-    fn unique_prefix_nomatch() {
-        let res = unique_prefix(strvec!["/a/c", "/a/b", "/b"], Order::Preserve, Keep::First);
-        assert_eq!(res, strvec!["/a/c", "/a/b", "/b"]);
-    }
-
-    #[test]
-    fn unique_prefix_dedup_if_no_parent() {
-        let res = unique_prefix(
-            strvec!["/a/c", "/a/c", "/b", "/b/a"],
-            Order::Preserve,
-            Keep::First,
-        );
-        assert_eq!(res, strvec!["/a/c", "/b"]);
-    }
-}
+// #[cfg(test)]
+// #[allow(clippy::vec_init_then_push, unused_mut)]
+// mod tests {
+//     use super::*;
+//
+//     macro_rules! strvec {
+//         ($($element: expr),*) => {
+//             {
+//                 let mut txts: Vec<String> = Vec::new();
+//                 $(
+//                     txts.push($element.to_owned());
+//                 )*
+//                 txts
+//             }
+//         };
+//     }
+//
+//     fn unique_collect(lines: Vec<String>, order: Order, keep: Keep) -> Vec<String> {
+//         let args = UniqueArgs { order, keep, by: None, prefix: false };
+//         let mut res = vec![];
+//         let mut line_iter = lines.into_iter().map(|line| io::Result::Ok(line));
+//         unique(args, || line_iter.next(), |line| res.push(line.to_owned()));
+//         res
+//     }
+//
+//     #[test]
+//     fn unique_first() {
+//         let res = unique_collect(
+//             strvec!["/a", "/c", "/a", "/b"],
+//             Order::Preserve,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/a", "/c", "/b"]);
+//     }
+//
+//     #[test]
+//     fn unique_sorted() {
+//         let res = unique_collect(
+//             strvec!["/a", "/c", "/a", "/b"],
+//             Order::SortAscending,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/a", "/b", "/c"]);
+//     }
+//
+//     #[test]
+//     fn unique_duplicates() {
+//         let res = unique_collect(
+//             strvec!["/a", "/c", "/a", "/a", "/b", "/c"],
+//             Order::Preserve,
+//             Keep::Subsequent,
+//         );
+//         assert_eq!(res, strvec!["/a", "/a", "/c"]);
+//     }
+//
+//     //TODO @mverleg:
+//     // #[test]
+//     // fn unique_by() {
+//     //     let mut res = vec![];
+//     //     unique_live_preserve_order(
+//     //         strvec!["hello world", "hello moon", "bye moon"],
+//     //         Keep::First,
+//     //         &Some(Regex::new("^[a-z]+").unwrap()),
+//     //         |line| res.push(line.to_owned())
+//     //     );
+//     //     assert_eq!(res, vec!["hello world".to_owned(), "bye moon".to_owned()]);
+//     // }
+//
+//     #[test]
+//     fn unique_prefix_empty() {
+//         let res = unique_prefix(strvec![], Order::Preserve, Keep::First);
+//         assert_eq!(res, strvec![]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_first() {
+//         let res = unique_prefix(
+//             strvec!["/a", "/a/b", "/a/c", "/a"],
+//             Order::Preserve,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/a"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_drop_duplicates() {
+//         let res = unique_prefix(strvec!["/a", "/a", "/a"], Order::Preserve, Keep::First);
+//         assert_eq!(res, strvec!["/a"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_middle() {
+//         let res = unique_prefix(strvec!["/a/c", "/a", "/a/b"], Order::Preserve, Keep::First);
+//         assert_eq!(res, strvec!["/a"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_keep_duplicates() {
+//         let res = unique_prefix(
+//             strvec!["/a/c", "/a", "/a/b", "/a/c", "/a", "/a"],
+//             Order::Preserve,
+//             Keep::Subsequent,
+//         );
+//         assert_eq!(res, strvec!["/a", "/a"]);
+//     }
+//
+//     #[test]
+//     #[should_panic]
+//     fn unique_prefix_keep_duplicates_not_supported_with_sort() {
+//         let _ = unique_prefix(strvec![], Order::SortAscending, Keep::Subsequent);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_preserve_order() {
+//         let res = unique_prefix(
+//             strvec!["/d", "/b", "/a", "/c", "/a/a"],
+//             Order::Preserve,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/d", "/b", "/a", "/c"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_sorted() {
+//         let res = unique_prefix(
+//             strvec!["/a/c", "/a/b", "/a/c/q"],
+//             Order::SortAscending,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/a/b", "/a/c"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_nomatch() {
+//         let res = unique_prefix(strvec!["/a/c", "/a/b", "/b"], Order::Preserve, Keep::First);
+//         assert_eq!(res, strvec!["/a/c", "/a/b", "/b"]);
+//     }
+//
+//     #[test]
+//     fn unique_prefix_dedup_if_no_parent() {
+//         let res = unique_prefix(
+//             strvec!["/a/c", "/a/c", "/b", "/b/a"],
+//             Order::Preserve,
+//             Keep::First,
+//         );
+//         assert_eq!(res, strvec!["/a/c", "/b"]);
+//     }
+// }
+//TODO @mark: ^

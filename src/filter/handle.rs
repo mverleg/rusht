@@ -1,4 +1,3 @@
-use ::std::io::{BufRead, BufReader, stdin};
 use ::std::process::exit;
 use crate::common::{StdinReader, StdoutWriter};
 
@@ -17,7 +16,6 @@ pub async fn handle_grab(args: GrabArgs) {
     }
 }
 
-pub fn handle_unique(args: UniqueArgs) {
-    let mut lines = BufReader::new(stdin().lock()).lines();
-    unique(args, || lines.next(), |line| println!("{}", line));
+pub async fn handle_unique(args: UniqueArgs) {
+    unique(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
 }

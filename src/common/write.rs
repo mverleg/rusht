@@ -4,7 +4,7 @@ use ::async_std::io::WriteExt;
 use ::async_trait::async_trait;
 
 #[async_trait]
-pub trait LineWriter {
+pub trait LineWriter: Send {
     async fn write_line(&mut self, line: impl AsRef<str> + Send);
 }
 
@@ -52,5 +52,29 @@ impl VecWriter {
 impl LineWriter for VecWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         self.lines.push(line.as_ref().to_owned())
+    }
+}
+
+#[derive(Debug)]
+pub struct FirstItemWriter {
+    line: Option<String>,
+}
+
+impl FirstItemWriter {
+    pub fn new() -> Self {
+        FirstItemWriter {
+            line: None
+        }
+    }
+
+    pub fn get(self) -> Option<String> {
+        self.line
+    }
+}
+
+#[async_trait]
+impl LineWriter for FirstItemWriter {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        self.line.get_or_insert_with(|| line.as_ref().to_owned());
     }
 }

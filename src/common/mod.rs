@@ -8,13 +8,14 @@ pub use self::stdin::EmptyLineHandling;
 pub use self::stdin::stdin_lines;
 pub use self::task::CommandArgs;
 pub use self::task::Task;
+pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
 pub use self::write::StdoutWriter;
 pub use self::write::VecWriter;
 
 mod err;
 mod files;
-#[deprecated]
+//#[deprecated]   //TODO @mark:
 mod stdin;
 mod read;
 mod write;

@@ -43,6 +43,7 @@ fn test_cli_args() {
     RushtArgs::into_app().debug_assert()
 }
 
+#[async_std::main]
 fn main() {
     env_logger::init();
     let args = RushtArgs::from_args();

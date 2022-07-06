@@ -4,11 +4,17 @@ use ::async_std::io::stdin;
 use ::async_std::io::Stdin;
 use ::async_trait::async_trait;
 
-use crate::common::write::LineWriter;
-
 #[async_trait]
-pub trait LineReader {
+pub trait LineReader: Send {
     async fn read_line(&mut self) -> Option<&str>;
+
+    async fn collect_all(&mut self) -> Vec<String> {
+        let mut all = vec![];
+        while let Some(line) = self.read_line().await {
+            all.push(line.to_owned())
+        }
+        all
+    }
 }
 
 #[derive(Debug)]

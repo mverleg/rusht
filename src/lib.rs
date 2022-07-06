@@ -12,8 +12,6 @@ mod tests {
     use crate::common::{VecReader, VecWriter};
     use crate::filter::{grab, GrabArgs};
 
-    use super::*;
-
     #[test]
     fn implement_test() {
         let mut inp = VecReader::new(vec![
