@@ -1,12 +1,13 @@
-use ::std::io::{stdin, BufRead, BufReader};
+use ::std::io::{BufRead, BufReader, stdin};
 use ::std::process::exit;
 
 use ::ustr::Ustr;
 
 use crate::common::EmptyLineHandling;
+use crate::filter::{Order, unique_buffered, unique_live};
 
 use super::{grab, GrabArgs};
-use super::{unique, unique_prefix, UniqueArgs};
+use super::{unique_prefix, UniqueArgs};
 
 pub fn handle_grab(args: GrabArgs) {
     let mut lines = BufReader::new(stdin().lock()).lines();
@@ -25,12 +26,15 @@ pub fn handle_unique(args: UniqueArgs) {
         .iter()
         .map(|line| Ustr::from(line))
         .collect();
-    let result = if args.prefix {
-        unique_prefix(lines, args.order, args.keep)
+    if args.prefix {
+        unique_prefix(lines, args.order, args.keep).iter()
+            .for_each(|line| println!("{}", line));
     } else {
-        unique(lines, args.order, args.keep)
+        if Order::SortAscending == args.order || args.prefix {
+            unique_buffered(lines, args.order, args.keep).iter()
+                .for_each(|line| println!("{}", line));
+        } else {
+            unique_live(lines, args.keep, |line| println!("{}", line))
+        }
     };
-    for line in result {
-        println!("{}", line);
-    }
 }

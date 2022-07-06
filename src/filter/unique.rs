@@ -11,14 +11,15 @@ use ::ustr::UstrSet;
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
 pub struct UniqueArgs {
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", help = "Sort the entries")]
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", help = "Sort the entries. Buffers all the input.")]
     pub order: Order,
     #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
     #[structopt(
         short = 'p',
         long = "prefix",
-        help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter."
+        help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter. Buffers all the input.",
+        conflicts_with = "by"
     )]
     pub prefix: bool,
 }
@@ -29,7 +30,7 @@ fn test_cli_args() {
     UniqueArgs::into_app().debug_assert()
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Order {
     #[default]
     Preserve,
@@ -44,13 +45,11 @@ impl Order {
             Order::Preserve
         }
     }
+}
 
-    fn order_inplace<T: Ord>(&self, data: &mut [T]) {
-        if let Order::SortAscending = *self {
-            debug!("sorting unique_prefix result");
-            data.sort_unstable()
-        }
-    }
+fn order_inplace<T: Ord>(data: &mut [T]) {
+    debug!("sorting unique_prefix result");
+    data.sort_unstable()
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -77,7 +76,17 @@ impl Keep {
     }
 }
 
-pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
+pub fn unique_live(texts: Vec<Ustr>, keep: Keep, mut out_line_handler: impl FnMut(&str)) {
+    let mut seen = HashSet::with_capacity(texts.len());
+    for txt in texts {
+        if !keep.keep_is_first(seen.insert(txt)) {
+            continue;
+        }
+        out_line_handler(txt.as_str())
+    }
+}
+
+pub fn unique_buffered(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     let mut result = Vec::with_capacity(texts.len());
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
@@ -86,7 +95,9 @@ pub fn unique(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
         }
         result.push(txt)
     }
-    order.order_inplace(&mut result);
+    if Order::SortAscending == order {
+        order_inplace(&mut result);
+    }
     result
 }
 
@@ -156,7 +167,7 @@ mod tests {
 
     #[test]
     fn unique_first() {
-        let res = unique(
+        let res = unique_buffered(
             ustrvec!["/a", "/c", "/a", "/b"],
             Order::Preserve,
             Keep::First,
@@ -166,7 +177,7 @@ mod tests {
 
     #[test]
     fn unique_sorted() {
-        let res = unique(
+        let res = unique_buffered(
             ustrvec!["/a", "/c", "/a", "/b"],
             Order::SortAscending,
             Keep::First,
@@ -176,13 +187,15 @@ mod tests {
 
     #[test]
     fn unique_duplicates() {
-        let res = unique(
+        let res = unique_buffered(
             ustrvec!["/a", "/c", "/a", "/a", "/b", "/c"],
             Order::Preserve,
             Keep::Subsequent,
         );
         assert_eq!(res, ustrvec!["/a", "/a", "/c"]);
     }
+
+    //TODO @mverleg: tests for --by
 
     #[test]
     fn unique_prefix_empty() {
