@@ -19,6 +19,7 @@ mod tests {
             "hello Mars",
             "hello Venus",
             "bye world",
+            "bye Jupiter",
         ]);
         let mut out = VecWriter::new();
         let grab_args = GrabArgs {

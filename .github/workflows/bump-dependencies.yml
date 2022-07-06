@@ -72,7 +72,6 @@ jobs:
           update test_lint 'test-lint.Dockerfile' './ci/test-lint.Dockerfile' &
           wait
       - name: Docker bump
-        #TODO @mark:
         if: hashFiles('ci/upgrade_docker_base.sh') != '' && steps.conf.outputs.dockerfile == 1
         run: |
           sh ci/upgrade_docker_base.sh

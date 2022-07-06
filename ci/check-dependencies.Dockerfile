@@ -12,4 +12,3 @@ RUN cargo --offline deny check advisories
 RUN cargo --offline deny check licenses
 #RUN cargo --offline deny check bans
 #RUN cargo udeps --all-targets --all-features
-#TODO @mark: more checks here?

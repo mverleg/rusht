@@ -6,6 +6,12 @@ use ::async_trait::async_trait;
 #[async_trait]
 pub trait LineWriter: Send {
     async fn write_line(&mut self, line: impl AsRef<str> + Send);
+
+    async fn write_all_lines<S: AsRef<str> + Send>(&mut self, lines: impl Iterator<Item=S> + Send) {
+        for line in lines {
+            self.write_line(line).await
+        }
+    }
 }
 
 #[derive(Debug)]

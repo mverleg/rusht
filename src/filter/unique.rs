@@ -100,10 +100,7 @@ pub async fn unique(
             unique_nosort(args.keep, &args.by, reader, &mut vec_writer).await;
             let mut matches = vec_writer.get();
             order_inplace(&mut matches);
-            //TODO @mark: make this into function:
-            for line in matches {
-                writer.write_line(&line).await
-            }
+            writer.write_all_lines(matches.into_iter()).await
         } else {
             unique_nosort(args.keep, &args.by, reader, writer).await
         }
