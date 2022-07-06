@@ -1,5 +1,3 @@
-use ::std::io;
-
 use ::clap::StructOpt;
 use ::regex::Regex;
 use crate::common::{get_matches, LineReader, LineWriter};
@@ -44,23 +42,20 @@ fn test_cli_args() {
     GrabArgs::into_app().debug_assert()
 }
 
-pub fn grab(
+pub async fn grab(
     args: GrabArgs,
     reader: &mut impl LineReader,
     writer: &mut impl LineWriter,
 ) -> Result<(), String> {
-    while let Some(line_res) = line_supplier() {
-        let line = match line_res {
-            Ok(line) => line,
-            Err(err) => return Err(format!("failed to read line: {}", err)),
-        };
-        get_matches(&args.pattern, &line, &mut consume, args.first_only, args.keep_unmatched);
+    while let Some(line) = reader.read_line().await {
+        get_matches(&args.pattern, &line, writer, args.first_only, args.keep_unmatched);
     }
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::common::{VecReader, VecWriter};
     use super::*;
 
     fn run_grab<S: Into<String>>(input: Vec<S>) -> Vec<String> {
@@ -74,10 +69,9 @@ mod tests {
     }
 
     fn run_grab_arg<S: Into<String>>(args: GrabArgs, input: Vec<S>) -> Vec<String> {
-        let mut res = vec![];
-        let mut lines = input.into_iter().map(|v| Ok(v.into()));
-        grab(args, || lines.next(), |line| res.push(line)).unwrap();
-        res
+        let mut res = VecWriter::new();
+        grab(args, &mut VecReader::new(input), &mut res);
+        res.get()
     }
 
     #[test]

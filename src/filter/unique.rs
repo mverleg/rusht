@@ -122,7 +122,7 @@ fn unique_nosort(
         //TODO @mverleg: can this use a borrow somehow?
         let mut key = line.clone();
         if let Some(re) = unique_by_pattern {
-            get_matches(re, &line, &mut |mtch| key = mtch, true, true)
+            get_matches(re, &line, &mut |mtch| key = mtch, true, true).await
         }
         if !keep.keep_is_first(seen.insert(key)) {
             continue;

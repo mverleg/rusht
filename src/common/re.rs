@@ -1,6 +1,7 @@
 use ::regex::Regex;
+use crate::common::LineWriter;
 
-pub fn get_matches(pattern: &Regex, text: &str, handle_match: &mut impl FnMut(String), first_only: bool, keep_unmatched: bool) {
+pub async fn get_matches(pattern: &Regex, text: &str, writer: &mut impl LineWriter, first_only: bool, keep_unmatched: bool) {
     match pattern.captures(&text) {
         Some(captures) => {
             let mut caps = captures.iter();
@@ -8,7 +9,7 @@ pub fn get_matches(pattern: &Regex, text: &str, handle_match: &mut impl FnMut(St
             let mut any_groups = false;
             for mtch_opt in caps {
                 if let Some(mtch) = mtch_opt {
-                    handle_match(mtch.as_str().to_owned());
+                    writer.write_line(mtch.as_str()).await;
                 }
                 any_groups = true;
                 if first_only {
@@ -16,12 +17,12 @@ pub fn get_matches(pattern: &Regex, text: &str, handle_match: &mut impl FnMut(St
                 }
             }
             if !any_groups {
-                handle_match(full_match);
+                writer.write_line(full_match).await;
             }
         }
         None => {
             if keep_unmatched {
-                handle_match(text.to_owned())
+                writer.write_line(text.to_owned()).await
             }
         }
     }
