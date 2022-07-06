@@ -1,10 +1,11 @@
 use ::std::collections::HashSet;
+use ::std::io;
 
 use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
-use ::ustr::Ustr;
 use ::ustr::UstrSet;
+
 use crate::common::get_matches;
 
 #[derive(StructOpt, Debug, Default)]
@@ -83,13 +84,36 @@ impl Keep {
     }
 }
 
-//TODO @mverleg: input is still buffered
-pub fn unique_nosort(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, out_line_handler: impl FnMut(&str)) {
-    let mut seen = HashSet::with_capacity(texts.len());
-    for txt in texts {
+pub fn unique(
+    args: UniqueArgs,
+    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
+    out_line_handler: impl FnMut(&str)) {
+    if args.prefix {
+        let lines = line_supplier.collect();
+        unique_prefix(lines, args.order, args.keep).iter()
+            .for_each(|line| out_line_handler(line.as_str()));
+    } else {
+        if Order::SortAscending == args.order {
+            let mut matches = vec![];
+            unique_nosort(args.keep, &args.by, line_supplier, |line| matches.push(line));
+            order_inplace(&mut matches);
+            matches.into_iter().for_each(|line| out_line_handler(line))
+        } else {
+            unique_nosort(args.keep, &args.by, line_supplier, |line| out_line_handler(line))
+        }
+    };
+}
+
+fn unique_nosort(
+    keep: Keep,
+    unique_by_pattern: &Option<Regex>,
+    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
+    out_line_handler: impl FnMut(&str)) {
+    let mut seen = HashSet::new();
+    while Some(txt) = line_supplier() {
         //TODO @mverleg: can this use a borrow somehow?
         let mut key = txt.to_string();
-        if let Some(re) = pattern {
+        if let Some(re) = unique_by_pattern {
             get_matches(re, txt.as_str(), &mut |mtch| key = mtch, true, true)
         }
         if !keep.keep_is_first(seen.insert(key)) {
@@ -101,7 +125,7 @@ pub fn unique_nosort(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, out_
 
 /// Removes strings that have another string as prefix, preserving order.
 /// E.g. '/a/b' and '/a/c' and '/a', will keep '/a'
-pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
+pub fn unique_prefix(texts: Vec<String>, order: Order, keep: Keep) -> Vec<String> {
     if matches!(order, Order::SortAscending) && matches!(keep, Keep::Subsequent) {
         panic!("--filter-duplicates, --sorted and --prefix cannot all be used together");
     };
@@ -132,7 +156,7 @@ pub fn unique_prefix(texts: Vec<Ustr>, order: Order, keep: Keep) -> Vec<Ustr> {
     }
 }
 
-fn unique_prefix_sorted(mut texts: Vec<Ustr>, mut collect: impl FnMut(Ustr)) {
+fn unique_prefix_sorted(mut texts: Vec<String>, mut collect: impl FnMut(String)) {
     texts.sort_unstable();
     collect(texts[0]);
     let mut prev = texts[0].as_str();

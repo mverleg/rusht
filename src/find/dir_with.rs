@@ -10,10 +10,8 @@ use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
-use ::ustr::Ustr;
 
-use crate::filter::unique_prefix;
-use crate::filter::{Keep, Order as UniqueOrder};
+use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
 use crate::find::Nested::StopOnMatch;
 
 #[derive(StructOpt, Debug, Default)]
@@ -151,7 +149,7 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
     let unique_roots = unique_prefix(
         roots
             .iter()
-            .map(|p| Ustr::from(p.to_string_lossy().as_ref()))
+            .map(|p| p.to_string_lossy().to_string())
             .collect(),
         UniqueOrder::SortAscending,
         Keep::First,
