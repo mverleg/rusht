@@ -53,30 +53,7 @@ pub fn grab(
             Ok(line) => line,
             Err(err) => return Err(format!("failed to read line: {}", err)),
         };
-        match args.pattern.captures(&line) {
-            Some(captures) => {
-                let mut caps = captures.iter();
-                let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
-                let mut any_groups = false;
-                for mtch_opt in caps {
-                    if let Some(mtch) = mtch_opt {
-                        consume(mtch.as_str().to_owned());
-                    }
-                    any_groups = true;
-                    if args.first_only {
-                        break;
-                    }
-                }
-                if !any_groups {
-                    consume(full_match);
-                }
-            }
-            None => {
-                if args.keep_unmatched {
-                    consume(line)
-                }
-            }
-        }
+        get_matches(&args.pattern, &line, consume, args.first_only, args.keep_unmatched);
     }
     Ok(())
 }

@@ -9,3 +9,4 @@ mod err;
 mod files;
 mod stdin;
 mod task;
+mod re;
