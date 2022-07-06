@@ -74,7 +74,7 @@ mod tests {
 
     async fn run_grab_arg<S: Into<String>>(args: GrabArgs, input: Vec<S>) -> Vec<String> {
         let mut res = VecWriter::new();
-        grab(args, &mut VecReader::new(input), &mut res).await;
+        grab(args, &mut VecReader::new(input), &mut res).await.unwrap();
         res.get()
     }
 

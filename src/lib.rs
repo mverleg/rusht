@@ -12,8 +12,8 @@ mod tests {
     use crate::common::{VecReader, VecWriter};
     use crate::filter::{grab, GrabArgs};
 
-    #[test]
-    fn implement_test() {
+    #[async_std::test]
+    async fn chain_inout() {
         let mut inp = VecReader::new(vec![
             "hello world",
             "hello Mars",
@@ -21,13 +21,17 @@ mod tests {
             "bye world",
         ]);
         let mut out = VecWriter::new();
-        grab(GrabArgs {
-            pattern: Regex::new("^hello ").unwrap(),
+        let grab_args = GrabArgs {
+            pattern: Regex::new("^hello (.*)").unwrap(),
             first_only: true,
             keep_unmatched: true
-        },
-             &mut inp,
-             &mut out);
-
+        };
+        grab(grab_args, &mut inp, &mut out).await.unwrap();
+        out.assert_eq(vec![
+            "world",
+            "Mars",
+            "Venus",
+            "bye world",
+        ]);
     }
 }

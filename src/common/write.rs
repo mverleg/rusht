@@ -46,6 +46,13 @@ impl VecWriter {
     pub fn get(self) -> Vec<String> {
         self.lines
     }
+
+    pub fn assert_eq<S: Into<String>>(&self, lines: Vec<S>) {
+        let expected: Vec<String> = lines.into_iter()
+            .map(|line| line.into())
+            .collect();
+        assert_eq!(self.lines, expected);
+    }
 }
 
 #[async_trait]
