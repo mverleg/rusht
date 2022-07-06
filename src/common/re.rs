@@ -1,4 +1,4 @@
-use regex::Regex;
+use ::regex::Regex;
 
 pub fn get_matches(pattern: &Regex, text: &str, handle_match: &mut impl FnMut(String), first_only: bool, keep_unmatched: bool) {
     match pattern.captures(&text) {
