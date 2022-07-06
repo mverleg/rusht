@@ -44,7 +44,7 @@ fn test_cli_args() {
 }
 
 #[async_std::main]
-fn main() {
+async fn main() {
     env_logger::init();
     let args = RushtArgs::from_args();
     match args.subcommand {
@@ -54,8 +54,8 @@ fn main() {
         SubCmd::Cmlist(sub_args) => handle_list(sub_args),
         SubCmd::Cmdrop(sub_args) => handle_drop(sub_args),
         SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
-        SubCmd::Grab(sub_args) => handle_grab(sub_args),
-        SubCmd::Unique(sub_args) => handle_unique(sub_args),
+        SubCmd::Grab(sub_args) => handle_grab(sub_args).await,
+        SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
     }
 }

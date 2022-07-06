@@ -76,8 +76,8 @@ sha2 = "0.10.2"
 base64 = "0.13.0"
 rayon = "1.5.3"
 dashmap = "5.3.4"
-async-std = "1.12.0"
-async-trait = { version = "0.1.56", feature = ["attributes"] }
+async-std = { version = "1.12.0", features = ["attributes"] }
+async-trait = "0.1.56"
 
 [dev-dependencies]
 tempfile = "3.3.0"

@@ -97,7 +97,7 @@ pub async fn unique(
     } else {
         if Order::SortAscending == args.order {
             let mut vec_writer = VecWriter::new();
-            unique_nosort(args.keep, &args.by, reader, &mut vec_writer);
+            unique_nosort(args.keep, &args.by, reader, &mut vec_writer).await;
             let mut matches = vec_writer.get();
             order_inplace(&mut matches);
             //TODO @mark: make this into function:
