@@ -4,12 +4,12 @@ use ::async_std::io::WriteExt;
 use ::async_trait::async_trait;
 
 #[async_trait]
-trait LineWriter {
+pub trait LineWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send);
 }
 
 #[derive(Debug)]
-struct StdoutWriter {
+pub struct StdoutWriter {
     writer: Stdout,
 }
 
@@ -32,7 +32,7 @@ impl LineWriter for StdoutWriter {
 }
 
 #[derive(Debug)]
-struct VecWriter {
+pub struct VecWriter {
     lines: Vec<String>,
 }
 

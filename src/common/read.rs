@@ -4,13 +4,15 @@ use ::async_std::io::stdin;
 use ::async_std::io::Stdin;
 use ::async_trait::async_trait;
 
+use crate::common::write::LineWriter;
+
 #[async_trait]
-trait LineReader {
+pub trait LineReader {
     async fn read_line(&mut self) -> Option<&str>;
 }
 
 #[derive(Debug)]
-struct StdinReader {
+pub struct StdinReader {
     reader: BufReader<Stdin>,
     buffer: String,
 }
@@ -34,7 +36,7 @@ impl LineReader for StdinReader {
 }
 
 #[derive(Debug)]
-struct VecReader {
+pub struct VecReader {
     lines: Vec<String>,
     current: String,
 }
@@ -58,3 +60,23 @@ impl LineReader for VecReader {
         Some(&self.current)
     }
 }
+
+// #[derive(Debug)]
+// pub struct ChainReader<W: LineWriter> {
+//     writer: W,
+// }
+//
+// impl <W: LineWriter> ChainReader<W> {
+//     pub fn new<S: Into<String>>(writer: W) -> Self {
+//         ChainReader {
+//             writer
+//         }
+//     }
+// }
+//
+// #[async_trait]
+// impl <W: LineWriter> LineReader for ChainReader<W> {
+//     async fn read_line(&mut self) -> Option<&str> {
+//         self.writer.write_line()
+//     }
+// }
