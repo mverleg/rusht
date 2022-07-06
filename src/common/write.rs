@@ -1,9 +1,11 @@
 use ::async_std::io::Stdout;
 use ::async_std::io::stdout;
-use async_std::io::WriteExt;
+use ::async_std::io::WriteExt;
+use ::async_trait::async_trait;
 
+#[async_trait]
 trait LineWriter {
-    fn write_line(&mut self, line: impl AsRef<str>);
+    async fn write_line(&mut self, line: impl AsRef<str> + Send);
 }
 
 #[derive(Debug)]
@@ -19,9 +21,13 @@ impl StdoutWriter {
     }
 }
 
+#[async_trait]
 impl LineWriter for StdoutWriter {
-    fn write_line(&mut self, line: impl AsRef<str>) {
-        self.writer.write(line.as_ref().as_bytes());
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let expected = line.as_ref().as_bytes().len();
+        let bytes = line.as_ref().as_bytes();
+        let write_len = self.writer.write(bytes).await.unwrap();
+        assert_eq!(expected, write_len);
     }
 }
 
@@ -42,8 +48,9 @@ impl VecWriter {
     }
 }
 
+#[async_trait]
 impl LineWriter for VecWriter {
-    fn write_line(&mut self, line: impl AsRef<str>) {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         self.lines.push(line.as_ref().to_owned())
     }
 }

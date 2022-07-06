@@ -1,10 +1,12 @@
 use ::async_std::io::BufReader;
+use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
 use ::async_std::io::Stdin;
-use ::async_std::io::prelude::BufReadExt;
+use ::async_trait::async_trait;
 
+#[async_trait]
 trait LineReader {
-    fn read_line(&mut self) -> Option<&str>;
+    async fn read_line(&mut self) -> Option<&str>;
 }
 
 #[derive(Debug)]
@@ -22,9 +24,11 @@ impl StdinReader {
     }
 }
 
+#[async_trait]
 impl LineReader for StdinReader {
-    fn read_line(&mut self) -> Option<&str> {
-        self.reader.read_line(&mut self.buffer);
+    async fn read_line(&mut self) -> Option<&str> {
+        let read_len = self.reader.read_line(&mut self.buffer).await.unwrap();
+        assert_eq!(read_len, self.buffer.len());
         Some(&self.buffer)
     }
 }
@@ -47,8 +51,9 @@ impl VecReader {
     }
 }
 
+#[async_trait]
 impl LineReader for VecReader {
-    fn read_line(&mut self) -> Option<&str> {
+    async fn read_line(&mut self) -> Option<&str> {
         self.current = self.lines.pop()?;
         Some(&self.current)
     }
