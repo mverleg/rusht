@@ -11,6 +11,7 @@ use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::SystemTime;
 use ::std::time::UNIX_EPOCH;
+use std::io::Read;
 
 use ::chrono::{DateTime, Local};
 use ::log::debug;
@@ -27,11 +28,12 @@ pub fn read(key: Key) -> Option<LockFile> {
     debug!("going to read lock for key '{}'", &key);
     let pth = lock_pth(key);
     if !pth.exists() {
-        debug!("no commands file at '{}'", pth.to_string_lossy());
-        return TaskStack::empty();
+        debug!("no lock file at '{}'", pth.to_string_lossy());
+        return None
     }
+    let content = read_file(&pth)?;
     let reader = BufReader::new(open_file(&pth, false));
-    match serde_json::from_reader::<_, TaskStack>(reader) {
+    match bincode::from_reader::<_, TaskStack>(reader) {
         Ok(tasks) => {
             debug!(
                 "successfully read {} commands from '{}'",
@@ -72,7 +74,7 @@ pub fn read(key: Key) -> Option<LockFile> {
 //         }
 //     } else {
 //         let mut writer = BufWriter::new(open_file(&pth, true));
-//         if let Err(err) = serde_json::to_writer_pretty(&mut writer, tasks) {
+//         if let Err(err) = bincode::to_writer(&mut writer, tasks) {
 //             fail(&format!(
 //                 "failed to write commands in {}, error: {}",
 //                 pth.to_string_lossy(),
@@ -120,10 +122,28 @@ fn make_filename(key: Key) -> String {
         fail("key should only contains alphanumeric characters, dashes and underscores");
     }
     format!(
-        "lock_{}_v{}.json",
+        "lock_{}_v{}",
         key,
         DATA_VERSION
     )
+}
+
+fn read_file(pth: &Path) -> Result<Vec<u8>, String> {
+    let mut opts = OpenOptions::new().read(true);
+    match opts.open(pth) {
+        Ok(mut file) => {
+            let mut buf = vec![];
+            file.read_to_end()?;
+            Ok(buf)
+        },
+        Err(err) => {
+            Err(format!(
+                "failed to open lock file for reading '{}', error {}",
+                pth.to_string_lossy(),
+                err
+            ))
+        }
+    }
 }
 
 // fn open_file(pth: &Path, write: bool) -> File {
@@ -137,7 +157,7 @@ fn make_filename(key: Key) -> String {
 //         Ok(file) => file,
 //         Err(err) => {
 //             fail(&format!(
-//                 "failed to open commands file at '{}' with options {:?}, error {}",
+//                 "failed to open lock file at '{}' with options {:?}, error {}",
 //                 pth.to_string_lossy(),
 //                 &opts,
 //                 err
@@ -161,7 +181,7 @@ fn make_filename(key: Key) -> String {
 //     fn default_lock_pth() {
 //         assert_eq!(
 //             lock_pth("".to_owned()).file_name().unwrap(),
-//             format!("cmd_stack_v{}.json", DATA_VERSION).as_str()
+//             format!("cmd_stack_v{}", DATA_VERSION).as_str()
 //         );
 //     }
 //
@@ -169,7 +189,7 @@ fn make_filename(key: Key) -> String {
 //     fn namespaced_lock_pth() {
 //         assert_eq!(
 //             lock_pth("1".to_owned()).file_name().unwrap(),
-//             format!("cmd_stack_1_v{}.json", DATA_VERSION).as_str()
+//             format!("cmd_stack_1_v{}", DATA_VERSION).as_str()
 //         );
 //     }
 // }
