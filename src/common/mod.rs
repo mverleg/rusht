@@ -8,7 +8,9 @@ pub use self::task::Task;
 
 mod err;
 mod files;
+#[deprecated]
 mod stdin;
 mod read;
+mod write;
 mod task;
 mod re;

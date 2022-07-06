@@ -1,6 +1,7 @@
 use ::std::process::exit;
 
-use crate::common::{stdin_lines, EmptyLineHandling};
+use crate::common::stdin_lines;
+use crate::common::EmptyLineHandling;
 
 use super::list_cmds;
 use super::ListArgs;
