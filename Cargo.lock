@@ -102,6 +102,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-spsc"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5774e9afd1279b91feb3c7fc16b9f4fd8e45dcf246263ee4addae1d0a5564c07"
+
+[[package]]
 name = "async-std"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -935,6 +941,7 @@ dependencies = [
 name = "rusht"
 version = "1.0.0"
 dependencies = [
+ "async-spsc",
  "async-std",
  "async-trait",
  "base64",
