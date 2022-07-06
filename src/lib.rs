@@ -9,9 +9,10 @@ pub mod wait;
 mod tests {
     use ::std::cmp::max;
 
-    use ::async_spsc::spsc;
+    use ::async_std::channel::bounded;
     use ::async_trait::async_trait;
     use ::regex::Regex;
+    use ::async_std::channel::{Receiver, Sender};
 
     use crate::common::{LineReader, LineWriter, VecReader, VecWriter};
     use crate::filter::{grab, GrabArgs, Keep, Order, unique, UniqueArgs};
@@ -25,7 +26,7 @@ mod tests {
             "bye world",
             "bye Jupiter",
         ]);
-        let (mut out1, mut inp2) = chained();
+        let (mut out1, mut inp2) = chained(1);
 
         let grab_args = GrabArgs {
             pattern: Regex::new("^hello (.*)").unwrap(),
@@ -52,29 +53,36 @@ mod tests {
     }
 
     #[derive(Debug)]
-    struct ChainWriter {}
+    struct ChainWriter {
+        sender: Sender<String>,
+    }
 
     #[async_trait]
     impl LineWriter for ChainWriter {
         async fn write_line(&mut self, line: impl AsRef<str> + Send) {
-            todo!()
+            let line = line.as_ref().to_owned();
+            self.sender.send(line).await.unwrap()
         }
     }
 
     #[derive(Debug)]
-    struct ChainReader {}
+    struct ChainReader {
+        receiver: Receiver<String>,
+        current: String,
+    }
 
     #[async_trait]
     impl LineReader for ChainReader {
         async fn read_line(&mut self) -> Option<&str> {
-            todo!()
+            self.current = self.receiver.recv().await.unwrap();
+            Some(&self.current)
         }
     }
 
     //TODO @mark: move to common read/write
-    fn chained(mut buffer_size: u32) -> (ChainWriter, ChainReader) {
-        buffer_size = max(1, buffer_size);
-        let (sender, receiver) = spsc::<String>(buffer_size);
-        (ChainWriter { sender }, ChainReader { receiver })
+    fn chained(buffer_size: usize) -> (ChainWriter, ChainReader) {
+        let buffer_size = max(1, buffer_size);
+        let (sender, receiver) = bounded(buffer_size);
+        (ChainWriter { sender }, ChainReader { receiver, current: "".to_string() })
     }
 }

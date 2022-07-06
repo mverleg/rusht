@@ -102,12 +102,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-spsc"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5774e9afd1279b91feb3c7fc16b9f4fd8e45dcf246263ee4addae1d0a5564c07"
-
-[[package]]
 name = "async-std"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -156,12 +150,6 @@ name = "atomic-waker"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "065374052e7df7ee4047b1160cca5e1467a12351a40b3da123c870ba0b8eda2a"
-
-[[package]]
-name = "atomicbox"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a9a3820bc9e9aaf60c8389c2a4808548599f4ff254ce6bdb608ac3631d4ad76"
 
 [[package]]
 name = "atty"
@@ -947,10 +935,8 @@ dependencies = [
 name = "rusht"
 version = "1.0.0"
 dependencies = [
- "async-spsc",
  "async-std",
  "async-trait",
- "atomicbox",
  "base64",
  "chrono",
  "clap",
