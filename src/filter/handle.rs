@@ -30,11 +30,14 @@ pub fn handle_unique(args: UniqueArgs) {
         unique_prefix(lines, args.order, args.keep).iter()
             .for_each(|line| println!("{}", line));
     } else {
+        //TODO @mverleg: sorting + unique-by ?
         if Order::SortAscending == args.order || args.prefix {
+            assert!(args.by.is_none());
             unique_buffered(lines, args.order, args.keep).iter()
                 .for_each(|line| println!("{}", line));
         } else {
-            unique_live(lines, args.keep, |line| println!("{}", line))
+            assert_eq!(Order::Preserve, args.order);
+            unique_live(lines, args.keep, &args.by, |line| println!("{}", line))
         }
     };
 }

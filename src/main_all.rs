@@ -49,7 +49,6 @@ fn main() {
     match args.subcommand {
         SubCmd::Cached(sub_args) => handle_cached(sub_args),
         SubCmd::Cmadd(sub_args) => handle_add(sub_args),
-        SubCmd::Cmadd(sub_args) => handle_add(sub_args),
         SubCmd::Cmdo(sub_args) => handle_do(sub_args),
         SubCmd::Cmlist(sub_args) => handle_list(sub_args),
         SubCmd::Cmdrop(sub_args) => handle_drop(sub_args),

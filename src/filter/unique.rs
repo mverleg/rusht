@@ -5,6 +5,7 @@ use ::log::debug;
 use ::regex::Regex;
 use ::ustr::Ustr;
 use ::ustr::UstrSet;
+use crate::common::get_matches;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -82,10 +83,14 @@ impl Keep {
     }
 }
 
-pub fn unique_live(texts: Vec<Ustr>, keep: Keep, mut out_line_handler: impl FnMut(&str)) {
+pub fn unique_live(texts: Vec<Ustr>, keep: Keep, pattern: &Option<Regex>, mut out_line_handler: impl FnMut(&str)) {
     let mut seen = HashSet::with_capacity(texts.len());
     for txt in texts {
-        if !keep.keep_is_first(seen.insert(txt)) {
+        let mut key = txt.to_string();
+        if let Some(re) = pattern {
+            get_matches(re, txt.as_str(), &mut |mtch| key = mtch, true, true)
+        }
+        if !keep.keep_is_first(seen.insert(key)) {
             continue;
         }
         out_line_handler(txt.as_str())
@@ -201,7 +206,17 @@ mod tests {
         assert_eq!(res, ustrvec!["/a", "/a", "/c"]);
     }
 
-    //TODO @mverleg: tests for --by
+    #[test]
+    fn unique_by() {
+        let mut res = vec![];
+        unique_live(
+            ustrvec!["hello world", "hello moon", "bye moon"],
+            Keep::First,
+            &Some(Regex::new("^[a-z]+").unwrap()),
+            |line| res.push(line.to_owned())
+        );
+        assert_eq!(res, vec!["hello world".to_owned(), "bye moon".to_owned()]);
+    }
 
     #[test]
     fn unique_prefix_empty() {

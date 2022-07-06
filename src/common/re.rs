@@ -1,6 +1,6 @@
 use regex::Regex;
 
-pub fn get_matches(pattern: &Regex, text: &str, mut handle_match: impl FnMut(String), first_only: bool, keep_unmatched: bool) {
+pub fn get_matches(pattern: &Regex, text: &str, handle_match: &mut impl FnMut(String), first_only: bool, keep_unmatched: bool) {
     match pattern.captures(&text) {
         Some(captures) => {
             let mut caps = captures.iter();
@@ -21,9 +21,8 @@ pub fn get_matches(pattern: &Regex, text: &str, mut handle_match: impl FnMut(Str
         }
         None => {
             if keep_unmatched {
-                handle_match(text)
+                handle_match(text.to_owned())
             }
         }
     }
 }
-

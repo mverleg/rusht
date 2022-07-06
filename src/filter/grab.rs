@@ -2,6 +2,7 @@ use ::std::io;
 
 use ::clap::StructOpt;
 use ::regex::Regex;
+use crate::common::get_matches;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -53,7 +54,7 @@ pub fn grab(
             Ok(line) => line,
             Err(err) => return Err(format!("failed to read line: {}", err)),
         };
-        get_matches(&args.pattern, &line, consume, args.first_only, args.keep_unmatched);
+        get_matches(&args.pattern, &line, &mut consume, args.first_only, args.keep_unmatched);
     }
     Ok(())
 }
