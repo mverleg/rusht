@@ -35,6 +35,7 @@ impl StdinReader {
 #[async_trait]
 impl LineReader for StdinReader {
     async fn read_line(&mut self) -> Option<&str> {
+        self.buffer.clear();
         let read_len = self.reader.read_line(&mut self.buffer).await.unwrap();
         assert_eq!(read_len, self.buffer.len());
         Some(&self.buffer)
