@@ -7,7 +7,7 @@ use crate::filter::UniqueArgs;
 use super::{grab, GrabArgs};
 
 pub async fn handle_grab(args: GrabArgs) {
-    match grab(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await {
+    match grab(args, StdinReader::new(), StdoutWriter::new()).await {
         Ok(()) => {}
         Err(err) => {
             eprintln!("{}", err);

@@ -45,14 +45,14 @@ async fn test_cli_args() {
 
 pub async fn grab(
     args: GrabArgs,
-    reader: &mut impl LineReader,
-    writer: &mut impl LineWriter,
+    mut reader: impl LineReader,
+    mut writer: impl LineWriter,
 ) -> Result<(), String> {
     while let Some(line) = reader.read_line().await {
         get_matches(
             &args.pattern,
             line,
-            writer,
+            &mut writer,
             args.first_only,
             args.keep_unmatched,
         )
@@ -81,11 +81,11 @@ mod tests {
     }
 
     async fn run_grab_arg<S: Into<String>>(args: GrabArgs, input: Vec<S>) -> Vec<String> {
-        let mut res = VecWriter::new();
-        grab(args, &mut VecReader::new(input), &mut res)
+        let res = VecWriter::new();
+        grab(args, VecReader::new(input), res.clone())
             .await
             .unwrap();
-        res.get()
+        res.get().to_vec()
     }
 
     #[async_std::test]

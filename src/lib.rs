@@ -25,14 +25,14 @@ mod tests {
 
     #[async_std::test]
     async fn chain_inout() {
-        let mut inp1 = VecReader::new(vec![
+        let inp1 = VecReader::new(vec![
             "hello world",
             "hello Mars",
             "hello Venus",
             "bye world",
             "bye Jupiter",
         ]);
-        let (mut out1, mut inp2) = chained(1);
+        let (out1, mut inp2) = chained(1);
 
         let grab_args = GrabArgs {
             pattern: Regex::new("^hello (.*)").unwrap(),
@@ -49,7 +49,7 @@ mod tests {
         };
         join!(
             //TODO @mark: probably an easier way for this:
-            (async || grab(grab_args, &mut inp1, &mut out1).await.unwrap())(),
+            (async || grab(grab_args, inp1, out1).await.unwrap())(),
             unique(unique_args, &mut inp2, &mut out2),
         ).await;
 
