@@ -1,5 +1,5 @@
-use ::std::process::exit;
 use crate::common::{StdinReader, StdoutWriter};
+use ::std::process::exit;
 
 use crate::filter::unique;
 use crate::filter::UniqueArgs;

@@ -11,7 +11,7 @@ use ::serde::Serialize;
 use time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, Task, unique_filename};
+use crate::common::{fail, unique_filename, Task};
 
 pub const DATA_VERSION: u32 = 1;
 

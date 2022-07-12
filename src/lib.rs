@@ -11,12 +11,12 @@ mod tests {
     use ::std::cmp::max;
 
     use ::async_std::channel::bounded;
+    use ::async_std::channel::{Receiver, Sender};
     use ::async_trait::async_trait;
     use ::regex::Regex;
-    use ::async_std::channel::{Receiver, Sender};
 
     use crate::common::{LineReader, LineWriter, VecReader, VecWriter};
-    use crate::filter::{grab, GrabArgs, Keep, Order, unique, UniqueArgs};
+    use crate::filter::{grab, unique, GrabArgs, Keep, Order, UniqueArgs};
 
     #[async_std::test]
     async fn chain_inout() {
@@ -32,7 +32,7 @@ mod tests {
         let grab_args = GrabArgs {
             pattern: Regex::new("^hello (.*)").unwrap(),
             first_only: true,
-            keep_unmatched: true
+            keep_unmatched: true,
         };
         grab(grab_args, &mut inp1, &mut out1).await.unwrap();
 
@@ -41,16 +41,11 @@ mod tests {
             order: Order::Preserve,
             keep: Keep::First,
             by: None,
-            prefix: true
+            prefix: true,
         };
         unique(unique_args, &mut inp2, &mut out2).await;
 
-        out2.assert_eq(vec![
-            "world",
-            "Mars",
-            "Venus",
-            "bye",
-        ]);
+        out2.assert_eq(vec!["world", "Mars", "Venus", "bye"]);
     }
 
     #[derive(Debug)]
@@ -84,6 +79,12 @@ mod tests {
     fn chained(buffer_size: usize) -> (ChainWriter, ChainReader) {
         let buffer_size = max(1, buffer_size);
         let (sender, receiver) = bounded(buffer_size);
-        (ChainWriter { sender }, ChainReader { receiver, current: "".to_string() })
+        (
+            ChainWriter { sender },
+            ChainReader {
+                receiver,
+                current: "".to_string(),
+            },
+        )
     }
 }

@@ -11,7 +11,7 @@ use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
 
-use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
+use crate::filter::{unique_prefix, Keep, Order as UniqueOrder};
 use crate::find::Nested::StopOnMatch;
 
 #[derive(StructOpt, Debug, Default)]

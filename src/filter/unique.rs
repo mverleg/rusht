@@ -4,9 +4,9 @@ use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
 
-use crate::common::{FirstItemWriter, get_matches, VecWriter};
 use crate::common::LineReader;
 use crate::common::LineWriter;
+use crate::common::{get_matches, FirstItemWriter, VecWriter};
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -84,26 +84,20 @@ impl Keep {
     }
 }
 
-pub async fn unique(
-    args: UniqueArgs,
-    reader: &mut impl LineReader,
-    writer: &mut impl LineWriter,
-) {
+pub async fn unique(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
     if args.prefix {
         let lines = reader.collect_all().await;
         for line in unique_prefix(lines, args.order, args.keep) {
             writer.write_line(line).await
         }
+    } else if Order::SortAscending == args.order {
+        let mut vec_writer = VecWriter::new();
+        unique_nosort(args.keep, &args.by, reader, &mut vec_writer).await;
+        let mut matches = vec_writer.get();
+        order_inplace(&mut matches);
+        writer.write_all_lines(matches.into_iter()).await
     } else {
-        if Order::SortAscending == args.order {
-            let mut vec_writer = VecWriter::new();
-            unique_nosort(args.keep, &args.by, reader, &mut vec_writer).await;
-            let mut matches = vec_writer.get();
-            order_inplace(&mut matches);
-            writer.write_all_lines(matches.into_iter()).await
-        } else {
-            unique_nosort(args.keep, &args.by, reader, writer).await
-        }
+        unique_nosort(args.keep, &args.by, reader, writer).await
     };
 }
 
@@ -119,7 +113,7 @@ async fn unique_nosort(
         let mut key = line.to_owned();
         if let Some(re) = unique_by_pattern {
             let mut first_writer = FirstItemWriter::new();
-            get_matches(re, &line, &mut first_writer, true, true).await;
+            get_matches(re, line, &mut first_writer, true, true).await;
             first_writer.get().map(|val| key = val);
         }
         if !keep.keep_is_first(seen.insert(key)) {

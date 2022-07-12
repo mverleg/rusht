@@ -1,6 +1,6 @@
 use crate::wait::LockedArgs;
 
-#[allow(unreachable_code)]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+#[allow(unreachable_code)] //TODO @mverleg: TEMPORARY! REMOVE THIS!
 pub fn locked(args: LockedArgs) -> Result<(), String> {
     if args.show {
         unimplemented!();

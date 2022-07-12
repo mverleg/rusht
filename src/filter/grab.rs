@@ -49,7 +49,14 @@ pub async fn grab(
     writer: &mut impl LineWriter,
 ) -> Result<(), String> {
     while let Some(line) = reader.read_line().await {
-        get_matches(&args.pattern, &line, writer, args.first_only, args.keep_unmatched).await;
+        get_matches(
+            &args.pattern,
+            line,
+            writer,
+            args.first_only,
+            args.keep_unmatched,
+        )
+        .await;
     }
     Ok(())
 }
@@ -69,12 +76,15 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await
+        )
+        .await
     }
 
     async fn run_grab_arg<S: Into<String>>(args: GrabArgs, input: Vec<S>) -> Vec<String> {
         let mut res = VecWriter::new();
-        grab(args, &mut VecReader::new(input), &mut res).await.unwrap();
+        grab(args, &mut VecReader::new(input), &mut res)
+            .await
+            .unwrap();
         res.get()
     }
 
@@ -136,7 +146,8 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await;
+        )
+        .await;
         let expected: Vec<String> = vec!["aab".to_owned()];
         assert_eq!(res, expected);
     }
@@ -150,7 +161,8 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await;
+        )
+        .await;
         let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned()];
         assert_eq!(res, expected);
     }
@@ -165,7 +177,8 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await;
+        )
+        .await;
         let expected: Vec<String> = vec!["aa".to_owned()];
         assert_eq!(res, expected);
     }
@@ -180,7 +193,8 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await;
+        )
+        .await;
         let expected: Vec<String> = vec![
             "aa".to_owned(),
             "cc".to_owned(),
@@ -201,7 +215,8 @@ mod tests {
                 ..GrabArgs::default()
             },
             input,
-        ).await;
+        )
+        .await;
         let expected: Vec<String> = vec!["aa".to_owned(), "abc".to_owned(), "bcc".to_owned()];
         assert_eq!(res, expected);
     }

@@ -1,6 +1,6 @@
-use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
+use ::async_std::io::BufReader;
 use ::async_std::io::Stdin;
 use ::async_trait::async_trait;
 
@@ -52,9 +52,7 @@ impl VecReader {
     pub fn new<S: Into<String>>(mut lines: Vec<S>) -> Self {
         lines.reverse();
         VecReader {
-            lines: lines.into_iter()
-                .map(|line| line.into())
-                .collect(),
+            lines: lines.into_iter().map(|line| line.into()).collect(),
             current: "".to_string(),
         }
     }

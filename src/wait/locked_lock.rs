@@ -1,6 +1,6 @@
-use ::chrono::{DateTime, Local};
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use ::time::OffsetDateTime;
 
 use crate::common::Task;
 
@@ -14,6 +14,6 @@ struct LockFile {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct LockHolder {
     pid: u8,
-    acquired: DateTime<Local>,
+    acquired: OffsetDateTime,
     task: Task,
 }

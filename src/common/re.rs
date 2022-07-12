@@ -1,8 +1,14 @@
-use ::regex::Regex;
 use crate::common::LineWriter;
+use ::regex::Regex;
 
-pub async fn get_matches(pattern: &Regex, text: &str, writer: &mut impl LineWriter, first_only: bool, keep_unmatched: bool) {
-    match pattern.captures(&text) {
+pub async fn get_matches(
+    pattern: &Regex,
+    text: &str,
+    writer: &mut impl LineWriter,
+    first_only: bool,
+    keep_unmatched: bool,
+) {
+    match pattern.captures(text) {
         Some(captures) => {
             let mut caps = captures.iter();
             let full_match = caps.next().unwrap().unwrap().as_str().to_owned();

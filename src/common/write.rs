@@ -1,5 +1,5 @@
-use ::async_std::io::Stdout;
 use ::async_std::io::stdout;
+use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
 use ::async_trait::async_trait;
 
@@ -7,7 +7,10 @@ use ::async_trait::async_trait;
 pub trait LineWriter: Send {
     async fn write_line(&mut self, line: impl AsRef<str> + Send);
 
-    async fn write_all_lines<S: AsRef<str> + Send>(&mut self, lines: impl Iterator<Item=S> + Send) {
+    async fn write_all_lines<S: AsRef<str> + Send>(
+        &mut self,
+        lines: impl Iterator<Item = S> + Send,
+    ) {
         for line in lines {
             self.write_line(line).await
         }
@@ -21,9 +24,7 @@ pub struct StdoutWriter {
 
 impl StdoutWriter {
     pub fn new() -> Self {
-        StdoutWriter {
-            writer: stdout(),
-        }
+        StdoutWriter { writer: stdout() }
     }
 }
 
@@ -44,9 +45,7 @@ pub struct VecWriter {
 
 impl VecWriter {
     pub fn new() -> Self {
-        VecWriter {
-            lines: vec![]
-        }
+        VecWriter { lines: vec![] }
     }
 
     pub fn get(self) -> Vec<String> {
@@ -54,9 +53,7 @@ impl VecWriter {
     }
 
     pub fn assert_eq<S: Into<String>>(&self, lines: Vec<S>) {
-        let expected: Vec<String> = lines.into_iter()
-            .map(|line| line.into())
-            .collect();
+        let expected: Vec<String> = lines.into_iter().map(|line| line.into()).collect();
         assert_eq!(self.lines, expected);
     }
 }
@@ -75,9 +72,7 @@ pub struct FirstItemWriter {
 
 impl FirstItemWriter {
     pub fn new() -> Self {
-        FirstItemWriter {
-            line: None
-        }
+        FirstItemWriter { line: None }
     }
 
     pub fn get(self) -> Option<String> {
