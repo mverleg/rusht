@@ -5,13 +5,15 @@ use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::Duration;
 
-use ::chrono::{DateTime, Local};
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, unique_filename, Task};
+use crate::common::{fail, Task, unique_filename};
+
+pub const DATA_VERSION: u32 = 1;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CacheStatus {
@@ -22,7 +24,7 @@ pub enum CacheStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct Cache {
-    time: DateTime<Local>,
+    time: OffsetDateTime,
     task: Task,
     output: String,
 }
@@ -59,20 +61,17 @@ fn try_read_cache(max_age: &Duration, cache_pth: &Path) -> Option<String> {
                 &cache.time,
                 cache_pth.to_string_lossy()
             );
-            let age = Local::now()
-                .signed_duration_since(cache.time)
-                .to_std()
-                .unwrap();
+            let age = OffsetDateTime::now_utc() - cache.time;
             if &age > max_age {
                 debug!(
                     "cached entry is too old, {}s > {}s",
-                    &age.as_secs(),
+                    &age.whole_seconds(),
                     &max_age.as_secs()
                 );
             } else {
                 debug!(
                     "valid cache ({}s); was created with task: {}",
-                    age.as_secs(),
+                    age.whole_seconds(),
                     cache.task.as_str()
                 );
                 return Some(cache.output);
@@ -102,7 +101,7 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
             )
         });
     let cache = Cache {
-        time: Local::now(),
+        time: OffsetDateTime::now_utc(),
         task,
         output,
     };
@@ -129,7 +128,7 @@ fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
         .replace("${cmd}", &task.as_cmd_str());
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
-    pth.push("cmdcache");
+    pth.push(format!("cmdcache_v{}", DATA_VERSION));
     create_dir_all(&pth).unwrap();
     pth.push(filename);
     pth
