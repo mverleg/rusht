@@ -57,9 +57,7 @@ name = "rusht"
 path = "src/main_all.rs"
 
 [dependencies]
-#structopt = "*"
 clap = { version = "3.2.11", default-features = true, features = ["std", "derive", "unicode"] }
-#walkdir = "*"
 lazy_static = "1.4.0"
 regex = "1.6.0"
 itertools = "0.10.3"
@@ -79,7 +77,6 @@ sha2 = "0.10.2"
 base64 = "0.13.0"
 rayon = "1.5.3"
 dashmap = "5.3.4"
-futures = "0.3.21"
 async-std = { version = "1.12.0", features = ["attributes"] }
 async-trait = "0.1.56"
 

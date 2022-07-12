@@ -1,3 +1,7 @@
+#![feature(future_join)]
+#![feature(future_poll_fn)]
+#![feature(async_closure)]
+
 pub mod cached;
 pub mod cmd;
 pub mod common;
@@ -9,12 +13,11 @@ pub mod escape;
 #[cfg(test)]
 mod tests {
     use ::std::cmp::max;
+    use ::std::future::join;
 
     use ::async_std::channel::{Receiver, Sender};
     use ::async_std::channel::bounded;
     use ::async_trait::async_trait;
-    use ::futures::future::join;
-    use ::futures::FutureExt;
     use ::regex::Regex;
 
     use crate::common::{LineReader, LineWriter, VecReader, VecWriter};
@@ -44,8 +47,9 @@ mod tests {
             by: None,
             prefix: true,
         };
-        join(
-            grab(grab_args, &mut inp1, &mut out1).map(|v| v.unwrap()),
+        join!(
+            //TODO @mark: probably an easier way for this:
+            (async || grab(grab_args, &mut inp1, &mut out1).await.unwrap())(),
             unique(unique_args, &mut inp2, &mut out2),
         ).await;
 
