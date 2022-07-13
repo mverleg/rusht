@@ -93,7 +93,7 @@ pub async fn unique(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut
     } else if Order::SortAscending == args.order {
         let mut vec_writer = VecWriter::new();
         unique_nosort(args.keep, &args.by, reader, &mut vec_writer).await;
-        let mut matches = vec_writer.get_mut();
+        let mut matches = vec_writer.get();
         order_inplace(&mut matches);
         writer.write_all_lines(matches.into_iter()).await
     } else {

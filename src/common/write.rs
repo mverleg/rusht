@@ -49,12 +49,8 @@ impl VecWriter {
         VecWriter { lines: RefCell::new(vec![]) }
     }
 
-    pub fn get(&self) -> &[String] {
-        self.lines.borrow()
-    }
-
-    pub fn get_mut(&mut self) -> &mut [String] {
-        self.lines.borrow_mut()
+    pub fn get(self) -> Vec<String> {
+        self.lines.take()
     }
 
     pub fn assert_eq<S: Into<String>>(&self, lines: Vec<S>) {

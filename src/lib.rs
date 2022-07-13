@@ -17,6 +17,7 @@ mod tests {
 
     use ::async_std::channel::{Receiver, Sender};
     use ::async_std::channel::bounded;
+    use ::async_std::task::block_on;
     use ::async_trait::async_trait;
     use ::regex::Regex;
 
@@ -56,9 +57,15 @@ mod tests {
         out2.assert_eq(vec!["world", "Mars", "Venus", "bye"]);
     }
 
+    #[derive(Debug, PartialEq, Eq)]
+    enum PipeItem {
+        Line(String),
+        End,
+    }
+
     #[derive(Debug)]
     struct ChainWriter {
-        sender: Sender<String>,
+        sender: Sender<PipeItem>,
     }
 
     #[async_trait]
@@ -66,23 +73,35 @@ mod tests {
         async fn write_line(&mut self, line: impl AsRef<str> + Send) {
             let line = line.as_ref().to_owned();
             eprintln!("chain write: {}", &line);  //TODO @mark: TEMPORARY! REMOVE THIS!
-            self.sender.send(line).await.unwrap()
+            self.sender.send(PipeItem::Line(line)).await.unwrap()
+        }
+    }
+
+    impl Drop for ChainWriter {
+        fn drop(&mut self) {
+            // TODO rewrite for async drop if supported
+            block_on(self.sender.send(PipeItem::End)).unwrap()
         }
     }
 
     #[derive(Debug)]
     struct ChainReader {
-        receiver: Receiver<String>,
-        current: String,
+        receiver: Receiver<PipeItem>,
+        current: PipeItem,
     }
 
     #[async_trait]
     impl LineReader for ChainReader {
         async fn read_line(&mut self) -> Option<&str> {
             eprintln!("chain read start");  //TODO @mark: TEMPORARY! REMOVE THIS!
+            if PipeItem::End == self.current {
+                return None
+            }
             self.current = self.receiver.recv().await.unwrap();
-            eprintln!("chain read done: {}", &self.current);  //TODO @mark: TEMPORARY! REMOVE THIS!
-            Some(&self.current)
+            match &self.current {
+                PipeItem::Line(line) => Some(line),
+                PipeItem::End => None,
+            }
         }
     }
 
@@ -94,7 +113,7 @@ mod tests {
             ChainWriter { sender },
             ChainReader {
                 receiver,
-                current: "".to_string(),
+                current: PipeItem::Line("".to_string()),
             },
         )
     }
