@@ -1,6 +1,8 @@
 use ::async_std::io::stdout;
 use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
+use ::async_std::sync::Arc;
+use ::async_std::sync::Mutex;
 use ::async_trait::async_trait;
 
 #[async_trait]
@@ -51,17 +53,34 @@ impl VecWriter {
     pub fn get(self) -> Vec<String> {
         self.lines
     }
-
-    pub fn assert_eq<S: Into<String>>(&self, lines: Vec<S>) {
-        let expected: Vec<String> = lines.into_iter().map(|line| line.into()).collect();
-        assert_eq!(&*self.lines, &expected);
-    }
 }
 
 #[async_trait]
 impl LineWriter for VecWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         self.lines.push(line.as_ref().to_owned())
+    }
+}
+
+#[derive(Debug)]
+pub struct CollectorWriter {
+    lines: Arc<Mutex<Vec<String>>>,
+}
+
+impl CollectorWriter {
+    pub fn new() -> Self {
+        CollectorWriter { lines: Arc::new(Mutex::new(vec![])) }
+    }
+
+    pub fn get_lines(self) -> Arc<Mutex<Vec<String>>> {
+        self.lines.clone()
+    }
+}
+
+#[async_trait]
+impl LineWriter for CollectorWriter {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        self.lines.lock().await.push(line.as_ref().to_owned())
     }
 }
 

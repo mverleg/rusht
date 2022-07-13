@@ -21,7 +21,7 @@ mod tests {
     use ::async_trait::async_trait;
     use ::regex::Regex;
 
-    use crate::common::{LineReader, LineWriter, VecReader, VecWriter};
+    use crate::common::{CollectorWriter, LineReader, LineWriter, VecReader};
     use crate::filter::{grab, GrabArgs, Keep, Order, unique, UniqueArgs};
 
     #[async_std::test]
@@ -41,7 +41,8 @@ mod tests {
             keep_unmatched: true,
         };
 
-        let mut out2 = VecWriter::new();
+        let mut out2 = CollectorWriter::new();
+        let lines = out2.get_lines();
         let unique_args = UniqueArgs {
             order: Order::Preserve,
             keep: Keep::First,
@@ -54,7 +55,9 @@ mod tests {
             unique(unique_args, &mut inp2, &mut out2),
         ).await;
 
-        out2.assert_eq(vec!["world", "Mars", "Venus", "bye"]);
+        let expected = vec!["world", "Mars", "Venus", "bye"];
+        let actual = lines.lock().await;
+        assert_eq!(actual, &expected);
     }
 
     #[derive(Debug, PartialEq, Eq)]
