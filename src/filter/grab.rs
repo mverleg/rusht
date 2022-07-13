@@ -85,7 +85,7 @@ mod tests {
         grab(args, VecReader::new(input), res.clone())
             .await
             .unwrap();
-        res.get().to_vec()
+        res.get()
     }
 
     #[async_std::test]

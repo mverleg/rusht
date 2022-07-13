@@ -1,8 +1,12 @@
-use std::cell::RefCell;
+use ::std::borrow::Borrow;
+
 use ::async_std::io::stdout;
 use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
 use ::async_trait::async_trait;
+use ::async_std::sync::RwLock;
+use ::async_std::sync::Arc;
+use async_std::sync::RwLockReadGuard;
 
 #[async_trait]
 pub trait LineWriter: Send {
@@ -41,28 +45,28 @@ impl LineWriter for StdoutWriter {
 
 #[derive(Debug, Clone)]
 pub struct VecWriter {
-    lines: RefCell<Vec<String>>,
+    lines: Arc<RwLock<Vec<String>>>,
 }
 
 impl VecWriter {
     pub fn new() -> Self {
-        VecWriter { lines: RefCell::new(vec![]) }
+        VecWriter { lines: Arc::new(RwLock::new(vec![])) }
     }
 
-    pub fn get(self) -> Vec<String> {
-        self.lines.take()
+    pub async fn get(&self) -> RwLockReadGuard<Vec<String>> {
+        self.lines.read().await
     }
 
     pub fn assert_eq<S: Into<String>>(&self, lines: Vec<S>) {
         let expected: Vec<String> = lines.into_iter().map(|line| line.into()).collect();
-        assert_eq!(&*self.lines.borrow(), &expected);
+        assert_eq!(&*self.lines.read(), &expected);
     }
 }
 
 #[async_trait]
 impl LineWriter for VecWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
-        self.lines.borrow_mut().push(line.as_ref().to_owned())
+        self.lines.write().await.push(line.as_ref().to_owned())
     }
 }
 
