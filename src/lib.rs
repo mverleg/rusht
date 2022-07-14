@@ -83,6 +83,7 @@ mod tests {
     impl Drop for ChainWriter {
         fn drop(&mut self) {
             // TODO rewrite for async drop if supported
+            eprintln!("ending chain writer pipe");  //TODO @mark: TEMPORARY! REMOVE THIS!
             block_on(self.sender.send(PipeItem::End)).unwrap()
         }
     }
@@ -98,12 +99,16 @@ mod tests {
         async fn read_line(&mut self) -> Option<&str> {
             eprintln!("chain read start");  //TODO @mark: TEMPORARY! REMOVE THIS!
             if PipeItem::End == self.current {
+                eprintln!("chain reader pipe was already closed");  //TODO @mark: TEMPORARY! REMOVE THIS!
                 return None
             }
             self.current = self.receiver.recv().await.unwrap();
             match &self.current {
                 PipeItem::Line(line) => Some(line),
-                PipeItem::End => None,
+                PipeItem::End => {
+                    eprintln!("chain reader pipe was just closed");  //TODO @mark: TEMPORARY! REMOVE THIS!
+                    None
+                },
             }
         }
     }
