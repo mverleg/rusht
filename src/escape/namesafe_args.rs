@@ -24,9 +24,15 @@ pub struct NamesafeArgs {
         short = 'l',
         long = "max-length",
         default_value = "32",
-        help = "Maximum number of characters in the cleaned line."
+        help = "Maximum number of characters in the cleaned line (min 8)."
     )]
     pub max_length: u32,
+    #[structopt(
+        short = 'e',
+        long = "extension",
+        help = "If the line appears to contain an filename extension (max 4 chars), preserve it."
+    )]
+    pub keep_extension: bool,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
 
@@ -98,6 +104,7 @@ impl Default for NamesafeArgs {
             charset: Default::default(),
             hash_policy: Default::default(),
             max_length: 32,
+            keep_extension: false,
         }
     }
 }

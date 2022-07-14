@@ -28,8 +28,8 @@ pub fn namesafe(
 
 pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     debug_assert!(args.max_length >= 8);
+    assert!(args.keep_extension, "keeping extension not yet supported");  //TODO @mverleg:
     let mut count = 0;
-    //TODO @mverleg: remove subsequent dashses/underscores
     let max_length = max(8, args.max_length as usize);
     let mut is_prev_special = true;
     let mut filtered = original.chars()

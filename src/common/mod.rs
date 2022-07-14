@@ -27,5 +27,6 @@ pub fn unique_filename(text: &str) -> String {
         charset: Charset::AsciiOnly,
         hash_policy: HashPolicy::Always,
         max_length: 32,
+        keep_extension: false,
     })
 }
