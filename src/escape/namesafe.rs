@@ -1,5 +1,7 @@
 use ::std::cmp::min;
 use ::std::io;
+use base64::{encode_config, URL_SAFE_NO_PAD};
+use sha2::Sha256;
 
 use super::NamesafeArgs;
 
@@ -16,7 +18,7 @@ pub fn namesafe(
     Ok(())
 }
 
-fn namesafe_line(line: &str, args: &NamesafeArgs) -> String {
+pub fn namesafe_line(line: &str, args: &NamesafeArgs) -> String {
     let mut count = 0;
     let filtered = line.chars()
         .filter(|c| args.charset.is_allowed(*c))
@@ -29,22 +31,17 @@ fn namesafe_line(line: &str, args: &NamesafeArgs) -> String {
     if ! do_hash {
         return filtered;
     }
-    let hash_length = min(10, args.max_length / 2);
-    filtered;
+    let hash_length = min(12, args.max_length / 2);
+    let hash = compute_hash(&filtered, hash_length);
+    let text_len = args.max_length - hash.len();
+    format!("{}{}", filtered[..text_len], hash)
 }
 
-/// Turn a text into a safe filename, trying to keep it unique.
-pub fn unique_filename(text: &str) -> String {
-    //TODO @mverleg: remove
-    let clean = INVALID_CHARS.replace_all(text, "_");
-    let squash = SQUASH_CHARS.replace_all(clean.as_ref(), "_");
-    let trim = INVALID_EDGES.replace_all(squash.as_ref(), "");
-    let short: String = trim.as_ref().chars().take(32).collect();
+fn compute_hash(text: &str, hash_length: u32) -> String {
     let mut hasher = Sha256::new();
     hasher.update(text.as_bytes());
     let hash_out = hasher.finalize();
-    let hash = encode_config(hash_out, URL_SAFE_NO_PAD)[..20].to_ascii_lowercase();
-    format!("{short}_{hash}")
+    encode_config(hash_out, URL_SAFE_NO_PAD)[..20].to_ascii_lowercase()
 }
 
 #[cfg(test)]
@@ -53,14 +50,15 @@ mod tests {
 
     #[test]
     fn short_legal_filename() {
-        let res = unique_filename("Hello world");
+        let res = namesafe_line("Hello world", &NamesafeArgs::default());
         assert_eq!(res, "Hello_world_zoyiygcyaow6gjvnihtt");
     }
 
     #[test]
     fn long_illegal_filename() {
-        let res = unique_filename(
+        let res = namesafe_line(
             " _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123",
+            &NamesafeArgs::default(),
         );
         assert_eq!(res, "hello_WORLD_hello_world_hello_wo_zc4zyofxrnr1onvipg5w");
     }

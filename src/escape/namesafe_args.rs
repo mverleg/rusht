@@ -23,6 +23,7 @@ pub struct NamesafeArgs {
     #[structopt(
         short = 'l',
         long = "max-length",
+        default_value = "32",
         help = "Maximum number of characters in the cleaned line."
     )]
     pub max_length: u32,
