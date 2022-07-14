@@ -35,6 +35,7 @@ enum SubCmd {
     Grab(GrabArgs),
     Unique(UniqueArgs),
     Locked(LockedArgs),
+    Namesafe(NamesafeArgs),
 }
 
 #[test]
@@ -57,5 +58,6 @@ async fn main() {
         SubCmd::Grab(sub_args) => handle_grab(sub_args).await,
         SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
+        SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args),
     }
 }

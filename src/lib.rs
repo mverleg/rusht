@@ -4,6 +4,7 @@ pub mod common;
 pub mod filter;
 pub mod find;
 pub mod wait;
+pub mod escape;
 
 #[cfg(test)]
 mod tests {
