@@ -56,7 +56,7 @@ mod tests {
         ).await;
 
         let expected = vec!["world", "Mars", "Venus", "bye"];
-        let actual = lines.lock().await;
+        let actual = &*lines.lock().await;
         assert_eq!(actual, &expected);
     }
 

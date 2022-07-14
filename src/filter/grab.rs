@@ -70,8 +70,8 @@ mod tests {
 
     use super::*;
 
-    async fn run_grab<S: Into<String>, T: Into<String>>(input: Vec<S>, expected: Vec<T>) {
-        run_grab_arg(
+    async fn test_grab<S: Into<String>, T: Into<String>>(input: Vec<S>, expected: Vec<T>) {
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b").unwrap(),
                 ..GrabArgs::default()
@@ -82,7 +82,7 @@ mod tests {
         .await
     }
 
-    async fn run_grab_arg<S: Into<String>, T: Into<String>>(
+    async fn test_grab_arg<S: Into<String>, T: Into<String>>(
         args: GrabArgs, input: Vec<S>, expected: Vec<T>
     ) {
         let writer = CollectorWriter::new();
@@ -93,57 +93,57 @@ mod tests {
         let expected = expected.into_iter()
             .map(|s| s.into())
             .collect::<Vec<String>>();
-        assert_eq!(lines, &expected)
+        let line_vec = &*lines.lock().await;
+        assert_eq!(line_vec, &expected)
     }
 
     #[async_std::test]
     async fn no_lines() {
         let empty: Vec<String> = vec![];
-        let res = run_grab(empty.clone(), empty).await;
+        test_grab(empty.clone(), empty).await;
     }
 
     #[async_std::test]
     async fn empty_line() {
         let expected: Vec<String> = vec![];
-        let res = run_grab(vec![""], expected).await;
-        let expected: Vec<String> = vec![];
+        test_grab(vec![""], expected).await;
     }
 
     #[async_std::test]
     async fn ignore_not_matching() {
         let expected: Vec<String> = vec![];
-        let res = run_grab(vec!["c"], expected).await;
+        test_grab(vec!["c"], expected).await;
     }
 
     #[async_std::test]
     async fn ignore_only_group_matches() {
         let expected: Vec<String> = vec![];
-        let res = run_grab(vec!["aa"], expected).await;
+        test_grab(vec!["aa"], expected).await;
     }
 
     #[async_std::test]
     async fn match_single_group() {
         let expected: Vec<String> = vec!["aa".to_owned()];
-        let res = run_grab(vec!["aab"], expected).await;
+        test_grab(vec!["aab"], expected).await;
     }
 
     #[async_std::test]
     async fn match_some_lines() {
         let expected: Vec<String> = vec!["aa".to_owned(), "a".to_owned()];
-        run_grab(vec!["aab", "", "cab", "AAB"], expected).await;
+        test_grab(vec!["aab", "", "cab", "AAB"], expected).await;
     }
 
     #[async_std::test]
     async fn first_of_multi_per_line() {
         let expected: Vec<String> = vec!["aa".to_owned()];
-        run_grab(vec!["aabab"], expected).await;
+        test_grab(vec!["aabab"], expected).await;
     }
 
     #[async_std::test]
     async fn full_match_if_no_group() {
         let input = vec!["aab"];
         let expected: Vec<String> = vec!["aab".to_owned()];
-        let res = run_grab_arg(
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("a+b").unwrap(),
                 ..GrabArgs::default()
@@ -157,7 +157,7 @@ mod tests {
     async fn match_multiple_groups() {
         let input = vec!["aabccd"];
         let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned()];
-        let res = run_grab_arg(
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 ..GrabArgs::default()
@@ -171,7 +171,7 @@ mod tests {
     async fn match_only_first_groups() {
         let input = vec!["aabccd"];
         let expected: Vec<String> = vec!["aa".to_owned()];
-        let res = run_grab_arg(
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 first_only: true,
@@ -191,7 +191,7 @@ mod tests {
             "abc".to_owned(),
             "bcc".to_owned(),
         ];
-        let res = run_grab_arg(
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,
@@ -206,7 +206,7 @@ mod tests {
     async fn first_group_and_keep_unmatched() {
         let input = vec!["aabccd", "abc", "bcc"];
         let expected: Vec<String> = vec!["aa".to_owned(), "abc".to_owned(), "bcc".to_owned()];
-        let res = run_grab_arg(
+        test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,

@@ -72,7 +72,7 @@ impl CollectorWriter {
         CollectorWriter { lines: Arc::new(Mutex::new(vec![])) }
     }
 
-    pub fn get_lines(self) -> Arc<Mutex<Vec<String>>> {
+    pub fn get_lines(&self) -> Arc<Mutex<Vec<String>>> {
         self.lines.clone()
     }
 }
