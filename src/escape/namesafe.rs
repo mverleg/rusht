@@ -32,7 +32,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     //TODO @mverleg: remove subsequent dashses/underscores
     let max_length = max(8, args.max_length as usize);
     let mut is_prev_special = true;
-    let filtered = original.chars()
+    let mut filtered = original.chars()
         .map(|c| if args.charset.is_allowed(c) { c } else { '_' })
         .filter(|c| skip_subsequent_special(*c, &mut is_prev_special))
         .inspect(|_| count += 1)
@@ -45,10 +45,18 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     if ! do_hash {
         return filtered;
     }
+    if ! is_prev_special {
+        filtered.push('_')
+    }
     let hash_length = min(12, max_length / 2);
     let hash = compute_hash(&original, hash_length);
-    let text_len = min(filtered.len(), args.max_length as usize - hash.len());
-    format!("{}{}", &filtered[..text_len], hash)
+    let text_len = args.max_length as usize - hash.len();
+    // use iterator because string slice can break up characters
+    let mut new = filtered.chars()
+        .take(text_len)
+        .collect::<String>();
+    new.push_str(&hash);
+    new
 }
 
 fn skip_subsequent_special(symbol: char, is_prev_special: &mut bool) -> bool {
@@ -73,12 +81,22 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::escape::HashPolicy;
     use super::*;
 
     #[test]
     fn short_legal_filename() {
         let res = namesafe_line("Hello world", &NamesafeArgs::default());
-        assert_eq!(res, "Hello_world_zoyiygcyaow6gjvnihtt");
+        assert_eq!(res, "Hello_world");
+    }
+
+    #[test]
+    fn short_legal_filename_hash() {
+        let res = namesafe_line("Hello world", &NamesafeArgs {
+            hash_policy: HashPolicy::Always,
+            ..Default::default()
+        });
+        assert_eq!(res, "Hello_world_zoyiygcyaow6");
     }
 
     #[test]
@@ -87,6 +105,6 @@ mod tests {
             " _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123",
             &NamesafeArgs::default(),
         );
-        assert_eq!(res, "hello_WORLD_hello_world_hello_wo_zc4zyofxrnr1onvipg5w");
+        assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
     }
 }
