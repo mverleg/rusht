@@ -1,5 +1,7 @@
-mod main_namesafe;
+pub use self::handle::handle_namesafe;
+pub use self::namesafe::namesafe;
+pub use self::namesafe_args::NamesafeArgs;
+
 mod handle;
 mod namesafe;
-
-pub use handle::handle_namesafe;
+mod namesafe_args;

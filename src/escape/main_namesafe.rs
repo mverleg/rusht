@@ -1,7 +1,7 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
-use super::handle_namesafe;
-use super::NamesafeArgs;
+use ::rusht::escape::handle_namesafe;
+use ::rusht::escape::NamesafeArgs;
 
 fn main() {
     env_logger::init();

@@ -2,16 +2,18 @@ use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::handle_cached;
 use ::rusht::cached::CachedArgs;
+use ::rusht::cached::handle_cached;
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
+use ::rusht::escape::NamesafeArgs;
 use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::filter::{GrabArgs, UniqueArgs};
-use ::rusht::find::handle_dir_with;
 use ::rusht::find::DirWithArgs;
+use ::rusht::find::handle_dir_with;
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
+use rusht::escape::handle_namesafe;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
