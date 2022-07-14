@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use ::clap::StructOpt;
 
-#[derive(StructOpt, Debug, Default)]
+#[derive(StructOpt, Debug)]
 #[structopt(
     name = "namesafe",
     about = "Convert each line to a string that is safe for names (no whitespace or special characters, not too long)."
@@ -88,6 +88,16 @@ impl Charset {
                 ('A' <= symbol && symbol <= 'Z') ||
                 ('0' <= symbol && symbol <= '9') ||
                 symbol == '-' || symbol == '_'
+        }
+    }
+}
+
+impl Default for NamesafeArgs {
+    fn default() -> Self {
+        NamesafeArgs {
+            charset: Default::default(),
+            hash_policy: Default::default(),
+            max_length: 32,
         }
     }
 }
