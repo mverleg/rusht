@@ -85,6 +85,7 @@ impl Keep {
 }
 
 pub async fn unique(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
+    assert!(!(args.prefix && args.by.is_some()), "cannot use both --prefix and --by");
     if args.prefix {
         let lines = reader.collect_all().await;
         for line in unique_prefix(lines, args.order, args.keep) {

@@ -46,8 +46,8 @@ mod tests {
         let unique_args = UniqueArgs {
             order: Order::Preserve,
             keep: Keep::First,
-            by: None,
-            prefix: true,
+            by: Some(Regex::new("([^ ])* ").unwrap()),
+            prefix: false,
         };
         join!(
             //TODO @mark: probably an easier way for this:
@@ -55,7 +55,7 @@ mod tests {
             unique(unique_args, &mut inp2, &mut out2),
         ).await;
 
-        let expected = vec!["world", "Mars", "Venus", "bye"];
+        let expected = vec!["world", "Mars", "Venus", "bye world"];
         let actual = &*lines.lock().await;
         assert_eq!(actual, &expected);
     }
