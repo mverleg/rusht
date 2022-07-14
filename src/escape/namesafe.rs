@@ -18,21 +18,22 @@ pub fn namesafe(
     Ok(())
 }
 
-pub fn namesafe_line(line: &str, args: &NamesafeArgs) -> String {
+pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let mut count = 0;
-    let filtered = line.chars()
+    //TODO @mverleg: remove subsequent dashses/underscores
+    let filtered = original.chars()
         .filter(|c| args.charset.is_allowed(*c))
         .inspect(|_| count += 1)
         .take((args.max_length + 1) as usize)
         .collect::<String>();
-    let was_changed = line == filtered;
+    let was_changed = original == filtered;
     let was_too_long = count > args.max_length;
     let do_hash = args.hash_policy.should_hash(was_changed, was_too_long);
     if ! do_hash {
         return filtered;
     }
     let hash_length = min(12, args.max_length / 2);
-    let hash = compute_hash(&filtered, hash_length);
+    let hash = compute_hash(&original, hash_length);
     let text_len = args.max_length - hash.len();
     format!("{}{}", filtered[..text_len], hash)
 }

@@ -39,6 +39,17 @@ pub enum HashPolicy {
     Never,
 }
 
+impl HashPolicy {
+    pub fn should_hash(&self, was_changed: bool, was_too_long: bool) -> bool {
+        match self {
+            HashPolicy::Always => true,
+            HashPolicy::Changed => was_changed || was_too_long,
+            HashPolicy::TooLong => was_too_long,
+            HashPolicy::Never => false,
+        }
+    }
+}
+
 impl FromStr for HashPolicy {
     type Err = String;
 
@@ -66,6 +77,17 @@ impl Charset {
             Charset::AllowUnicode
         } else {
             Charset::AsciiOnly
+        }
+    }
+
+    pub fn is_allowed(&self, symbol: char) -> bool {
+        match self {
+            Charset::AllowUnicode => symbol.is_alphanumeric() ||
+                symbol == '-' || symbol == '_',
+            Charset::AsciiOnly => ('a' <= symbol && symbol <= 'z') ||
+                ('A' <= symbol && symbol <= 'Z') ||
+                ('0' <= symbol && symbol <= '9') ||
+                symbol == '-' || symbol == '_'
         }
     }
 }
