@@ -35,19 +35,17 @@ pub struct NamesafeArgs {
     )]
     pub keep_extension: bool,
     #[structopt(
-        short = 'f',
+        short = '0',
         long = "allow-empty",
         help = "Do not fail if there are no input lines."
     )]
     pub allow_empty: bool,
-    //TODO @mverleg: ^
     #[structopt(
         short = '1',
         long = "single",
         help = "Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty."
     )]
     pub single_line: bool,
-    //TODO @mverleg: ^
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
 

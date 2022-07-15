@@ -22,11 +22,11 @@ pub fn namesafe(
     while let Some(line_res) = line_supplier() {
         let oldline = line_res.map_err(|err| format!("failed to read line, {}", err))?;
         let newline = namesafe_line(&oldline, &args);
+        if args.single_line && any_line {
+            return Err("namesafe failed because it received more than one line, and --single was requested".to_owned())
+        };
         out_line_handler(&newline);
         any_line = true;
-        if args.single_line {
-            break
-        }
     }
     if args.allow_empty || any_line {
         Ok(())
@@ -48,7 +48,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .inspect(|_| count += 1)
         .take((max_length + 1) as usize)
         .collect::<String>();
-    let was_changed = original == filtered;
+    let was_changed = original != filtered;
     let was_too_long = count > max_length;
     let do_hash = args.hash_policy.should_hash(was_changed, was_too_long);
     if ! do_hash {
