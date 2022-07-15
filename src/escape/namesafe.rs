@@ -23,7 +23,10 @@ pub fn namesafe(
         let oldline = line_res.map_err(|err| format!("failed to read line, {}", err))?;
         let newline = namesafe_line(&oldline, &args);
         out_line_handler(&newline);
-        any_line = true
+        any_line = true;
+        if args.single_line {
+            break
+        }
     }
     if args.allow_empty || any_line {
         Ok(())
@@ -32,6 +35,7 @@ pub fn namesafe(
     }
 }
 
+//TODO @mverleg: only pass relevant line args
 pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     debug_assert!(args.max_length >= 8);
     assert!(!args.keep_extension, "keeping extension not yet supported");  //TODO @mverleg:

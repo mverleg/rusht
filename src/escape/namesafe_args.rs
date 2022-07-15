@@ -87,8 +87,8 @@ impl FromStr for HashPolicy {
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum Charset {
-    #[default]
     AllowUnicode,
+    #[default]
     AsciiOnly,
 }
 
@@ -120,6 +120,8 @@ impl Default for NamesafeArgs {
             hash_policy: Default::default(),
             max_length: 32,
             keep_extension: false,
+            allow_empty: false,
+            single_line: false
         }
     }
 }
