@@ -24,7 +24,8 @@ mod task;
 mod write;
 
 pub fn unique_filename(text: &str) -> String {
-    namesafe_line(text, &NamesafeArgs {
+    namesafe_line(text, &
+        NamesafeArgs {
         charset: Charset::AsciiOnly,
         hash_policy: HashPolicy::Always,
         max_length: 32,

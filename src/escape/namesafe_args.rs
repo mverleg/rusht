@@ -17,7 +17,8 @@ pub struct NamesafeArgs {
     #[structopt(
         short = 'x',
         long = "hash",
-        help = "In which cases to include a hash in the name."
+        default_value = "changed",  //TODO @mverleg: not sure why Default impl doesn't work
+        help = "In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever)."
     )]
     pub hash_policy: HashPolicy,
     #[structopt(
@@ -33,6 +34,20 @@ pub struct NamesafeArgs {
         help = "If the line appears to contain an filename extension (max 4 chars), preserve it."
     )]
     pub keep_extension: bool,
+    #[structopt(
+        short = 'f',
+        long = "allow-empty",
+        help = "Do not fail if there are no input lines."
+    )]
+    pub allow_empty: bool,
+    //TODO @mverleg: ^
+    #[structopt(
+        short = '1',
+        long = "single",
+        help = "Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty."
+    )]
+    pub single_line: bool,
+    //TODO @mverleg: ^
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
 

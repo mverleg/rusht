@@ -3,9 +3,9 @@ use ::std::cmp::min;
 use ::std::io;
 
 use ::base64::{encode_config, URL_SAFE_NO_PAD};
+use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
-use log::debug;
 
 use super::NamesafeArgs;
 
@@ -18,12 +18,18 @@ pub fn namesafe(
         debug!("maximum length too low ({}), setting to 8", args.max_length);
         args.max_length = 8
     }
+    let mut any_line = false;
     while let Some(line_res) = line_supplier() {
         let oldline = line_res.map_err(|err| format!("failed to read line, {}", err))?;
         let newline = namesafe_line(&oldline, &args);
-        out_line_handler(&newline)
+        out_line_handler(&newline);
+        any_line = true
     }
-    Ok(())
+    if args.allow_empty || any_line {
+        Ok(())
+    } else {
+        Err("namesafe failed because it did not receive any lines (use --allow-empty if this is okay)".to_owned())
+    }
 }
 
 pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
@@ -38,7 +44,6 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .inspect(|_| count += 1)
         .take((max_length + 1) as usize)
         .collect::<String>();
-    dbg!(&filtered);
     let was_changed = original == filtered;
     let was_too_long = count > max_length;
     let do_hash = args.hash_policy.should_hash(was_changed, was_too_long);
@@ -82,6 +87,7 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
 #[cfg(test)]
 mod tests {
     use crate::escape::HashPolicy;
+
     use super::*;
 
     #[test]
