@@ -45,7 +45,7 @@ fn start_time_monitor(has_data: Arc<AtomicBool>) {
         }
         sleep(Duration::from_millis(timeout * 900));
         if !has_data.load(Ordering::Acquire) {
-            eprintln!("no input on stdin, terminating (set STDIN_READ_TIMEOUT to extend)")
+            eprintln!("no input on stdin, terminating (set RUSHT_STDIN_READ_TIMEOUT to extend)")
         }
         error!("timeout {} s, terminating", timeout);
         exit(1);
@@ -53,21 +53,21 @@ fn start_time_monitor(has_data: Arc<AtomicBool>) {
 }
 
 fn read_timeout_env() -> u64 {
-    match env::var("STDIN_READ_TIMEOUT") {
+    match env::var("RUSHT_STDIN_READ_TIMEOUT") {
         Ok(timeout_str) => {
             match timeout_str.parse::<u64>() {
                 Ok(timeout) => {
-                    debug!("read STDIN_READ_TIMEOUT = {} seconds", timeout);
+                    debug!("read RUSHT_STDIN_READ_TIMEOUT = {} seconds", timeout);
                     timeout
                 }
                 Err(_) => {
-                    warn!("failed to parse STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
+                    warn!("failed to parse RUSHT_STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
                     30
                 }
             }
         }
         Err(_) => {
-            debug!("did not filter STDIN_READ_TIMEOUT in env, using default");
+            debug!("did not filter RUSHT_STDIN_READ_TIMEOUT in env, using default");
             30
         }
     }

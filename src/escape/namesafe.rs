@@ -95,13 +95,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn short_legal_filename() {
-        let res = namesafe_line("Hello world", &NamesafeArgs::default());
+    fn already_valid() {
+        let res = namesafe_line("Hello_world", &NamesafeArgs::default());
         assert_eq!(res, "Hello_world");
     }
 
     #[test]
-    fn short_legal_filename_hash() {
+    fn legal_filename_hash() {
         let res = namesafe_line("Hello world", &NamesafeArgs {
             hash_policy: HashPolicy::Always,
             ..Default::default()
@@ -116,5 +116,14 @@ mod tests {
             &NamesafeArgs::default(),
         );
         assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
+    }
+
+    #[test]
+    fn dashes_and_underscores() {
+        let res = namesafe_line(
+            " _-_ ",
+            &NamesafeArgs::default(),
+        );
+        assert_eq!(res, "cavx4zqano9q");
     }
 }
