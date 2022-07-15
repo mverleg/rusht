@@ -50,7 +50,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .collect::<String>();
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
-    let do_hash = args.hash_policy.should_hash(was_changed, was_too_long);
+    let do_hash = filtered.len() < 2 || args.hash_policy.should_hash(was_changed, was_too_long);
     if ! do_hash {
         return filtered;
     }
@@ -122,8 +122,12 @@ mod tests {
     fn dashes_and_underscores() {
         let res = namesafe_line(
             " _-_ ",
-            &NamesafeArgs::default(),
+            &NamesafeArgs {
+                hash_policy: HashPolicy::Never,
+                ..Default::default()
+            },
         );
+        // use hash if result is too short
         assert_eq!(res, "cavx4zqano9q");
     }
 }
