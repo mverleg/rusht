@@ -33,10 +33,11 @@ impl StdoutWriter {
 #[async_trait]
 impl LineWriter for StdoutWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
-        let expected = line.as_ref().as_bytes().len();
         let bytes = line.as_ref().as_bytes();
+        let expected = bytes.len();
         let write_len = self.writer.write(bytes).await.unwrap();
         assert_eq!(expected, write_len);
+        assert_eq!(1, self.writer.write(&[b'\n']).await.unwrap()); //TODO @mverleg: more efficient way with single await?
     }
 }
 
