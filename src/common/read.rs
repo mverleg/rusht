@@ -37,6 +37,9 @@ impl LineReader for StdinReader {
     async fn read_line(&mut self) -> Option<&str> {
         self.buffer.clear();
         let read_len = self.reader.read_line(&mut self.buffer).await.unwrap();
+        while self.buffer.ends_with('\n') || self.buffer.ends_with('\r') {
+            self.buffer.pop();
+        }
         if read_len == 0 {
             return None
         }
