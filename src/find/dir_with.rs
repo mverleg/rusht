@@ -8,7 +8,6 @@ use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
-use log::{error, warn};
 
 use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
 use crate::find::{DirWithArgs, PathModification};
@@ -80,9 +79,9 @@ fn find_matching_dirs(
             let found = parent.to_path_buf();
             if args.nested == StopOnMatch {
                 debug!(
-                "found a match based on parent name: {}, not recursing deeper",
-                parent.to_str().unwrap()
-            );
+                    "found a match based on parent name: {}, not recursing deeper",
+                    parent.to_str().unwrap()
+                );
                 return Ok(smallvec![found]);
             }
             debug!(
@@ -103,21 +102,28 @@ fn find_matching_dirs(
     );
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
-        if !current_is_match && is_content_match(sub, &args.files, &args.dirs) {
-            let found = parent.to_path_buf();
-            if args.nested == StopOnMatch {
+        if current_is_match {
+            continue
+        }
+        match is_content_match(sub, &args.files, &args.not_files, &args.dirs, &args.not_dirs) {
+            IsMatch::Include => {
+                let found = parent.to_path_buf();
+                if args.nested == StopOnMatch {
+                    debug!(
+                        "found a match based on child name: {}, not recursing deeper",
+                        sub.to_str().unwrap()
+                    );
+                    return Ok(smallvec![found]);
+                }
                 debug!(
-                    "found a match based on child name: {}, not recursing deeper",
+                    "found a match based on child name: {}, searching deeper",
                     sub.to_str().unwrap()
                 );
-                return Ok(smallvec![found]);
+                current_is_match = true;
+                results.push(found)
             }
-            debug!(
-                "found a match based on parent name: {}, searching deeper",
-                sub.to_str().unwrap()
-            );
-            current_is_match = true;
-            results.push(found)
+            IsMatch::Exclude => return Ok(smallvec![]),
+            IsMatch::NoMatch => {}
         }
     }
     for sub in content {
@@ -197,24 +203,43 @@ fn is_parent_match(dir: &Path, positive_patterns: &[Regex], negative_patterns: &
 }
 
 /// Check if this content item is a match (which causes the parent to be flagged).
-fn is_content_match(item: &Path, file_res: &Vec<Regex>, dir_res: &Vec<Regex>) -> bool {
-    if file_res.is_empty() && dir_res.is_empty() {
-        return false;
+fn is_content_match(
+    item: &Path,
+    positive_file_pattern: &Vec<Regex>,
+    negative_file_pattern: &Vec<Regex>,
+    positive_dir_pattern: &Vec<Regex>,
+    negative_dir_pattern: &Vec<Regex>
+) -> IsMatch {
+    if positive_file_pattern.is_empty() && negative_file_pattern.is_empty() &&
+        positive_dir_pattern.is_empty() && negative_dir_pattern.is_empty() {
+        return IsMatch::NoMatch;
     }
     if let Some(item_name) = item.file_name() {
         let item_name = item_name.to_str().unwrap();
-        for re in file_res {
+        for re in positive_file_pattern {
             if re.is_match(item_name) && item.is_file() {
                 debug!("match: '{}' matches '{}'", item_name, re);
-                return true;
+                return IsMatch::Include;
             }
         }
-        for re in dir_res {
+        for re in negative_file_pattern {
+            if re.is_match(item_name) && item.is_file() {
+                debug!("negative match: '{}' matches '{}'", item_name, re);
+                return IsMatch::Exclude;
+            }
+        }
+        for re in positive_dir_pattern {
             if re.is_match(item_name) && item.is_dir() {
                 debug!("match: '{}' matches '{}'", item_name, re);
-                return true;
+                return IsMatch::Include;
+            }
+        }
+        for re in negative_dir_pattern {
+            if re.is_match(item_name) && item.is_dir() {
+                debug!("negative match: '{}' matches '{}'", item_name, re);
+                return IsMatch::Exclude;
             }
         }
     }
-    false
+    IsMatch::NoMatch
 }
