@@ -16,7 +16,7 @@ use crate::common::{get_matches, FirstItemWriter, VecWriter};
 pub struct UniqueArgs {
     #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", help = "Sort the entries. Buffers all the input.")]
     pub order: Order,
-    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, returning all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
+    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, removing all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
     pub keep: Keep,
     #[structopt(
         long,

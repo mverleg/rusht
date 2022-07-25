@@ -17,7 +17,7 @@ pub struct CachedArgs {
         short = 'k',
         long = "key",
         default_value = "${pwd}_${cmd}.cache",
-        help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders. If it contains a / it will be considered a full path."
+        help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders."
     )]
     pub key: String,
     #[structopt(
