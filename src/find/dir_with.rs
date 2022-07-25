@@ -8,12 +8,19 @@ use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
+use log::{error, warn};
 
 use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
 use crate::find::{DirWithArgs, PathModification};
 use crate::find::OnErr;
 use crate::find::Order;
 use crate::find::Nested::StopOnMatch;
+
+enum IsMatch {
+    Include,
+    Exclude,
+    NoMatch,
+}
 
 fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
     let unique_roots = unique_prefix(
@@ -68,23 +75,25 @@ fn find_matching_dirs(
         return Ok(smallvec![]);
     }
     let mut current_is_match = false;
-    let mut results: Dirs = if is_parent_match(parent, &args.itself) {
-        let found = parent.to_path_buf();
-        if args.nested == StopOnMatch {
-            debug!(
+    let mut results: Dirs = match is_parent_match(parent, &args.itself, &args.not_self) {
+        IsMatch::Include => {
+            let found = parent.to_path_buf();
+            if args.nested == StopOnMatch {
+                debug!(
                 "found a match based on parent name: {}, not recursing deeper",
                 parent.to_str().unwrap()
             );
-            return Ok(smallvec![found]);
+                return Ok(smallvec![found]);
+            }
+            debug!(
+                "found a match based on parent name: {}, searching deeper",
+                parent.to_str().unwrap()
+            );
+            current_is_match = true;
+            smallvec![found]
         }
-        debug!(
-            "found a match based on parent name: {}, searching deeper",
-            parent.to_str().unwrap()
-        );
-        current_is_match = true;
-        smallvec![found]
-    } else {
-        smallvec![]
+        IsMatch::Exclude => return Ok(smallvec![]),
+        IsMatch::NoMatch => smallvec![],
     };
     let content = read_content(parent, args.on_err)?;
     trace!(
@@ -166,20 +175,25 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
 }
 
 /// Check if the parent itself matches one of the patterns.
-fn is_parent_match(dir: &Path, patterns: &[Regex]) -> bool {
-    if patterns.is_empty() {
-        return false;
+fn is_parent_match(dir: &Path, positive_patterns: &[Regex], negative_patterns: &Vec<Regex>) -> IsMatch {
+    if positive_patterns.is_empty() && negative_patterns.is_empty() {
+        return IsMatch::NoMatch;
     }
     if let Some(dir_name) = dir.file_name() {
         let dir_name = dir_name.to_str().unwrap();
-        for re in patterns {
+        for re in negative_patterns {
+            if re.is_match(dir_name) {
+                return IsMatch::Exclude;
+            }
+        }
+        for re in positive_patterns {
             if re.is_match(dir_name) {
                 debug!("parent match: '{}' matches '{}'", dir_name, re);
-                return true;
+                return IsMatch::Include;
             }
         }
     }
-    false
+    IsMatch::NoMatch
 }
 
 /// Check if this content item is a match (which causes the parent to be flagged).

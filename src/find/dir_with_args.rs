@@ -50,9 +50,9 @@ pub struct DirWithArgs {
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'I', long = "not-self", help = "Opposite of -i, directory only matches if its own name does NOT match this pattern")]
     pub not_self: Vec<Regex>,
     //TODO @mverleg: ^
-    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'N', long = "exclude-not", help = "Keep recursing even if a directory is negative-matched by -F/-D/-I")]
-    pub negative_nested: Nested,
-    //TODO @mverleg: ^
+    // #[structopt(parse(from_flag = Nested::from_do_nested), short = 'N', long = "exclude-not", help = "Keep recursing even if a directory is negative-matched by -F/-D/-I")]
+    // pub negative_nested: Nested,
+    // //TODO @mverleg: ^
 }
 
 #[test]
