@@ -1,5 +1,7 @@
 use ::std::process::ExitStatus;
 use ::std::sync::Arc;
+use ::std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
@@ -110,6 +112,8 @@ pub fn do_cmd(args: DoArgs) -> bool {
         .for_each(|(id, status)| {
             statuses.insert(id, status);
         });
+    let total_count = to_run.len();
+    let current_nr = AtomicUsize::new(1);
 
     if args.continue_on_error {
         ThreadPoolBuilder::new()
@@ -120,7 +124,7 @@ pub fn do_cmd(args: DoArgs) -> bool {
                 to_run
                     .into_par_iter()
                     .map(|task| {
-                        let (id, status) = exec(&args, task);
+                        let (id, status) = exec(&args, task, current_nr.fetch_add(1, Ordering::AcqRel), total_count);
                         statuses.insert(id, status);
                     })
                     .for_each(|_| {});
@@ -133,7 +137,7 @@ pub fn do_cmd(args: DoArgs) -> bool {
         to_run
             .into_iter()
             .map(|task| {
-                let (id, status) = exec(&args, task);
+                let (id, status) = exec(&args, task, current_nr.fetch_add(1, Ordering::AcqRel), total_count);
                 statuses.insert(id, status);
                 status
             })
@@ -175,9 +179,13 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
     args
 }
 
-fn exec(args: &DoArgs, task: RunningTask) -> (RunId, Status) {
+fn exec(args: &DoArgs, task: RunningTask, current_nr: usize, total_count: usize) -> (RunId, Status) {
     if !args.quiet {
-        println!("run: {}", task.as_str());
+        if total_count > 1 {
+            println!("run {}/{}: {}", current_nr, total_count, task.as_str());
+        } else {
+            println!("run: {}", task.as_str());
+        }
     }
     let id = task.run_id;
     let status = Status::from(task.task.execute(args.quiet));
