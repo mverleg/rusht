@@ -2,148 +2,18 @@ use ::std::fs;
 use ::std::fs::DirEntry;
 use ::std::path::Path;
 use ::std::path::PathBuf;
-use ::std::str::FromStr;
 
-use ::clap::StructOpt;
 use ::itertools::Itertools;
 use ::log::debug;
 use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
 
-use crate::filter::{unique_prefix, Keep, Order as UniqueOrder};
+use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
+use crate::find::{DirWithArgs, PathModification};
+use crate::find::OnErr;
+use crate::find::Order;
 use crate::find::Nested::StopOnMatch;
-
-#[derive(StructOpt, Debug, Default)]
-#[structopt(
-    name = "dir_with",
-    about = "Find directories that contain certain files or directories.",
-    long_about = "Find directories that contain certain files or directories. Only supports utf8, sensible filenames."
-)]
-pub struct DirWithArgs {
-    #[structopt(
-        short = 'l',
-        long,
-        default_value = "10000",
-        help = "Maximum directory depth to recurse into"
-    )]
-    pub max_depth: u32,
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort", help = "Sort the results alphabetically")]
-    pub order: Order,
-    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested", help = "Keep recursing even if a directory matches")]
-    pub nested: Nested,
-    #[structopt(
-        short = 'x',
-        long = "on-error",
-        default_value = "warn",
-        help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore"
-    )]
-    pub on_err: OnErr,
-    #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative", help = "Results are relative to roots, instead of absolute")]
-    pub path_modification: PathModification,
-    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
-    pub roots: Vec<PathBuf>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file", help = "File pattern that must exist in the directory to match")]
-    pub files: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
-    pub dirs: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self", help = "Pattern for the directory itself for it to match")]
-    pub itself: Vec<Regex>,
-}
-
-#[test]
-fn test_cli_args() {
-    use clap::IntoApp;
-    DirWithArgs::into_app().debug_assert()
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum PathModification {
-    Relative,
-    #[default]
-    Canonical,
-}
-
-impl PathModification {
-    fn from_is_relative(is_relative: bool) -> Self {
-        if is_relative {
-            PathModification::Relative
-        } else {
-            PathModification::Canonical
-        }
-    }
-}
-
-fn parse_full_str_regex(pattern: &str) -> Result<Regex, String> {
-    let full_pattern = format!("^{}$", pattern);
-    match Regex::new(&full_pattern) {
-        Ok(re) => Ok(re),
-        Err(err) => Err(format!("invalid file/dir pattern '{}'; it should be a valid regular expression, which will be wrapped inbetween ^ and $; err: {}", pattern, err)),
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum OnErr {
-    #[default]
-    Warn,
-    Abort,
-    Ignore,
-}
-
-impl FromStr for OnErr {
-    type Err = String;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        Ok(match value.to_ascii_lowercase().as_str() {
-            "w" | "warn" => OnErr::Warn,
-            "a" | "abort" | "exit" | "stop" => OnErr::Abort,
-            "i" | "ignore" | "silent" | "skip" => OnErr::Ignore,
-            _ => return Err(format!("did not understand error handling strategy '{}', try '[w]arn', '[a]bort' or '[i]gnore'", value)),
-        })
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum Order {
-    #[default]
-    Preserve,
-    SortAscending,
-}
-
-impl Order {
-    fn from_is_sorted(is_sorted: bool) -> Self {
-        if is_sorted {
-            Order::SortAscending
-        } else {
-            Order::Preserve
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum Nested {
-    #[default]
-    StopOnMatch,
-    AlwaysRecurse,
-}
-
-impl Nested {
-    fn from_do_nested(do_nested: bool) -> Self {
-        if do_nested {
-            Nested::AlwaysRecurse
-        } else {
-            Nested::StopOnMatch
-        }
-    }
-}
-
-fn root_parser(root: &str) -> Result<PathBuf, String> {
-    let path = PathBuf::from(root);
-    if fs::metadata(&path).is_err() {
-        return Err(format!("did not filter root '{}'", root));
-    }
-    Ok(path)
-}
 
 fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
     let unique_roots = unique_prefix(

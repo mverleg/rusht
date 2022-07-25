@@ -141,6 +141,7 @@ fn onebyone_add_run() {
         drop_failed: false,
         keep_successful: false,
         quiet: false,
+        allow_empty: false,
     });
     let out = list_cmds(ListArgs {
         namespace,
