@@ -85,7 +85,10 @@ impl Keep {
 }
 
 pub async fn unique(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
-    assert!(!(args.prefix && args.by.is_some()), "cannot use both --prefix and --by");
+    assert!(
+        !(args.prefix && args.by.is_some()),
+        "cannot use both --prefix and --by"
+    );
     if args.prefix {
         let lines = reader.collect_all().await;
         for line in unique_prefix(lines, args.order, args.keep) {
@@ -115,7 +118,9 @@ async fn unique_nosort(
         if let Some(re) = unique_by_pattern {
             let mut first_writer = FirstItemWriter::new();
             get_matches(re, line, &mut first_writer, true, true).await;
-            first_writer.get().map(|val| key = val);
+            if let Some(val) = first_writer.get() {
+                key = val;
+            }
         }
         if !keep.keep_is_first(seen.insert(key)) {
             continue;

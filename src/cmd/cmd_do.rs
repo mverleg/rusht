@@ -1,6 +1,6 @@
 use ::std::process::ExitStatus;
-use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicUsize;
+use ::std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use ::clap::StructOpt;
@@ -21,65 +21,69 @@ use crate::cmd::cmd_type::TaskType;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
-name = "cmdo",
-about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
+    name = "cmdo",
+    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
 )]
 pub struct DoArgs {
     #[structopt(
-    short = 'n',
-    long,
-    default_value = "",
-    help = "Use the stack from the given namespace instead of the global one"
+        short = 'n',
+        long,
+        default_value = "",
+        help = "Use the stack from the given namespace instead of the global one"
     )]
     pub namespace: String,
     #[structopt(
-    short = 'c',
-    long,
-    default_value = "1",
-    help = "Number of commands to run"
+        short = 'c',
+        long,
+        default_value = "1",
+        help = "Number of commands to run"
     )]
     pub count: u32,
     #[structopt(
-    short = 'a',
-    long,
-    help = "Try to run all the commands",
-    conflicts_with = "count"
+        short = 'a',
+        long,
+        help = "Try to run all the commands",
+        conflicts_with = "count"
     )]
     pub all: bool,
     #[structopt(
-    short = 'p',
-    long = "parallel",
-    default_value = "1",
-    help = "How many parallel tasks to run (implies --continue-on-error)"
+        short = 'p',
+        long = "parallel",
+        default_value = "1",
+        help = "How many parallel tasks to run (implies --continue-on-error)"
     )]
     pub parallel: u32,
     #[structopt(
-    short = 'g',
-    long = "restart-running",
-    help = "Run tasks even if they are marked as already running."
+        short = 'g',
+        long = "restart-running",
+        help = "Run tasks even if they are marked as already running."
     )]
     pub restart_running: bool,
     #[structopt(
-    short = 'f',
-    long = "continue-on-error",
-    help = "Keep running tasks even if one fails (it stays on stack unless -r)"
+        short = 'f',
+        long = "continue-on-error",
+        help = "Keep running tasks even if one fails (it stays on stack unless -r)"
     )]
     pub continue_on_error: bool,
     #[structopt(
-    short = 'r',
-    long = "drop-failed",
-    help = "Remove tasks from the stack when ran, even if they fail"
+        short = 'r',
+        long = "drop-failed",
+        help = "Remove tasks from the stack when ran, even if they fail"
     )]
     pub drop_failed: bool,
     #[structopt(
-    short = 'k',
-    long = "keep",
-    help = "Keep the task on the stack when ran when successful"
+        short = 'k',
+        long = "keep",
+        help = "Keep the task on the stack when ran when successful"
     )]
     pub keep_successful: bool,
     #[structopt(short = 'q', long, help = "Do not log command and timing")]
     pub quiet: bool,
-    #[structopt(short = '0', long = "allow-empty", help = "Silently do nothing if there are no commands")]
+    #[structopt(
+        short = '0',
+        long = "allow-empty",
+        help = "Silently do nothing if there are no commands"
+    )]
     pub allow_empty: bool,
 }
 
@@ -95,7 +99,7 @@ pub fn do_cmd(args: DoArgs) -> bool {
     let mut tasks = read(args.namespace.clone());
     if tasks.is_empty() {
         if args.allow_empty {
-            return true
+            return true;
         }
         eprintln!("there are no commands to run, use cmadd to add them");
         return false;
@@ -124,7 +128,12 @@ pub fn do_cmd(args: DoArgs) -> bool {
                 to_run
                     .into_par_iter()
                     .map(|task| {
-                        let (id, status) = exec(&args, task, current_nr.fetch_add(1, Ordering::AcqRel), total_count);
+                        let (id, status) = exec(
+                            &args,
+                            task,
+                            current_nr.fetch_add(1, Ordering::AcqRel),
+                            total_count,
+                        );
                         statuses.insert(id, status);
                     })
                     .for_each(|_| {});
@@ -137,7 +146,12 @@ pub fn do_cmd(args: DoArgs) -> bool {
         to_run
             .into_iter()
             .map(|task| {
-                let (id, status) = exec(&args, task, current_nr.fetch_add(1, Ordering::AcqRel), total_count);
+                let (id, status) = exec(
+                    &args,
+                    task,
+                    current_nr.fetch_add(1, Ordering::AcqRel),
+                    total_count,
+                );
                 statuses.insert(id, status);
                 status
             })
@@ -179,7 +193,12 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
     args
 }
 
-fn exec(args: &DoArgs, task: RunningTask, current_nr: usize, total_count: usize) -> (RunId, Status) {
+fn exec(
+    args: &DoArgs,
+    task: RunningTask,
+    current_nr: usize,
+    total_count: usize,
+) -> (RunId, Status) {
     if !args.quiet {
         if total_count > 1 {
             println!("run {}/{}: {}", current_nr, total_count, task.as_str());

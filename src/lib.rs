@@ -5,24 +5,24 @@
 pub mod cached;
 pub mod cmd;
 pub mod common;
+pub mod escape;
 pub mod filter;
 pub mod find;
 pub mod wait;
-pub mod escape;
 
 #[cfg(test)]
 mod tests {
     use ::std::cmp::max;
     use ::std::future::join;
 
-    use ::async_std::channel::{Receiver, Sender};
     use ::async_std::channel::bounded;
+    use ::async_std::channel::{Receiver, Sender};
     use ::async_std::task::block_on;
     use ::async_trait::async_trait;
     use ::regex::Regex;
 
     use crate::common::{CollectorWriter, LineReader, LineWriter, VecReader};
-    use crate::filter::{grab, GrabArgs, Keep, Order, unique, UniqueArgs};
+    use crate::filter::{grab, unique, GrabArgs, Keep, Order, UniqueArgs};
 
     #[async_std::test]
     async fn chain_inout() {
@@ -49,11 +49,13 @@ mod tests {
             by: Some(Regex::new("([^ ])* ").unwrap()),
             prefix: false,
         };
-        join!(
+        let (res, ()) = join!(
             //TODO @mark: probably an easier way for this:
-            (async || grab(grab_args, inp1, out1).await.unwrap())(),
+            grab(grab_args, inp1, out1),
             unique(unique_args, &mut inp2, &mut out2),
-        ).await;
+        )
+        .await;
+        res.unwrap();
 
         let expected = vec!["world", "Mars", "Venus", "bye world"];
         let actual = &*lines.lock().await;
@@ -75,7 +77,7 @@ mod tests {
     impl LineWriter for ChainWriter {
         async fn write_line(&mut self, line: impl AsRef<str> + Send) {
             let line = line.as_ref().to_owned();
-            eprintln!("chain write: {}", &line);  //TODO @mark: TEMPORARY! REMOVE THIS!
+            eprintln!("chain write: {}", &line); //TODO @mark: TEMPORARY! REMOVE THIS!
             self.sender.send(PipeItem::Line(line)).await.unwrap()
         }
     }
@@ -83,7 +85,7 @@ mod tests {
     impl Drop for ChainWriter {
         fn drop(&mut self) {
             // TODO rewrite for async drop if supported
-            eprintln!("ending chain writer pipe");  //TODO @mark: TEMPORARY! REMOVE THIS!
+            eprintln!("ending chain writer pipe"); //TODO @mark: TEMPORARY! REMOVE THIS!
             block_on(self.sender.send(PipeItem::End)).unwrap()
         }
     }
@@ -97,18 +99,18 @@ mod tests {
     #[async_trait]
     impl LineReader for ChainReader {
         async fn read_line(&mut self) -> Option<&str> {
-            eprintln!("chain read start");  //TODO @mark: TEMPORARY! REMOVE THIS!
+            eprintln!("chain read start"); //TODO @mark: TEMPORARY! REMOVE THIS!
             if PipeItem::End == self.current {
-                eprintln!("chain reader pipe was already closed");  //TODO @mark: TEMPORARY! REMOVE THIS!
-                return None
+                eprintln!("chain reader pipe was already closed"); //TODO @mark: TEMPORARY! REMOVE THIS!
+                return None;
             }
             self.current = self.receiver.recv().await.unwrap();
             match &self.current {
                 PipeItem::Line(line) => Some(line),
                 PipeItem::End => {
-                    eprintln!("chain reader pipe was just closed");  //TODO @mark: TEMPORARY! REMOVE THIS!
+                    eprintln!("chain reader pipe was just closed"); //TODO @mark: TEMPORARY! REMOVE THIS!
                     None
-                },
+                }
             }
         }
     }

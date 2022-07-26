@@ -9,11 +9,11 @@ use ::log::trace;
 use ::regex::Regex;
 use ::smallvec::{smallvec, SmallVec};
 
-use crate::filter::{Keep, Order as UniqueOrder, unique_prefix};
-use crate::find::{DirWithArgs, PathModification};
+use crate::filter::{unique_prefix, Keep, Order as UniqueOrder};
+use crate::find::Nested::StopOnMatch;
 use crate::find::OnErr;
 use crate::find::Order;
-use crate::find::Nested::StopOnMatch;
+use crate::find::{DirWithArgs, PathModification};
 
 enum IsMatch {
     Include,
@@ -103,9 +103,15 @@ fn find_matching_dirs(
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if current_is_match {
-            continue
+            continue;
         }
-        match is_content_match(sub, &args.files, &args.not_files, &args.dirs, &args.not_dirs) {
+        match is_content_match(
+            sub,
+            &args.files,
+            &args.not_files,
+            &args.dirs,
+            &args.not_dirs,
+        ) {
             IsMatch::Include => {
                 let found = parent.to_path_buf();
                 if args.nested == StopOnMatch {
@@ -181,7 +187,11 @@ fn read_dir_err_handling(dir: &Path, on_err: OnErr) -> Result<SmallVec<[DirEntry
 }
 
 /// Check if the parent itself matches one of the patterns.
-fn is_parent_match(dir: &Path, positive_patterns: &[Regex], negative_patterns: &Vec<Regex>) -> IsMatch {
+fn is_parent_match(
+    dir: &Path,
+    positive_patterns: &[Regex],
+    negative_patterns: &Vec<Regex>,
+) -> IsMatch {
     if positive_patterns.is_empty() && negative_patterns.is_empty() {
         return IsMatch::NoMatch;
     }
@@ -208,10 +218,13 @@ fn is_content_match(
     positive_file_pattern: &Vec<Regex>,
     negative_file_pattern: &Vec<Regex>,
     positive_dir_pattern: &Vec<Regex>,
-    negative_dir_pattern: &Vec<Regex>
+    negative_dir_pattern: &Vec<Regex>,
 ) -> IsMatch {
-    if positive_file_pattern.is_empty() && negative_file_pattern.is_empty() &&
-        positive_dir_pattern.is_empty() && negative_dir_pattern.is_empty() {
+    if positive_file_pattern.is_empty()
+        && negative_file_pattern.is_empty()
+        && positive_dir_pattern.is_empty()
+        && negative_dir_pattern.is_empty()
+    {
         return IsMatch::NoMatch;
     }
     if let Some(item_name) = item.file_name() {

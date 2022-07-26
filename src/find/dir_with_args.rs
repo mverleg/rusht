@@ -5,7 +5,6 @@ use ::std::str::FromStr;
 use ::clap::StructOpt;
 use ::regex::Regex;
 
-
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
     name = "dir_with",

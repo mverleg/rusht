@@ -32,6 +32,12 @@ impl StdinReader {
     }
 }
 
+impl Default for StdinReader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl LineReader for StdinReader {
     async fn read_line(&mut self) -> Option<&str> {
@@ -41,7 +47,7 @@ impl LineReader for StdinReader {
             self.buffer.pop();
         }
         if read_len == 0 {
-            return None
+            return None;
         }
         Some(&self.buffer)
     }

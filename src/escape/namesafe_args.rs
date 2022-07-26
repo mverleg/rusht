@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use ::clap::StructOpt;
+use std::str::FromStr;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -78,7 +78,7 @@ impl FromStr for HashPolicy {
             "changed" | "c" => HashPolicy::Changed,
             "too-long" | "long" | "l" => HashPolicy::TooLong,
             "never" | "n" => HashPolicy::TooLong,
-            other => return Err(format!("unknown hash policy: {}", other))
+            other => return Err(format!("unknown hash policy: {}", other)),
         })
     }
 }
@@ -101,12 +101,14 @@ impl Charset {
 
     pub fn is_allowed(&self, symbol: char) -> bool {
         match self {
-            Charset::AllowUnicode => symbol.is_alphanumeric() ||
-                symbol == '-' || symbol == '_',
-            Charset::AsciiOnly => ('a' <= symbol && symbol <= 'z') ||
-                ('A' <= symbol && symbol <= 'Z') ||
-                ('0' <= symbol && symbol <= '9') ||
-                symbol == '-' || symbol == '_'
+            Charset::AllowUnicode => symbol.is_alphanumeric() || symbol == '-' || symbol == '_',
+            Charset::AsciiOnly => {
+                ('a'..='z').contains(&symbol)
+                    || ('A'..='Z').contains(&symbol)
+                    || ('0'..='9').contains(&symbol)
+                    || symbol == '-'
+                    || symbol == '_'
+            }
         }
     }
 }
@@ -119,7 +121,7 @@ impl Default for NamesafeArgs {
             max_length: 32,
             keep_extension: false,
             allow_empty: false,
-            single_line: false
+            single_line: false,
         }
     }
 }

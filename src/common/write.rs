@@ -30,6 +30,12 @@ impl StdoutWriter {
     }
 }
 
+impl Default for StdoutWriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl LineWriter for StdoutWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
@@ -56,6 +62,12 @@ impl VecWriter {
     }
 }
 
+impl Default for VecWriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[async_trait]
 impl LineWriter for VecWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
@@ -70,11 +82,19 @@ pub struct CollectorWriter {
 
 impl CollectorWriter {
     pub fn new() -> Self {
-        CollectorWriter { lines: Arc::new(Mutex::new(vec![])) }
+        CollectorWriter {
+            lines: Arc::new(Mutex::new(vec![])),
+        }
     }
 
     pub fn get_lines(&self) -> Arc<Mutex<Vec<String>>> {
         self.lines.clone()
+    }
+}
+
+impl Default for CollectorWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -97,6 +117,12 @@ impl FirstItemWriter {
 
     pub fn get(self) -> Option<String> {
         self.line
+    }
+}
+
+impl Default for FirstItemWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

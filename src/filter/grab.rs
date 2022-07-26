@@ -83,14 +83,15 @@ mod tests {
     }
 
     async fn test_grab_arg<S: Into<String>, T: Into<String>>(
-        args: GrabArgs, input: Vec<S>, expected: Vec<T>
+        args: GrabArgs,
+        input: Vec<S>,
+        expected: Vec<T>,
     ) {
         let writer = CollectorWriter::new();
         let lines = writer.get_lines();
-        grab(args, VecReader::new(input), writer)
-            .await
-            .unwrap();
-        let expected = expected.into_iter()
+        grab(args, VecReader::new(input), writer).await.unwrap();
+        let expected = expected
+            .into_iter()
             .map(|s| s.into())
             .collect::<Vec<String>>();
         let line_vec = &*lines.lock().await;
@@ -150,7 +151,8 @@ mod tests {
             },
             input,
             expected,
-        ).await;
+        )
+        .await;
     }
 
     #[async_std::test]
@@ -164,7 +166,8 @@ mod tests {
             },
             input,
             expected,
-        ).await;
+        )
+        .await;
     }
 
     #[async_std::test]
@@ -179,7 +182,8 @@ mod tests {
             },
             input,
             expected,
-        ).await;
+        )
+        .await;
     }
 
     #[async_std::test]
@@ -199,7 +203,8 @@ mod tests {
             },
             input,
             expected,
-        ).await;
+        )
+        .await;
     }
 
     #[async_std::test]
@@ -211,10 +216,10 @@ mod tests {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,
                 first_only: true,
-                ..GrabArgs::default()
             },
             input,
             expected,
-        ).await;
+        )
+        .await;
     }
 }

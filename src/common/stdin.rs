@@ -54,18 +54,16 @@ fn start_time_monitor(has_data: Arc<AtomicBool>) {
 
 fn read_timeout_env() -> u64 {
     match env::var("RUSHT_STDIN_READ_TIMEOUT") {
-        Ok(timeout_str) => {
-            match timeout_str.parse::<u64>() {
-                Ok(timeout) => {
-                    debug!("read RUSHT_STDIN_READ_TIMEOUT = {} seconds", timeout);
-                    timeout
-                }
-                Err(_) => {
-                    warn!("failed to parse RUSHT_STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
-                    30
-                }
+        Ok(timeout_str) => match timeout_str.parse::<u64>() {
+            Ok(timeout) => {
+                debug!("read RUSHT_STDIN_READ_TIMEOUT = {} seconds", timeout);
+                timeout
             }
-        }
+            Err(_) => {
+                warn!("failed to parse RUSHT_STDIN_READ_TIMEOUT = {}, not a positive number, using default", timeout_str);
+                30
+            }
+        },
         Err(_) => {
             debug!("did not filter RUSHT_STDIN_READ_TIMEOUT in env, using default");
             30

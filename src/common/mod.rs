@@ -1,13 +1,13 @@
-use crate::escape::{Charset, HashPolicy, namesafe_line};
 use crate::escape::NamesafeArgs;
+use crate::escape::{namesafe_line, Charset, HashPolicy};
 
 pub use self::err::fail;
 pub use self::re::get_matches;
 pub use self::read::LineReader;
 pub use self::read::StdinReader;
 pub use self::read::VecReader;
-pub use self::stdin::EmptyLineHandling;
 pub use self::stdin::stdin_lines;
+pub use self::stdin::EmptyLineHandling;
 pub use self::task::CommandArgs;
 pub use self::task::Task;
 pub use self::write::CollectorWriter;
@@ -24,11 +24,13 @@ mod task;
 mod write;
 
 pub fn unique_filename(text: &str) -> String {
-    namesafe_line(text, &
-        NamesafeArgs {
-        charset: Charset::AsciiOnly,
-        hash_policy: HashPolicy::Always,
-        max_length: 32,
-        ..Default::default()
-    })
+    namesafe_line(
+        text,
+        &NamesafeArgs {
+            charset: Charset::AsciiOnly,
+            hash_policy: HashPolicy::Always,
+            max_length: 32,
+            ..Default::default()
+        },
+    )
 }

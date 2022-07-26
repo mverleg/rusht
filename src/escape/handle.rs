@@ -1,8 +1,8 @@
-use ::std::io::{BufRead, BufReader, stdin};
+use ::std::io::{stdin, BufRead, BufReader};
 use ::std::process::exit;
 
-use super::NamesafeArgs;
 use super::namesafe;
+use super::NamesafeArgs;
 
 pub fn handle_namesafe(args: NamesafeArgs) {
     let mut lines = BufReader::new(stdin().lock()).lines();
