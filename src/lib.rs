@@ -39,6 +39,7 @@ mod tests {
             pattern: Regex::new("^hello (.*)").unwrap(),
             first_only: true,
             keep_unmatched: true,
+            max_lines: None,
         };
 
         let mut out2 = CollectorWriter::new();

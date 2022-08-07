@@ -7,17 +7,19 @@ pub async fn get_matches(
     writer: &mut impl LineWriter,
     first_only: bool,
     keep_unmatched: bool,
-) {
+) -> u32 {
+    let mut match_cnt = 0;
     match pattern.captures(text) {
         Some(captures) => {
             let mut caps = captures.iter();
             let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
             let mut any_groups = false;
             for mtch_opt in caps {
+                any_groups = true;
                 if let Some(mtch) = mtch_opt {
                     writer.write_line(mtch.as_str()).await;
+                    match_cnt += 1
                 }
-                any_groups = true;
                 if first_only {
                     break;
                 }
@@ -32,4 +34,5 @@ pub async fn get_matches(
             }
         }
     }
+    match_cnt
 }
