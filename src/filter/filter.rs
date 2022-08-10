@@ -1,11 +1,3 @@
-
-
-
-
-
-
-
-
 use ::log::debug;
 
 use crate::common::{get_first_match_or_all, LineReader, LineWriter};
@@ -24,7 +16,7 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
         if expect_success == status.success() {
             debug!("keep line {} after task {} (code: {})", line,
                 task.as_cmd_str(), status.code().unwrap_or(-1));
-            writer.write_line(line);
+            writer.write_line(line).await;
         } else {
             debug!("discard line {} after task {} (code: {})", line,
                 task.as_cmd_str(), status.code().unwrap_or(-1));

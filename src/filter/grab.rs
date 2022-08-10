@@ -234,6 +234,7 @@ mod tests {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,
                 first_only: true,
+                max_lines: None
             },
             input,
             expected,

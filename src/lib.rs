@@ -1,5 +1,4 @@
 #![feature(future_join)]
-#![feature(future_poll_fn)]
 #![feature(async_closure)]
 
 pub mod cached;
