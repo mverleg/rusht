@@ -37,6 +37,10 @@ name = "unique"
 path = "src/filter/main_unique.rs"
 
 [[bin]]
+name = "filter"
+path = "src/filter/main_filter.rs"
+
+[[bin]]
 name = "grab"
 path = "src/filter/main_grab.rs"
 

@@ -14,6 +14,7 @@ use ::rusht::find::DirWithArgs;
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
 use rusht::escape::handle_namesafe;
+use rusht::filter::{FilterArgs, handle_filter};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -36,6 +37,7 @@ enum SubCmd {
     DirWith(DirWithArgs),
     Grab(GrabArgs),
     Unique(UniqueArgs),
+    Filter(FilterArgs),
     Locked(LockedArgs),
     Namesafe(NamesafeArgs),
 }
@@ -59,6 +61,7 @@ async fn main() {
         SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
         SubCmd::Grab(sub_args) => handle_grab(sub_args).await,
         SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
+        SubCmd::Filter(sub_args) => handle_filter(sub_args).await,
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
         SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args),
     }

@@ -1,6 +1,8 @@
-use crate::common::{StdinReader, StdoutWriter};
 use ::std::process::exit;
 
+use crate::common::{StdinReader, StdoutWriter};
+use crate::filter::filter;
+use crate::filter::FilterArgs;
 use crate::filter::unique;
 use crate::filter::UniqueArgs;
 
@@ -18,4 +20,8 @@ pub async fn handle_grab(args: GrabArgs) {
 
 pub async fn handle_unique(args: UniqueArgs) {
     unique(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
+}
+
+pub async fn handle_filter(args: FilterArgs) {
+    filter(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
 }

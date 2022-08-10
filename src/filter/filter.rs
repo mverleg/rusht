@@ -11,6 +11,6 @@ use ::log::debug;
 use crate::common::{CommandArgs, fail, LineReader, LineWriter, Task};
 use crate::filter::FilterArgs;
 
-pub async fn unique(args: FilterArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
+pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
 
 }
