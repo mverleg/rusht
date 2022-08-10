@@ -1,14 +1,14 @@
-use ::std::collections::HashSet;
-use ::std::env::current_dir;
-use ::std::io::Read;
-use ::std::io::stdin;
-use ::std::path::PathBuf;
-use ::std::thread::spawn;
 
-use ::clap::StructOpt;
+
+
+
+
+
+
+
 use ::log::debug;
 
-use crate::common::{CommandArgs, fail, get_first_match_or_all, LineReader, LineWriter, Task};
+use crate::common::{get_first_match_or_all, LineReader, LineWriter};
 use crate::filter::FilterArgs;
 
 //TODO @mverleg: pattern {} in cmd!
@@ -22,7 +22,12 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
         task.push_arg(arg);
         let status = task.execute(true);
         if expect_success == status.success() {
+            debug!("keep line {} after task {} (code: {})", line,
+                task.as_cmd_str(), status.code().unwrap_or(-1));
             writer.write_line(line);
+        } else {
+            debug!("discard line {} after task {} (code: {})", line,
+                task.as_cmd_str(), status.code().unwrap_or(-1));
         }
     }
 }

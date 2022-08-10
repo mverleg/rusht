@@ -1,4 +1,4 @@
-use crate::common::{FirstItemWriter, LineWriter};
+use crate::common::{LineWriter};
 use ::regex::Regex;
 
 pub async fn get_matches(
