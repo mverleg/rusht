@@ -115,7 +115,7 @@ async fn unique_nosort(
     while let Some(line) = reader.read_line().await {
         //TODO @mverleg: can this use a borrow somehow?
         let key = get_first_match_or_all(unique_by_pattern, line);
-        if !keep.keep_is_first(seen.insert(key)) {
+        if !keep.keep_is_first(seen.insert(key.to_owned())) {
             continue;
         }
         writer.write_line(&line).await
