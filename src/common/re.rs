@@ -1,4 +1,4 @@
-use crate::common::LineWriter;
+use crate::common::{FirstItemWriter, LineWriter};
 use ::regex::Regex;
 
 pub async fn get_matches(
@@ -35,4 +35,15 @@ pub async fn get_matches(
         }
     }
     match_cnt
+}
+
+pub async fn get_first_match_or_all(pattern: &Option<Regex>, line: &str) -> String {
+    if let Some(re) = pattern {
+        let mut first_writer = FirstItemWriter::new();
+        get_matches(re, line, &mut first_writer, true, true).await;
+        if let Some(val) = first_writer.get() {
+            return val
+        }
+    }
+    line.to_owned()
 }

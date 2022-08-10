@@ -4,9 +4,9 @@ use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
 
-use crate::common::LineReader;
+use crate::common::{get_first_match_or_all, LineReader};
 use crate::common::LineWriter;
-use crate::common::{get_matches, FirstItemWriter, VecWriter};
+use crate::common::VecWriter;
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(
@@ -114,14 +114,7 @@ async fn unique_nosort(
     let mut seen = HashSet::new();
     while let Some(line) = reader.read_line().await {
         //TODO @mverleg: can this use a borrow somehow?
-        let mut key = line.to_owned();
-        if let Some(re) = unique_by_pattern {
-            let mut first_writer = FirstItemWriter::new();
-            get_matches(re, line, &mut first_writer, true, true).await;
-            if let Some(val) = first_writer.get() {
-                key = val;
-            }
-        }
+        let key = get_first_match_or_all(unique_by_pattern, line);
         if !keep.keep_is_first(seen.insert(key)) {
             continue;
         }
