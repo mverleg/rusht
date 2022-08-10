@@ -57,6 +57,10 @@ impl Task {
         Task::new(cmd.to_owned(), args.to_vec(), working_dir)
     }
 
+    pub fn push_arg(&mut self, extra_arg: &str) {
+        self.args.push(extra_arg.to_owned());
+    }
+
     pub fn as_cmd_str(&self) -> String {
         format!("{} {}", self.cmd, self.args.join(" "))
     }

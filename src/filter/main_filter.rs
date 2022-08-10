@@ -1,6 +1,6 @@
 use ::clap::StructOpt;
 
-use ::rusht::filter::handle_unique;
+use ::rusht::filter::handle_filter;
 use ::rusht::filter::FilterArgs;
 
 #[async_std::main]
