@@ -16,10 +16,8 @@ pub struct MvnwArgs {
     //TODO @mverleg: ^
     #[structopt(short = 'U', long, help = "Update snapshots, even if it was recently done.")]
     pub update: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 't', long, help = "Run tests in affected modules.")]
     pub affected_tests: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 'T', long, help = "Run tests in all modules. Implies --all.", conflicts_with = "affected-tests")]
     pub all_tests: bool,
     //TODO @mverleg: ^

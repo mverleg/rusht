@@ -1,7 +1,7 @@
-use crate::common::{StdinReader, StdoutWriter};
-use crate::java::MvnwArgs;
+use crate::common::StdoutWriter;
 use crate::java::mvnw;
+use crate::java::MvnwArgs;
 
 pub async fn handle_mvnw(args: MvnwArgs) {
-    mvnw(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
+    mvnw(args, &mut StdoutWriter::new()).await;
 }
