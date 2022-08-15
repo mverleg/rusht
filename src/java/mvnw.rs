@@ -7,7 +7,7 @@ use ::smallvec::{SmallVec, smallvec};
 use crate::common::{LineWriter, Task};
 use crate::java::mvnw_args::MvnwArgs;
 
-pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
+pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), String> {
     assert!(!(args.prod_only && args.tests));
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
@@ -19,6 +19,10 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
         args.all = true;
     }
     debug!("arguments: {:?}", &args);
+    if ! PathBuf::from("pom.xml").is_file() {
+        return Err("must be run from a maven project directory (containing pom.xml)".to_owned())
+
+    }
     let args = args;
     // affected_tests
     // all_tests
@@ -37,6 +41,7 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
     };
     let cmd_config = MvnCmdConfig {
         modules,
+        tests: args.tests,
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
@@ -48,21 +53,26 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
         mvn_arg: args.mvn_arg,
         cwd: current_dir().unwrap(),
     };
+
     for cmd in cmd_config.build_cmds() {
         if args.show_cmds_only {
-            writer.write_line(cmd.as_cmd_str());
+            writer.write_line(cmd.as_cmd_str()).await;
         } else {
             let status = cmd.execute(!args.verbose);
-            unimplemented!()  //TODO @mverleg:
+            if ! status.success() {
+                return Err(format!("command {} failed with code {}",
+                        cmd.as_cmd_str(), status.code().unwrap_or(-1)))
+            }
         }
     }
 
-    unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    Ok(())
 }
 
 struct MvnCmdConfig {
     /// Which modules to build. Empty means everything.
     modules: Vec<String>,
+    tests: bool,
     verbose: bool,
     update: bool,
     clean: bool,
@@ -77,8 +87,7 @@ struct MvnCmdConfig {
 
 impl MvnCmdConfig {
     fn build_cmds(&self) -> SmallVec<[Task; 1]> {
-        let do_tests = false;  //TODO @mverle
-        // tests
+        let single_cmd = self.modules.is_empty();
         // max_memory
 
         let mut cmds = smallvec![];
@@ -88,7 +97,7 @@ impl MvnCmdConfig {
         }
 
         // Clean
-        if self.clean && self.modules.is_empty() {
+        if self.clean && single_cmd {
             args.push("clean".to_owned());
         } else {
             let mut clean_args = vec!["clean".to_owned()];
@@ -101,7 +110,7 @@ impl MvnCmdConfig {
         // Determine maven stage
         let stage = if self.install {
             "install"
-        } else if do_tests {
+        } else if self.tests && single_cmd {
             "test"
         } else {
             "compile"
@@ -111,16 +120,19 @@ impl MvnCmdConfig {
         // Affected build modules
         if ! self.modules.is_empty() {
             for module in &self.modules {
-                args.push("-pl".to_owned());
+                args.push("--projects".to_owned());
                 args.push(format!(":{}", module));
             }
-            args.push("-am".to_owned())
+            args.push("--also-make".to_owned())
         }
 
         // Modifier flags
         args.push(format!("--threads={}", self.threads));
-        if ! self.update {
+        if self.update {
             args.push("--update-snapshots".to_owned());
+        } else {
+            debug!("using offline mode, try with -U if this fails");
+            args.push("--offline".to_owned());
         }
         if ! self.verbose {
             args.push("--quiet".to_owned());
@@ -128,7 +140,16 @@ impl MvnCmdConfig {
         if self.prod_only {
             args.push("-Dmaven.test.skip=true".to_owned());
         }
-        if do_tests {
+
+        // Tests
+        let mut test_task = None;
+        if self.tests {
+            let test_task = if single_cmd {
+                unimplemented!()
+            } else {
+                test_task = Some(self.make_task(vec!["test".to_owned()]));
+                unimplemented!()
+            };
             args.push("-Dparallel=all".to_owned());
             args.push("-DperCoreThreadCount=false".to_owned());
             args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
@@ -145,6 +166,9 @@ impl MvnCmdConfig {
         args.push("-Dmaven.javadoc.skip=true".to_owned());
 
         cmds.push(self.make_task(args));
+        if let Some(tsk) = test_task {
+            cmds.push(tsk);
+        }
         cmds
     }
 

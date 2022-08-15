@@ -1,7 +1,15 @@
+use ::std::process::exit;
+
 use crate::common::StdoutWriter;
 use crate::java::mvnw;
 use crate::java::MvnwArgs;
 
 pub async fn handle_mvnw(args: MvnwArgs) {
-    mvnw(args, &mut StdoutWriter::new()).await;
+    match mvnw(args, &mut StdoutWriter::new()).await {
+        Ok(()) => {}
+        Err(err) => {
+            eprintln!("{}", err);
+            exit(1);
+        }
+    }
 }
