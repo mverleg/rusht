@@ -1,19 +1,6 @@
-use ::clap::StructOpt;
-use ::clap::Subcommand;
-use ::env_logger;
+use ::std::str::FromStr;
 
-use ::rusht::cached::handle_cached;
-use ::rusht::cached::CachedArgs;
-use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
-use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
-use ::rusht::escape::NamesafeArgs;
-use ::rusht::filter::{handle_grab, handle_unique};
-use ::rusht::filter::{GrabArgs, UniqueArgs};
-use ::rusht::find::handle_dir_with;
-use ::rusht::find::DirWithArgs;
-use ::rusht::wait::handle_locked;
-use ::rusht::wait::LockedArgs;
-use rusht::escape::handle_namesafe;
+use ::clap::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -21,38 +8,68 @@ use rusht::escape::handle_namesafe;
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and git."
 )]
 pub struct MvnwArgs {
-    #[structopt(short = 'c', long, help = "Do a clean build and update snapshots")]
+    #[structopt(short = 'c', long, help = "Do a clean build (also cleans unaffected modules).")]
     pub clean: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'a', long, help = "Build all the code, not just affected files.")]
+    pub all: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'U', long, help = "Update snapshots, even if it was recently done.")]
+    pub update: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 't', long, help = "Run tests in affected modules.")]
+    pub affected_tests: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'T', long, help = "Run tests in all modules. Implies --all.", conflicts_with = "affected-tests")]
+    pub all_tests: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'p', long, help = "Only build prod (main) code, skip building tests.", conflicts_with = "affected-tests", conflicts_with = "all-tests")]
+    pub prod_only: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'v', long, help = "Show the maven commands being run, and the build output.")]
+    pub verbose: bool,
+    //TODO @mverleg: ^
+    #[structopt(short = 'V', long, help = "Only show the maven commands to be ran, do not actually run them.")]
+    pub show_cmds_only: bool,
+    //TODO @mverleg: ^
     #[structopt(
         short = 'x',
-        long = "hash",
-        default_value = "changed",  //TODO @mverleg: not sure why Default impl doesn't work
-        help = "In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever)."
+        long = "affected",
+        help = "How to determine which files/modules have been affected: [a]ny-change / [r]ecent / [u]ncommitted / [c]ommit / [b]ranch.",
+        conflicts_with = "all",
     )]
-    pub hash_policy: BuildPolicy,
+    pub affected_policy: AffectedPolicy,
+    //TODO @mverleg: ^
 }
+//TODO @mverleg: pass extra maven args directly
+//TODO @mverleg: also include linting?
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum BuildPolicy {
-    commit/uncommitted/branch/all/recent
-    Commit,
+pub enum AffectedPolicy {
+    /// `Branch` + `Uncommmitted`
+    AnyChange,
     #[default]
-    Uncommitted,
-    Branch,
+    /// `Commit` + `Uncommmitted`
     Recent,
-    All,
+    /// All uncommitted changes.
+    Uncommitted,
+    /// All changes in the head commit.
+    Commit,
+    /// All commits in the branch (that are not in master).
+    Branch,
 }
 
-impl FromStr for BuildPolicy {
+impl FromStr for AffectedPolicy {
     type Err = String;
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
         Ok(match text.to_lowercase().as_str() {
-            "always" | "a" => HashPolicy::Always,
-            "changed" | "c" => HashPolicy::Changed,
-            "too-long" | "long" | "l" => HashPolicy::TooLong,
-            "never" | "n" => HashPolicy::TooLong,
-            other => return Err(format!("unknown hash policy: {}", other)),
+            "a" | "any-change" | "all" => AffectedPolicy::AnyChange,
+            "r" | "recent" => AffectedPolicy::Recent,
+            "u" | "uncommitted" => AffectedPolicy::Uncommitted,
+            "c" | "commit" => AffectedPolicy::Commit,
+            "b" | "branch" => AffectedPolicy::Branch,
+            other => return Err(format!("unknown affected files policy: {}", other)),
         })
     }
 }
