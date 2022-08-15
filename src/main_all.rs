@@ -2,19 +2,20 @@ use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::handle_cached;
 use ::rusht::cached::CachedArgs;
+use ::rusht::cached::handle_cached;
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
+use ::rusht::escape::handle_namesafe;
 use ::rusht::escape::NamesafeArgs;
 use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::filter::{GrabArgs, UniqueArgs};
-use ::rusht::find::handle_dir_with;
+use ::rusht::filter::{FilterArgs, handle_filter};
 use ::rusht::find::DirWithArgs;
+use ::rusht::find::handle_dir_with;
+use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
-use rusht::escape::handle_namesafe;
-use rusht::filter::{FilterArgs, handle_filter};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -40,6 +41,7 @@ enum SubCmd {
     Filter(FilterArgs),
     Locked(LockedArgs),
     Namesafe(NamesafeArgs),
+    Mvnw(MvnwArgs),
 }
 
 #[test]
@@ -64,5 +66,6 @@ async fn main() {
         SubCmd::Filter(sub_args) => handle_filter(sub_args).await,
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
         SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args),
+        SubCmd::Mvnw(sub_args) => handle_mvnw(sub_args).await,
     }
 }

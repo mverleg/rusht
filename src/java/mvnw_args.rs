@@ -4,7 +4,7 @@ use ::clap::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
-    name = "mvnw",
+    name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and git."
 )]
 pub struct MvnwArgs {

@@ -8,7 +8,7 @@ pub mod escape;
 pub mod filter;
 pub mod find;
 pub mod wait;
-pub mod mvnw;
+pub mod java;
 
 #[cfg(test)]
 mod tests {

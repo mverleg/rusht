@@ -57,6 +57,10 @@ name = "namesafe"
 path = "src/escape/main_namesafe.rs"
 
 [[bin]]
+name = "mvnw"
+path = "src/java/main_mvnw.rs"
+
+[[bin]]
 name = "rusht"
 path = "src/main_all.rs"
 
