@@ -11,29 +11,18 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) -> Result<()
     assert!(!(args.prod_only && args.tests));
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
-    if ! args.all {
-        unimplemented!("--all is required for now")  //TODO @mverleg: TEMPORARY! REMOVE THIS!
-    }
     debug!("arguments: {:?}", &args);
     if ! PathBuf::from("pom.xml").is_file() {
         return Err("must be run from a maven project directory (containing pom.xml)".to_owned())
 
     }
     let args = args;
-    // affected_tests
-    // all_tests
-    // prod_only
-    // affected_policy
-
-    // threads
-    // max_memory
-    // mvn_exe
-    // mvn_arg
+    // //TODO @mverleg: affected_policy
 
     let modules = if args.all {
         vec![]
     } else {
-        unimplemented!()
+        vec!["omm-goat".to_owned()]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     };
     let cmd_config = MvnCmdConfig {
         modules,
@@ -94,8 +83,10 @@ impl MvnCmdConfig {
 
         // Clean
         if self.clean && single_cmd {
+            debug!("clean and build in same command because of --all");
             args.push("clean".to_owned());
         } else {
+            debug!("clean and build in separate commands, to clean everything while building a subset");
             let mut clean_args = vec!["clean".to_owned()];
             if ! self.verbose {
                 clean_args.push("--quiet".to_owned());
@@ -144,39 +135,19 @@ impl MvnCmdConfig {
         let mut test_task = None;
         if self.tests {
             if single_cmd {
+                debug!("build and test in same command because of --all");
                 self.add_test_args(&mut args);
             } else {
+                debug!("build and test in separate commands, to build recursively but test only specific modules");
                 let mut test_args = vec!["test".to_owned()];
                 self.add_opt_args(&mut test_args);
                 self.add_test_args(&mut test_args);
-                let test_task = Some(self.make_task(test_args));
+                test_task = Some(self.make_task(test_args));
             }
         } else {
+            debug!("no tests");
             args.push("-DskipTests".to_owned());
         }
-
-        // let mut test_task = None;
-        // if self.tests {
-        //     let test_task = if single_cmd {
-        //         unimplemented!()
-        //     } else {
-        //         test_task = Some(self.make_task(vec!["test".to_owned()]));
-        //         unimplemented!()
-        //     };
-        //     args.push("-Dparallel=all".to_owned());
-        //     args.push("-DperCoreThreadCount=false".to_owned());
-        //     args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
-        //     args.push("-DskipITs".to_owned());
-        //     args.push("-Dsurefire.printSummary=false".to_owned());
-        //     args.push("-DfailIfNoTests=false".to_owned());
-        // }
-        //
-        // // Default optimization flags
-        // args.push("-Dmanagedversions.skip=true".to_owned());
-        // args.push("-Dmanagedversions.failOnError=false".to_owned());
-        // args.push("-Denforcer.skip=true".to_owned());
-        // args.push("-Ddatabase.skip=true".to_owned());
-        // args.push("-Dmaven.javadoc.skip=true".to_owned());
 
         cmds.push(self.make_task(args));
         if let Some(tsk) = test_task {
