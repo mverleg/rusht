@@ -1,4 +1,5 @@
 use ::std::env::current_dir;
+use std::path::Path;
 
 use ::log::debug;
 use ::smallvec::{SmallVec, smallvec};
@@ -7,22 +8,30 @@ use crate::common::{LineWriter, Task};
 use crate::java::mvnw_args::MvnwArgs;
 
 pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
+    assert!(!(args.prod_only && args.all_tests));
+    assert!(!(args.prod_only && args.affected_tests));
     if args.all_tests {
         debug!("setting --all because of --all-tests");
         args.all = true;
     }
+    debug!("arguments: {:?}", &args);
     let args = args;
-    // clean
-    // all
     // affected_tests
     // all_tests
     // prod_only
-    // verbose
     // affected_policy
 
+    let modules = if args.all {
+        vec![]
+    } else {
+        unimplemented!()
+    };
     let cmd_config = MvnCmdConfig {
+        modules,
         verbose: args.verbose,
         update: args.update,
+        clean: args.clean,
+        prod_only: args.prod_only,
     };
     for cmd in cmd_config.build_cmds() {
         if args.show_cmds_only {
@@ -41,30 +50,75 @@ struct MvnCmdConfig {
     modules: Vec<String>,
     verbose: bool,
     update: bool,
+    clean: bool,
+    install: bool,
+    prod_only: bool,
 }
 
 impl MvnCmdConfig {
     fn build_cmds(&self) -> SmallVec<[Task; 1]> {
-        // clean
-        // all
+        let cwd = current_dir().unwrap();
+        let do_tests = false;  //TODO @mverle
         // affected_tests
         // all_tests
-        // prod_only
-        // affected_policy
+
+        let mut cmds = smallvec![];
         let mut args = vec![];
-        if self.modules {
-            for module in self.modules {
+
+        // Clean
+        if self.clean && self.modules.is_empty() {
+            args.push("clean".to_owned());
+        } else {
+            let mut clean_args = vec!["clean".to_owned()];
+            if ! self.verbose {
+                clean_args.push("--quiet".to_owned());
+            }
+            cmds.push(make_task(clean_args, &cwd));
+        }
+
+        // Determine maven stage
+        stage = if self.install {
+            "install"
+        } else if do_tests {
+            "test"
+        } else {
+            "compile"
+        };
+        args.push(stage);
+
+        // Affected build modules
+        if ! self.modules.is_empty() {
+            for module in &self.modules {
                 args.push("-pl".to_owned());
                 args.push(format!(":{}", module));
             }
             args.push("-am".to_owned())
         }
+
+        // Modifier flags
         if ! self.update {
             args.push("--update-snapshots".to_owned());
         }
         if ! self.verbose {
             args.push("--quiet".to_owned());
         }
-        smallvec![Task::new("mvn".to_owned(), args, current_dir().unwrap())]
+        if self.prod_only {
+            args.push("-Dmaven.test.skip=true".to_owned());
+        }
+        if do_tests {
+            args.push("-Dparallel=all".to_owned());
+            args.push("-DperCoreThreadCount=false".to_owned());
+            args.push("-DthreadCount=30".to_owned());
+        }
+
+        // Default optimizer flags
+
+
+        cmds.push(make_task(args, &cwd));
+        cmds
     }
+}
+
+fn make_task(args: Vec<String>, cwd: &Path) -> Task {
+    Task::new("mvn".to_owned(), args, cwd.to_owned())
 }
