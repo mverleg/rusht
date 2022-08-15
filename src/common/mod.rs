@@ -23,6 +23,7 @@ mod read;
 mod stdin;
 mod task;
 mod write;
+mod git;
 
 pub fn unique_filename(text: &str) -> String {
     namesafe_line(
