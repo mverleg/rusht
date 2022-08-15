@@ -16,8 +16,8 @@ pub struct CachedArgs {
     #[structopt(
         short = 'k',
         long = "key",
-        default_value = "${pwd}_${cmd}.cache",
-        help = "The key to use for the cache. Can use ${pwd} and ${cmd} placeholders."
+        default_value = "${pwd}_${env}_${cmd}.cache",
+        help = "The key to use for the cache. Can use ${pwd}, ${env} and ${cmd} placeholders (${env} only contains non-inherited env)."
     )]
     pub key: String,
     #[structopt(

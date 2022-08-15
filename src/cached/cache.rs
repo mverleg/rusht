@@ -8,6 +8,7 @@ use ::std::time::Duration;
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use itertools::Itertools;
 use time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
@@ -125,6 +126,7 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
 fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
     let key = key_templ
         .replace("${pwd}", task.working_dir.to_string_lossy().as_ref())
+        .replace("${env}", &task.extra_envs.iter().map(|(k, v)| format!("{}{}", k, v)).join("_"))
         .replace("${cmd}", &task.as_cmd_str());
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");

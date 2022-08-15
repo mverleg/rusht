@@ -1,4 +1,6 @@
 use ::std::env::current_dir;
+use std::cmp::min;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use ::log::debug;
@@ -7,7 +9,7 @@ use ::smallvec::{SmallVec, smallvec};
 use crate::common::{LineWriter, Task};
 use crate::java::mvnw_args::MvnwArgs;
 
-pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), String> {
+pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), String> {
     assert!(!(args.prod_only && args.tests));
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
@@ -82,16 +84,20 @@ impl MvnCmdConfig {
         }
 
         // Clean
-        if self.clean && single_cmd {
-            debug!("clean and build in same command because of --all");
-            args.push("clean".to_owned());
-        } else {
-            debug!("clean and build in separate commands, to clean everything while building a subset");
-            let mut clean_args = vec!["clean".to_owned()];
-            if ! self.verbose {
-                clean_args.push("--quiet".to_owned());
+        if self.clean {
+            if single_cmd {
+                debug!("clean and build in same command because of --all");
+                args.push("clean".to_owned());
+            } else {
+                debug!("clean and build in separate commands, to clean everything while building a subset");
+                let mut clean_args = vec!["clean".to_owned()];
+                if !self.verbose {
+                    clean_args.push("--quiet".to_owned());
+                }
+                cmds.push(self.make_task(clean_args));
             }
-            cmds.push(self.make_task(clean_args));
+        } else {
+            debug!("not cleaning, incremental build");
         }
 
         // Determine maven stage
@@ -159,7 +165,10 @@ impl MvnCmdConfig {
 
     fn make_task(&self, mut args: Vec<String>) -> Task {
         args.extend_from_slice(&self.mvn_arg);
-        Task::new(self.mvn_exe.to_owned(), args, self.cwd.to_owned())
+        let mut extra_env = HashMap::new();
+        extra_env.insert("MAVEN_OPTS".to_owned(), format!("-XX:+UseParallelGC -Xms{}m -Xmx{}m",
+                min(256, self.max_memory_mb), self.max_memory_mb));
+        Task::new_with_env(self.mvn_exe.to_owned(), args, self.cwd.to_owned(), extra_env)
     }
 
     fn add_opt_args(&self, args: &mut Vec<String>) {

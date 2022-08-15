@@ -1,3 +1,4 @@
+use ::std::collections::HashMap;
 use ::std::env::current_dir;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
@@ -9,6 +10,7 @@ use ::std::time::Instant;
 use ::clap::StructOpt;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use itertools::Itertools;
 
 use crate::common::fail;
 
@@ -36,14 +38,21 @@ pub struct Task {
     pub cmd: String,
     pub args: Vec<String>,
     pub working_dir: PathBuf,
+    #[serde(default)]
+    pub extra_envs: HashMap<String, String>,
 }
 
 impl Task {
     pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
+        Task::new_with_env(cmd, args, working_dir, HashMap::new())
+    }
+
+    pub fn new_with_env(cmd: String, args: Vec<String>, working_dir: PathBuf, extra_envs: HashMap<String, String>) -> Self {
         Task {
             cmd,
             args,
             working_dir,
+            extra_envs,
         }
     }
 
@@ -66,15 +75,24 @@ impl Task {
     }
 
     pub fn as_str(&self) -> String {
-        if self.working_dir == current_dir().unwrap() {
-            self.as_cmd_str()
+        let cmd_str = if self.working_dir == current_dir().unwrap() {
+            "".to_owned()
         } else {
-            format!(
-                "{} @ {}",
-                self.as_cmd_str(),
-                self.working_dir.to_string_lossy()
-            )
-        }
+            format!(" @ {}", self.working_dir.to_string_lossy())
+        };
+        let env_str = if self.extra_envs.is_empty() {
+            "".to_owned()
+        } else {
+            format!("{} ", self.extra_envs.iter()
+                .map(|(k, v)| format!("{}='{}'", k, v))
+                .join(" "))
+        };
+        format!(
+            "{}{}{}",
+            env_str,
+            self.as_cmd_str(),
+            cmd_str,
+        )
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {
@@ -93,6 +111,7 @@ impl Task {
         let mut child = match Command::new(&self.cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)
+            .envs(&self.extra_envs)
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
