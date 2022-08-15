@@ -14,10 +14,6 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) -> Result<()
     if ! args.all {
         unimplemented!("--all is required for now")  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
-    if args.tests {
-        debug!("setting --all because of --all-tests");
-        args.all = true;
-    }
     debug!("arguments: {:?}", &args);
     if ! PathBuf::from("pom.xml").is_file() {
         return Err("must be run from a maven project directory (containing pom.xml)".to_owned())
@@ -141,39 +137,74 @@ impl MvnCmdConfig {
             args.push("-Dmaven.test.skip=true".to_owned());
         }
 
+        // Default optimization flags
+        self.add_opt_args(&mut args);
+
         // Tests
         let mut test_task = None;
         if self.tests {
-            let test_task = if single_cmd {
-                unimplemented!()
+            if single_cmd {
+                self.add_test_args(&mut args);
             } else {
-                test_task = Some(self.make_task(vec!["test".to_owned()]));
-                unimplemented!()
-            };
-            args.push("-Dparallel=all".to_owned());
-            args.push("-DperCoreThreadCount=false".to_owned());
-            args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
+                let mut test_args = vec!["test".to_owned()];
+                self.add_opt_args(&mut test_args);
+                self.add_test_args(&mut test_args);
+                let test_task = Some(self.make_task(test_args));
+            }
+        } else {
+            args.push("-DskipTests".to_owned());
         }
 
-        // Default optimization flags
-        args.push("-DskipITs".to_owned());
-        args.push("-Dmanagedversions.skip=true".to_owned());
-        args.push("-Dmanagedversions.failOnError=false".to_owned());
-        args.push("-Denforcer.skip=true".to_owned());
-        args.push("-Ddatabase.skip=true".to_owned());
-        args.push("-Dsurefire.printSummary=false".to_owned());
-        args.push("-DfailIfNoTests=false".to_owned());
-        args.push("-Dmaven.javadoc.skip=true".to_owned());
+        // let mut test_task = None;
+        // if self.tests {
+        //     let test_task = if single_cmd {
+        //         unimplemented!()
+        //     } else {
+        //         test_task = Some(self.make_task(vec!["test".to_owned()]));
+        //         unimplemented!()
+        //     };
+        //     args.push("-Dparallel=all".to_owned());
+        //     args.push("-DperCoreThreadCount=false".to_owned());
+        //     args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
+        //     args.push("-DskipITs".to_owned());
+        //     args.push("-Dsurefire.printSummary=false".to_owned());
+        //     args.push("-DfailIfNoTests=false".to_owned());
+        // }
+        //
+        // // Default optimization flags
+        // args.push("-Dmanagedversions.skip=true".to_owned());
+        // args.push("-Dmanagedversions.failOnError=false".to_owned());
+        // args.push("-Denforcer.skip=true".to_owned());
+        // args.push("-Ddatabase.skip=true".to_owned());
+        // args.push("-Dmaven.javadoc.skip=true".to_owned());
 
         cmds.push(self.make_task(args));
         if let Some(tsk) = test_task {
             cmds.push(tsk);
         }
+
         cmds
     }
 
     fn make_task(&self, mut args: Vec<String>) -> Task {
         args.extend_from_slice(&self.mvn_arg);
         Task::new(self.mvn_exe.to_owned(), args, self.cwd.to_owned())
+    }
+
+    fn add_opt_args(&self, args: &mut Vec<String>) {
+        args.push("-Dmanagedversions.skip=true".to_owned());
+        args.push("-Dmanagedversions.failOnError=false".to_owned());
+        args.push("-Denforcer.skip=true".to_owned());
+        args.push("-Ddatabase.skip=true".to_owned());
+        args.push("-Dmaven.javadoc.skip=true".to_owned());
+    }
+
+    fn add_test_args(&self, args: &mut Vec<String>) {
+        args.push("-Dparallel=all".to_owned());
+        args.push("-DperCoreThreadCount=false".to_owned());
+        args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
+        args.push("-DskipITs".to_owned());
+        args.push("-Dsurefire.printSummary=false".to_owned());
+        args.push("-DfailIfNoTests=false".to_owned());
     }
 }
