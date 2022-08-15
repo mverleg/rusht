@@ -941,6 +941,7 @@ dependencies = [
  "lazy_static",
  "log",
  "memoize",
+ "num_cpus",
  "parse_duration0",
  "rand",
  "rayon",

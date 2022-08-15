@@ -9,6 +9,8 @@ use crate::java::mvnw_args::MvnwArgs;
 
 pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
     assert!(!(args.prod_only && args.tests));
+    assert!(args.threads.unwrap_or(1) >= 1);
+    assert!(args.max_memory_mb >= 1);
     if args.tests {
         debug!("setting --all because of --all-tests");
         args.all = true;
@@ -20,6 +22,11 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
     // prod_only
     // affected_policy
 
+    // threads
+    // max_memory
+    // mvn_exe
+    // mvn_arg
+
     let modules = if args.all {
         vec![]
     } else {
@@ -30,7 +37,12 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
+        install: args.install,
         prod_only: args.prod_only,
+        threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
+        max_memory_mb: args.max_memory_mb,
+        mvn_exe: args.mvn_exe,
+        mvn_arg: args.mvn_arg,
     };
     for cmd in cmd_config.build_cmds() {
         if args.show_cmds_only {
@@ -52,6 +64,10 @@ struct MvnCmdConfig {
     clean: bool,
     install: bool,
     prod_only: bool,
+    threads: u32,
+    max_memory_mb: u32,
+    mvn_exe: String,
+    mvn_arg: Vec<String>,
 }
 
 impl MvnCmdConfig {
@@ -83,7 +99,7 @@ impl MvnCmdConfig {
         } else {
             "compile"
         };
-        args.push(stage);
+        args.push(stage.to_owned());
 
         // Affected build modules
         if ! self.modules.is_empty() {
@@ -110,14 +126,21 @@ impl MvnCmdConfig {
             args.push("-DthreadCount=30".to_owned());
         }
 
-        // Default optimizer flags
-
+        // Default optimization flags
+        args.push("-DskipITs".to_owned());
+        args.push("-Dmanagedversions.skip=true".to_owned());
+        args.push("-Dmanagedversions.failOnError=false".to_owned());
+        args.push("-Denforcer.skip=true".to_owned());
+        args.push("-Ddatabase.skip=true".to_owned());
+        args.push("-Dsurefire.printSummary=false".to_owned());
+        args.push("-DfailIfNoTests=false".to_owned());
+        args.push("-Dmaven.javadoc.skip=true".to_owned());
 
         cmds.push(make_task(args, &cwd));
         cmds
     }
 }
 
-fn make_task(args: Vec<String>, cwd: &Path) -> Task {
+fn make_task(mut args: Vec<String>, cwd: &Path) -> Task {
     Task::new("mvn".to_owned(), args, cwd.to_owned())
 }

@@ -10,6 +10,8 @@ use ::clap::StructOpt;
 pub struct MvnwArgs {
     #[structopt(short = 'c', long, help = "Do a clean build (also cleans unaffected modules).")]
     pub clean: bool,
+    #[structopt(short = 'i', long, help = "Install the modules into local .m2 after building them.")]
+    pub install: bool,
     #[structopt(short = 'a', long, help = "Build all the code, not just affected files.")]
     pub all: bool,
     #[structopt(short = 'U', long, help = "Update snapshots, even if it was recently done.")]
@@ -29,6 +31,14 @@ pub struct MvnwArgs {
         conflicts_with = "all",
     )]
     pub affected_policy: AffectedPolicy,
+    #[structopt(long, help = "Number of threads to build with. Multiplied by 4 for running tests.")]
+    pub threads: Option<u32>,
+    #[structopt(long = "max-memory", help = "Maximum memory to build, in MB.", default_value = "8192")]
+    pub max_memory_mb: u32,
+    #[structopt(long, help = "Maven executable. Can be used to select a different path or switch to mvnd.", default_value = "mvn")]
+    pub mvn_exe: String,
+    #[structopt(long, help = "Extra arguments to pass to maven.")]
+    pub mvn_arg: Vec<String>,
 }
 //TODO @mverleg: pass extra maven args directly
 //TODO @mverleg: also include linting?
