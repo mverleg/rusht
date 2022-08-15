@@ -8,9 +8,8 @@ use crate::common::{LineWriter, Task};
 use crate::java::mvnw_args::MvnwArgs;
 
 pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
-    assert!(!(args.prod_only && args.all_tests));
-    assert!(!(args.prod_only && args.affected_tests));
-    if args.all_tests {
+    assert!(!(args.prod_only && args.tests));
+    if args.tests {
         debug!("setting --all because of --all-tests");
         args.all = true;
     }
@@ -77,7 +76,7 @@ impl MvnCmdConfig {
         }
 
         // Determine maven stage
-        stage = if self.install {
+        let stage = if self.install {
             "install"
         } else if do_tests {
             "test"

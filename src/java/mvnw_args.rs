@@ -10,26 +10,18 @@ use ::clap::StructOpt;
 pub struct MvnwArgs {
     #[structopt(short = 'c', long, help = "Do a clean build (also cleans unaffected modules).")]
     pub clean: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 'a', long, help = "Build all the code, not just affected files.")]
     pub all: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 'U', long, help = "Update snapshots, even if it was recently done.")]
     pub update: bool,
     #[structopt(short = 't', long, help = "Run tests in affected modules.")]
-    pub affected_tests: bool,
-    #[structopt(short = 'T', long, help = "Run tests in all modules. Implies --all.", conflicts_with = "affected-tests")]
-    pub all_tests: bool,
-    //TODO @mverleg: ^
-    #[structopt(short = 'p', long, help = "Only build prod (main) code, skip building tests.", conflicts_with = "affected-tests", conflicts_with = "all-tests")]
+    pub tests: bool,
+    #[structopt(short = 'p', long, help = "Only build prod (main) code, skip building tests.", conflicts_with = "tests")]
     pub prod_only: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 'v', long, help = "Show the maven commands being run, and the build output.")]
     pub verbose: bool,
-    //TODO @mverleg: ^
     #[structopt(short = 'V', long, help = "Only show the maven commands to be ran, do not actually run them.")]
     pub show_cmds_only: bool,
-    //TODO @mverleg: ^
     #[structopt(
         short = 'x',
         long = "affected",
@@ -37,7 +29,6 @@ pub struct MvnwArgs {
         conflicts_with = "all",
     )]
     pub affected_policy: AffectedPolicy,
-    //TODO @mverleg: ^
 }
 //TODO @mverleg: pass extra maven args directly
 //TODO @mverleg: also include linting?
