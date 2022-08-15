@@ -1,5 +1,5 @@
 use ::std::env::current_dir;
-use std::path::Path;
+use std::path::PathBuf;
 
 use ::log::debug;
 use ::smallvec::{SmallVec, smallvec};
@@ -11,6 +11,9 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
     assert!(!(args.prod_only && args.tests));
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
+    if ! args.all {
+        unimplemented!("--all is required for now")  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    }
     if args.tests {
         debug!("setting --all because of --all-tests");
         args.all = true;
@@ -43,6 +46,7 @@ pub async fn mvnw(mut args: MvnwArgs, writer: &mut impl LineWriter) {
         max_memory_mb: args.max_memory_mb,
         mvn_exe: args.mvn_exe,
         mvn_arg: args.mvn_arg,
+        cwd: current_dir().unwrap(),
     };
     for cmd in cmd_config.build_cmds() {
         if args.show_cmds_only {
@@ -68,17 +72,20 @@ struct MvnCmdConfig {
     max_memory_mb: u32,
     mvn_exe: String,
     mvn_arg: Vec<String>,
+    cwd: PathBuf,
 }
 
 impl MvnCmdConfig {
     fn build_cmds(&self) -> SmallVec<[Task; 1]> {
-        let cwd = current_dir().unwrap();
         let do_tests = false;  //TODO @mverle
-        // affected_tests
-        // all_tests
+        // tests
+        // max_memory
 
         let mut cmds = smallvec![];
         let mut args = vec![];
+        if self.verbose {
+            cmds.push(self.make_task(vec!["--version".to_owned()]));
+        }
 
         // Clean
         if self.clean && self.modules.is_empty() {
@@ -88,7 +95,7 @@ impl MvnCmdConfig {
             if ! self.verbose {
                 clean_args.push("--quiet".to_owned());
             }
-            cmds.push(make_task(clean_args, &cwd));
+            cmds.push(self.make_task(clean_args));
         }
 
         // Determine maven stage
@@ -111,6 +118,7 @@ impl MvnCmdConfig {
         }
 
         // Modifier flags
+        args.push(format!("--threads={}", self.threads));
         if ! self.update {
             args.push("--update-snapshots".to_owned());
         }
@@ -123,7 +131,7 @@ impl MvnCmdConfig {
         if do_tests {
             args.push("-Dparallel=all".to_owned());
             args.push("-DperCoreThreadCount=false".to_owned());
-            args.push("-DthreadCount=30".to_owned());
+            args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
         }
 
         // Default optimization flags
@@ -136,11 +144,12 @@ impl MvnCmdConfig {
         args.push("-DfailIfNoTests=false".to_owned());
         args.push("-Dmaven.javadoc.skip=true".to_owned());
 
-        cmds.push(make_task(args, &cwd));
+        cmds.push(self.make_task(args));
         cmds
     }
-}
 
-fn make_task(mut args: Vec<String>, cwd: &Path) -> Task {
-    Task::new("mvn".to_owned(), args, cwd.to_owned())
+    fn make_task(&self, mut args: Vec<String>) -> Task {
+        args.extend_from_slice(&self.mvn_arg);
+        Task::new(self.mvn_exe.to_owned(), args, self.cwd.to_owned())
+    }
 }

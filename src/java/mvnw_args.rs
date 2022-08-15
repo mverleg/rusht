@@ -1,4 +1,5 @@
 use ::std::str::FromStr;
+use std::fmt::{Display, Formatter};
 
 use ::clap::StructOpt;
 
@@ -28,6 +29,7 @@ pub struct MvnwArgs {
         short = 'x',
         long = "affected",
         help = "How to determine which files/modules have been affected: [a]ny-change / [r]ecent / [u]ncommitted / [c]ommit / [b]ranch.",
+        default_value = "any-change",
         conflicts_with = "all",
     )]
     pub affected_policy: AffectedPolicy,
@@ -69,6 +71,18 @@ impl FromStr for AffectedPolicy {
             "c" | "commit" => AffectedPolicy::Commit,
             "b" | "branch" => AffectedPolicy::Branch,
             other => return Err(format!("unknown affected files policy: {}", other)),
+        })
+    }
+}
+
+impl Display for AffectedPolicy {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            AffectedPolicy::AnyChange => "any-change",
+            AffectedPolicy::Recent => "recent",
+            AffectedPolicy::Uncommitted => "uncommitted",
+            AffectedPolicy::Commit => "commit",
+            AffectedPolicy::Branch => "branch",
         })
     }
 }
