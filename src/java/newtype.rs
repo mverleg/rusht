@@ -20,7 +20,7 @@ impl Profile {
     pub fn new(value: impl Into<String>) -> Result<Self, String> {
         let value = value.into();
         if !PROFILE_RE.is_match(&value) {
-            return Err("profile name must be alphanumeric".to_string())
+            return Err("profile name must be alphanumeric and may contain slashes".to_string())
         }
         Ok(Profile {
             value

@@ -41,7 +41,6 @@ pub struct MvnwArgs {
     /// Only build prod (main) code, skip building tests.
     #[structopt(short = 'T', long = "prod-only", group = "test")]
     prod_only: bool,
-    //TODO @mverleg: implement all the test flags
 
     /// Show the maven commands being run, and the build output.
     #[structopt(short = 'v', long)]
@@ -77,7 +76,7 @@ pub struct MvnwArgs {
     #[structopt(long = "mvn-arg", hide_short_help = true)]
     pub mvn_args: Vec<String>,
     /// Maven profiles to activate. Prefix '!' to deactivate.
-    #[structopt(short = 'P', long = "profile", hide_short_help = true)]
+    #[structopt(short = 'P', long = "profile")]
     pub profiles: Vec<Profile>,
 }
 //TODO @mverleg: also include linting?
