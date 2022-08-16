@@ -23,6 +23,7 @@ pub struct MvnCmdConfig {
     pub max_memory_mb: u32,
     pub mvn_exe: String,
     pub mvn_arg: Vec<String>,
+    pub java_home: String,
     pub cwd: PathBuf,
 }
 
@@ -134,6 +135,10 @@ impl MvnCmdConfig {
                 min(256, self.max_memory_mb),
                 self.max_memory_mb
             ),
+        );
+        extra_env.insert(
+            "JAVA_HOME".to_owned(),
+            self.java_home.clone(),
         );
         Task::new_with_env(
             self.mvn_exe.to_owned(),
