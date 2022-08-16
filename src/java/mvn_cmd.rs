@@ -8,6 +8,7 @@ use itertools::Itertools;
 
 use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
+use crate::java::newtype::Profile;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
@@ -18,7 +19,7 @@ pub struct MvnCmdConfig {
     pub update: bool,
     pub clean: bool,
     pub install: bool,
-    pub profiles: Vec<String>,
+    pub profiles: Vec<Profile>,
     pub threads: u32,
     pub max_memory_mb: u32,
     pub mvn_exe: String,

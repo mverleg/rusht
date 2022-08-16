@@ -1,3 +1,5 @@
+#![allow(unused)]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+
 use ::std::path::Path;
 
 use ::git2::Repository;

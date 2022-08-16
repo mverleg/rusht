@@ -3,6 +3,8 @@ use ::std::str::FromStr;
 use ::clap::StructOpt;
 use ::clap::ValueEnum;
 
+use crate::java::newtype::Profile;
+
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "java",
@@ -76,7 +78,7 @@ pub struct MvnwArgs {
     pub mvn_args: Vec<String>,
     /// Maven profiles to activate. Prefix '!' to deactivate.
     #[structopt(short = 'P', long = "profile", hide_short_help = true)]
-    pub profiles: Vec<String>,
+    pub profiles: Vec<Profile>,
 }
 //TODO @mverleg: also include linting?
 

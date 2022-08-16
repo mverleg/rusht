@@ -37,11 +37,6 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     }
     let java_home = java_home.to_str().ok_or_else(|| "JAVA_HOME path is not unicode".to_owned())?.to_owned();
 
-    for profile in &args.profiles {
-        assert!(!profile.contains(' '), "profile name must not contain spaces");
-        assert!(!profile.contains('\''), "profile name must not contain quotes");
-    }
-
     let cmd_config = MvnCmdConfig {
         modules,
         tests: args.test(),
