@@ -1,4 +1,4 @@
-use crate::common::{LineWriter};
+use crate::common::LineWriter;
 use ::regex::Regex;
 
 pub async fn get_matches(
@@ -47,7 +47,7 @@ pub fn get_first_match_or_all<'a>(pattern: &Option<Regex>, text: &'a str) -> &'a
                     return mtch.as_str();
                 }
             }
-            return full_match
+            return full_match;
         }
     }
     text

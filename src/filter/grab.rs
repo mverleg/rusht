@@ -1,6 +1,6 @@
 use ::clap::StructOpt;
+use ::log::debug;
 use ::regex::Regex;
-use log::debug;
 
 use crate::common::{get_matches, LineReader, LineWriter};
 
@@ -26,11 +26,7 @@ pub struct GrabArgs {
         help = "Keep the full line if it does not match the pattern"
     )]
     pub keep_unmatched: bool,
-    #[structopt(
-        short = 'n',
-        long,
-        help = "Maximum number of matching lines"
-    )]
+    #[structopt(short = 'n', long, help = "Maximum number of matching lines")]
     pub max_lines: Option<u32>,
 }
 
@@ -40,7 +36,7 @@ impl Default for GrabArgs {
             pattern: Regex::new(".*").unwrap(),
             first_only: false,
             keep_unmatched: false,
-            max_lines: None
+            max_lines: None,
         }
     }
 }
@@ -71,8 +67,11 @@ pub async fn grab(
         .await;
         if let Some(max) = args.max_lines {
             if match_cnt >= max {
-                debug!("stopping after {} lines (max {:?})", match_cnt, args.max_lines);
-                break
+                debug!(
+                    "stopping after {} lines (max {:?})",
+                    match_cnt, args.max_lines
+                );
+                break;
             }
         }
     }
@@ -234,7 +233,7 @@ mod tests {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,
                 first_only: true,
-                max_lines: None
+                max_lines: None,
             },
             input,
             expected,

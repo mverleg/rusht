@@ -4,9 +4,9 @@ use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
 
-use crate::common::{get_first_match_or_all, LineReader};
 use crate::common::LineWriter;
 use crate::common::VecWriter;
+use crate::common::{get_first_match_or_all, LineReader};
 
 #[derive(StructOpt, Debug, Default)]
 #[structopt(

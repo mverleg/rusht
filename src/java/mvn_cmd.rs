@@ -3,7 +3,7 @@ use ::std::collections::HashMap;
 use ::std::path::PathBuf;
 
 use ::log::debug;
-use ::smallvec::{SmallVec, smallvec};
+use ::smallvec::{smallvec, SmallVec};
 
 use crate::common::Task;
 
@@ -63,7 +63,7 @@ impl MvnCmdConfig {
         args.push(stage.to_owned());
 
         // Affected build modules
-        if ! self.modules.is_empty() {
+        if !self.modules.is_empty() {
             for module in &self.modules {
                 args.push("--projects".to_owned());
                 args.push(format!(":{}", module));
@@ -79,7 +79,7 @@ impl MvnCmdConfig {
             debug!("using offline mode, try with -U if this fails");
             args.push("--offline".to_owned());
         }
-        if ! self.verbose {
+        if !self.verbose {
             args.push("--quiet".to_owned());
         }
         if self.prod_only {
@@ -118,9 +118,20 @@ impl MvnCmdConfig {
     fn make_task(&self, mut args: Vec<String>) -> Task {
         args.extend_from_slice(&self.mvn_arg);
         let mut extra_env = HashMap::new();
-        extra_env.insert("MAVEN_OPTS".to_owned(), format!("-XX:+UseParallelGC -Xms{}m -Xmx{}m",
-                min(256, self.max_memory_mb), self.max_memory_mb));
-        Task::new_with_env(self.mvn_exe.to_owned(), args, self.cwd.to_owned(), extra_env)
+        extra_env.insert(
+            "MAVEN_OPTS".to_owned(),
+            format!(
+                "-XX:+UseParallelGC -Xms{}m -Xmx{}m",
+                min(256, self.max_memory_mb),
+                self.max_memory_mb
+            ),
+        );
+        Task::new_with_env(
+            self.mvn_exe.to_owned(),
+            args,
+            self.cwd.to_owned(),
+            extra_env,
+        )
     }
 
     fn add_opt_args(&self, args: &mut Vec<String>) {
@@ -138,6 +149,13 @@ impl MvnCmdConfig {
         args.push("-DfailIfNoTests=false".to_owned());
         args.push("-Dparallel=all".to_owned());
         args.push("-DperCoreThreadCount=false".to_owned());
-        args.push(format!("-DthreadCount={}", if self.threads > 1 { 4 * self.threads } else { 1 }));
+        args.push(format!(
+            "-DthreadCount={}",
+            if self.threads > 1 {
+                4 * self.threads
+            } else {
+                1
+            }
+        ));
     }
 }

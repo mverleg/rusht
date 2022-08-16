@@ -1,15 +1,8 @@
-
-
-
-
-
-
-
 use ::clap::StructOpt;
 
-use regex::Regex;
+use ::regex::Regex;
 
-use crate::common::{CommandArgs};
+use crate::common::CommandArgs;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

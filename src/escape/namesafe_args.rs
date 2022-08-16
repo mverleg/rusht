@@ -1,5 +1,5 @@
 use ::clap::StructOpt;
-use std::str::FromStr;
+use ::std::str::FromStr;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

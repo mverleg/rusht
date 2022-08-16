@@ -2,8 +2,8 @@ use ::std::process::exit;
 
 use crate::common::{StdinReader, StdoutWriter};
 use crate::filter::filter;
-use crate::filter::FilterArgs;
 use crate::filter::unique;
+use crate::filter::FilterArgs;
 use crate::filter::UniqueArgs;
 
 use super::{grab, GrabArgs};

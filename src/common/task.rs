@@ -8,9 +8,9 @@ use ::std::process::Stdio;
 use ::std::time::Instant;
 
 use ::clap::StructOpt;
+use ::itertools::Itertools;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use itertools::Itertools;
 
 use crate::common::fail;
 
@@ -47,7 +47,12 @@ impl Task {
         Task::new_with_env(cmd, args, working_dir, HashMap::new())
     }
 
-    pub fn new_with_env(cmd: String, args: Vec<String>, working_dir: PathBuf, extra_envs: HashMap<String, String>) -> Self {
+    pub fn new_with_env(
+        cmd: String,
+        args: Vec<String>,
+        working_dir: PathBuf,
+        extra_envs: HashMap<String, String>,
+    ) -> Self {
         Task {
             cmd,
             args,
@@ -83,16 +88,15 @@ impl Task {
         let env_str = if self.extra_envs.is_empty() {
             "".to_owned()
         } else {
-            format!("{} ", self.extra_envs.iter()
-                .map(|(k, v)| format!("{}='{}'", k, v))
-                .join(" "))
+            format!(
+                "{} ",
+                self.extra_envs
+                    .iter()
+                    .map(|(k, v)| format!("{}='{}'", k, v))
+                    .join(" ")
+            )
         };
-        format!(
-            "{}{}{}",
-            env_str,
-            self.as_cmd_str(),
-            cmd_str,
-        )
+        format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
     }
 
     pub fn execute(&self, quiet: bool) -> ExitStatus {

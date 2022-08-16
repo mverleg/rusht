@@ -1,9 +1,9 @@
+use ::std::collections::HashSet;
 use ::std::env::current_dir;
 use ::std::io::stdin;
 use ::std::io::Read;
 use ::std::path::PathBuf;
 use ::std::thread::spawn;
-use std::collections::HashSet;
 
 use ::clap::StructOpt;
 use ::log::debug;
