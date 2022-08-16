@@ -12,6 +12,9 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
     debug!("arguments: {:?}", &args);
+    if ! args.all {
+        return Err("--all required for now".to_owned());  //TODO @mverleg: --all required for now
+    }
     if !PathBuf::from("pom.xml").is_file() {
         return Err("must be run from a maven project directory (containing pom.xml)".to_owned());
     }

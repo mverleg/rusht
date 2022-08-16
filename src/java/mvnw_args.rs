@@ -6,7 +6,8 @@ use ::clap::ValueEnum;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "java",
-    about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git."
+    about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
+    after_help = "Use --help for more options.",
 )]
 pub struct MvnwArgs {
     #[structopt(short = 'c', long)]
@@ -30,14 +31,14 @@ pub struct MvnwArgs {
     #[structopt(short = 'v', long)]
     /// Show the maven commands being run, and the build output.
     pub verbose: bool,
-    #[structopt(short = 'V', long)]
+    #[structopt(short = 'V', long, hide_short_help = true)]
     /// Only show the maven commands to be ran, do not actually run them.
     pub show_cmds_only: bool,
     #[structopt(
         value_enum,
         short = 'x',
         long = "affected",
-        default_value = "any-change",
+        default_value = "recent",
         conflicts_with = "all"
     )]
     /// How to determine which files/modules have been affected.
@@ -48,27 +49,26 @@ pub struct MvnwArgs {
     /// {n}[a]ny-change: uncommitted + branch
     /// {n}[r]ecent: head + branch
     pub affected_policy: AffectedPolicy,
-    #[structopt(long)]
+    #[structopt(long, hide_short_help = true)]
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
     pub threads: Option<u32>,
-    #[structopt(long = "max-memory", default_value = "8192")]
+    #[structopt(long = "max-memory", default_value = "8192", hide_short_help = true)]
     /// Maximum memory to build, in MB.
     pub max_memory_mb: u32,
-    #[structopt(long, default_value = "mvn")]
+    #[structopt(long, default_value = "mvn", hide_short_help = true)]
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     pub mvn_exe: String,
-    #[structopt(long)]
+    #[structopt(long, hide_short_help = true)]
     /// Extra arguments to pass to maven.
     pub mvn_arg: Vec<String>,
 }
 //TODO @mverleg: pass extra maven args directly
 //TODO @mverleg: also include linting?
 
-#[derive(ValueEnum, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AffectedPolicy {
     /// `Branch` + `Uncommmitted`
     AnyChange,
-    #[default]
     /// `Commit` + `Uncommmitted`
     Recent,
     /// All uncommitted changes.
