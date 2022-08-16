@@ -39,7 +39,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     };
 
     for cmd in cmd_config.build_cmds() {
-        writer.write_line(cmd.as_str()).await;
+        writer.write_line(format!("going to run: {}", cmd.as_str())).await;
         if args.show_cmds_only {
             continue;
         }

@@ -10,16 +10,11 @@ use crate::common::CommandArgs;
     about = "Run a test command for each line, keeping the file if the command succeeds"
 )]
 pub struct FilterArgs {
-    #[structopt(
-        long,
-        help = "Use a given regular expression that captures the value that is the input to the command. Uses the first capture group if any, or the whole match otherwise."
-    )]
+    #[structopt(long)]
+    /// Use a given regular expression that captures the value that is the input to the command. Uses the first capture group if any, or the whole match otherwise.
     pub by: Option<Regex>,
-    #[structopt(
-        short = 'i',
-        long,
-        help = "Invert the command result, keeping all lines for which the command fails instead"
-    )]
+    #[structopt(short = 'i', long)]
+    /// Invert the command result, keeping all lines for which the command fails instead
     pub invert: bool,
     #[structopt(subcommand)]
     pub cmd: CommandArgs,

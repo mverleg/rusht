@@ -1,4 +1,5 @@
 use ::clap::StructOpt;
+use ::clap::ArgEnum;
 use ::clap::Subcommand;
 use ::env_logger;
 

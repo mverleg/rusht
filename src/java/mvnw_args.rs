@@ -1,4 +1,3 @@
-use ::std::fmt::{Display, Formatter};
 use ::std::str::FromStr;
 
 use ::clap::StructOpt;
@@ -7,53 +6,31 @@ use ::clap::ValueEnum;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "java",
-    about = "Wrapper for maven (daemon) to add speed flags. Needs maven and git."
+    about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git."
 )]
 pub struct MvnwArgs {
-    #[structopt(
-        short = 'c',
-        long,
-    )]
+    #[structopt(short = 'c', long)]
     /// Do a clean build (also cleans unaffected modules).
     pub clean: bool,
-    #[structopt(
-        short = 'i',
-        long,
-    )]
+    #[structopt(short = 'i', long)]
     /// Install the modules into local .m2 after building them.
     pub install: bool,
-    #[structopt(
-        short = 'a',
-        long,
-    )]
+    #[structopt(short = 'a', long)]
     /// Build all the code, not just affected files.
     pub all: bool,
-    #[structopt(
-        short = 'U',
-        long,
-    )]
+    #[structopt(short = 'U', long)]
     /// Update snapshots, even if it was recently done.
     pub update: bool,
     #[structopt(short = 't', long)]
     /// Run tests in affected modules.
     pub tests: bool,
-    #[structopt(
-        short = 'p',
-        long,
-        conflicts_with = "tests"
-    )]
+    #[structopt(short = 'p', long, conflicts_with = "tests")]
     /// Only build prod (main) code, skip building tests.
     pub prod_only: bool,
-    #[structopt(
-        short = 'v',
-        long,
-    )]
+    #[structopt(short = 'v', long)]
     /// Show the maven commands being run, and the build output.
     pub verbose: bool,
-    #[structopt(
-        short = 'V',
-        long,
-    )]
+    #[structopt(short = 'V', long)]
     /// Only show the maven commands to be ran, do not actually run them.
     pub show_cmds_only: bool,
     #[structopt(
@@ -71,21 +48,13 @@ pub struct MvnwArgs {
     /// {n}[a]ny-change: uncommitted + branch
     /// {n}[r]ecent: head + branch
     pub affected_policy: AffectedPolicy,
-    #[structopt(
-        long,
-    )]
+    #[structopt(long)]
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
     pub threads: Option<u32>,
-    #[structopt(
-        long = "max-memory",
-        default_value = "8192"
-    )]
+    #[structopt(long = "max-memory", default_value = "8192")]
     /// Maximum memory to build, in MB.
     pub max_memory_mb: u32,
-    #[structopt(
-        long,
-        default_value = "mvn"
-    )]
+    #[structopt(long, default_value = "mvn")]
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     pub mvn_exe: String,
     #[structopt(long)]

@@ -18,47 +18,26 @@ use crate::common::{fail, CommandArgs, Task};
     about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
 )]
 pub struct AddArgs {
-    #[structopt(
-        short = 'n',
-        long,
-        default_value = "",
-        help = "Use the stack from the given namespace instead of the global one"
-    )]
+    #[structopt(short = 'n', long, default_value = "")]
+    /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[structopt(short = 'q', long, help = "Do not log the command")]
+    #[structopt(short = 'q', long)]
+    /// Do not log the command.
     pub quiet: bool,
-    #[structopt(
-        short = 'e',
-        long,
-        help = "Add command at the end (last) instead of as the next"
-    )]
+    #[structopt(short = 'e', long)]
+    /// Add command at the end (last) instead of as the next.
     pub end: bool,
-    // #[structopt(short = 'f', long, help = "Do not check that the command is known")]
-    // pub skip_validation: bool,
-    #[structopt(
-        short = 'l',
-        long,
-        help = "Add command for each line of stdin, replacing '{}' by the line"
-    )]
+    #[structopt(short = 'l', long)]
+    /// Add command for each line of stdin, replacing '{}' by the line.
     pub lines: bool,
-    #[structopt(
-        short = 'L',
-        long,
-        help = "Like --lines, but use given replacement placeholder instead of '{}'",
-        conflicts_with = "lines"
-    )]
+    #[structopt(short = 'L', long, conflicts_with = "lines")]
+    /// Like --lines, but use given replacement placeholder instead of '{}'.
     pub lines_with: Option<String>,
-    #[structopt(
-        short = 'u',
-        long,
-        help = "With --lines or --lines-with, skip any duplicate placeholders"
-    )]
+    #[structopt(short = 'u', long)]
+    /// With --lines or --lines-with, skip any duplicate placeholders.
     pub unique: bool,
-    #[structopt(
-        short = 'P',
-        long,
-        help = "Working directory when running the command. Can use placeholder with -l/-L."
-    )]
+    #[structopt(short = 'P', long)]
+    /// Working directory when running the command. Can use placeholder with -l/-L.
     pub working_dir: Option<String>,
     #[structopt(subcommand)]
     pub cmd: CommandArgs,

@@ -25,65 +25,35 @@ use crate::cmd::cmd_type::TaskType;
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
 )]
 pub struct DoArgs {
-    #[structopt(
-        short = 'n',
-        long,
-        default_value = "",
-        help = "Use the stack from the given namespace instead of the global one"
-    )]
+    #[structopt(short = 'n', long, default_value = "")]
+    /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[structopt(
-        short = 'c',
-        long,
-        default_value = "1",
-        help = "Number of commands to run"
-    )]
+    #[structopt(short = 'c', long, default_value = "1")]
+    /// Number of commands to run.
     pub count: u32,
-    #[structopt(
-        short = 'a',
-        long,
-        help = "Try to run all the commands",
-        conflicts_with = "count"
-    )]
+    #[structopt(short = 'a', long, conflicts_with = "count")]
+    /// Try to run all the commands.
     pub all: bool,
-    #[structopt(
-        short = 'p',
-        long = "parallel",
-        default_value = "1",
-        help = "How many parallel tasks to run (implies --continue-on-error)"
-    )]
+    #[structopt(short = 'p', long = "parallel", default_value = "1")]
+    /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
-    #[structopt(
-        short = 'g',
-        long = "restart-running",
-        help = "Run tasks even if they are marked as already running."
-    )]
+    #[structopt(short = 'g', long = "restart-running")]
+    /// Run tasks even if they are marked as already running.
     pub restart_running: bool,
-    #[structopt(
-        short = 'f',
-        long = "continue-on-error",
-        help = "Keep running tasks even if one fails (it stays on stack unless -r)"
-    )]
+    #[structopt(short = 'f', long = "continue-on-error")]
+    /// Keep running tasks even if one fails (it stays on stack unless -r).
     pub continue_on_error: bool,
-    #[structopt(
-        short = 'r',
-        long = "drop-failed",
-        help = "Remove tasks from the stack when ran, even if they fail"
-    )]
+    #[structopt(short = 'r', long = "drop-failed")]
+    /// Remove tasks from the stack when ran, even if they fail.
     pub drop_failed: bool,
-    #[structopt(
-        short = 'k',
-        long = "keep",
-        help = "Keep the task on the stack when ran when successful"
-    )]
+    #[structopt(short = 'k', long = "keep")]
+    /// Keep the task on the stack when ran when successful.
     pub keep_successful: bool,
-    #[structopt(short = 'q', long, help = "Do not log command and timing")]
+    #[structopt(short = 'q', long)]
+    /// Do not log command and timing.
     pub quiet: bool,
-    #[structopt(
-        short = '0',
-        long = "allow-empty",
-        help = "Silently do nothing if there are no commands"
-    )]
+    #[structopt(short = '0', long = "allow-empty")]
+    /// Silently do nothing if there are no commands.
     pub allow_empty: bool,
 }
 

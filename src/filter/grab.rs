@@ -10,23 +10,17 @@ use crate::common::{get_matches, LineReader, LineWriter};
     about = "Filter lines by regular expression, keeping only the matching capture group."
 )]
 pub struct GrabArgs {
-    #[structopt(
-        help = "Regular expression to match. Returns the capture group if any, or the whole match otherwise."
-    )]
+    #[structopt()]
+    /// Regular expression to match. Returns the capture group if any, or the whole match otherwise.
     pub pattern: Regex,
-    #[structopt(
-        short = '1',
-        long,
-        help = "Only print the first capture group, even if there are multiple"
-    )]
+    #[structopt(short = '1', long)]
+    /// Only print the first capture group, even if there are multiple
     pub first_only: bool,
-    #[structopt(
-        short = 'k',
-        long,
-        help = "Keep the full line if it does not match the pattern"
-    )]
+    #[structopt(short = 'k', long)]
+    /// Keep the full line if it does not match the pattern
     pub keep_unmatched: bool,
-    #[structopt(short = 'n', long, help = "Maximum number of matching lines")]
+    #[structopt(short = 'n', long)]
+    /// Maximum number of matching lines
     pub max_lines: Option<u32>,
 }
 

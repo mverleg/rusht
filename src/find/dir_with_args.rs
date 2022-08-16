@@ -12,44 +12,47 @@ use ::regex::Regex;
     long_about = "Find directories that contain certain files or directories. Only supports utf8, sensible filenames."
 )]
 pub struct DirWithArgs {
-    #[structopt(
-        short = 'l',
-        long,
-        default_value = "10000",
-        help = "Maximum directory depth to recurse into"
-    )]
+    #[structopt(short = 'l', long, default_value = "10000")]
+    /// Maximum directory depth to recurse into
     pub max_depth: u32,
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort", help = "Sort the results alphabetically")]
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort")]
+    /// Sort the results alphabetically
     pub order: Order,
-    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested", help = "Keep recursing even if a directory matches")]
+    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested")]
+    /// Keep recursing even if a directory matches
     pub nested: Nested,
-    #[structopt(
-        short = 'x',
-        long = "on-error",
-        default_value = "warn",
-        help = "What to do when an error occurs: [w]arn, [a]bort or [i]gnore"
-    )]
+    #[structopt(short = 'x', long = "on-error", default_value = "warn")]
+    /// What to do when an error occurs: [w]arn, [a]bort or [i]gnore
     pub on_err: OnErr,
-    #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative", help = "Results are relative to roots, instead of absolute")]
+    #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative")]
+    /// Results are relative to roots, instead of absolute
     pub path_modification: PathModification,
-    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".", help = "Root directories to start searching from (multiple allowed)")]
+    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".")]
+    /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file", help = "File pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
+    /// File pattern that must exist in the directory to match
     pub files: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir", help = "Subdirectory pattern that must exist in the directory to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir")]
+    /// Subdirectory pattern that must exist in the directory to match
     pub dirs: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self", help = "Pattern for the directory itself for it to match")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self")]
+    /// Pattern for the directory itself for it to match
     pub itself: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'F', long = "not-file", help = "Opposite of -f; directory only matches if this file pattern is NOT matched inside it")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'F', long = "not-file")]
+    /// Opposite of -f; directory only matches if this file pattern is NOT matched inside it
     pub not_files: Vec<Regex>,
     //TODO @mverleg: ^
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'D', long = "not-dir", help = "Opposite of -d, directory only matches if this directory pattern is NOT matched inside it")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'D', long = "not-dir")]
+    /// Opposite of -d, directory only matches if this directory pattern is NOT matched inside it
     pub not_dirs: Vec<Regex>,
     //TODO @mverleg: ^
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'I', long = "not-self", help = "Opposite of -i, directory only matches if its own name does NOT match this pattern")]
+    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'I', long = "not-self")]
+    /// Opposite of -i, directory only matches if its own name does NOT match this pattern
     pub not_self: Vec<Regex>,
     //TODO @mverleg: ^
-    // #[structopt(parse(from_flag = Nested::from_do_nested), short = 'N', long = "exclude-not", help = "Keep recursing even if a directory is negative-matched by -F/-D/-I")]
+    // #[structopt(parse(from_flag = Nested::from_do_nested), short = 'N', long = "exclude-not")]
+    // Keep recursing even if a directory is negative-matched by -F/-D/-I
     // pub negative_nested: Nested,
     // //TODO @mverleg: ^
 }

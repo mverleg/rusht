@@ -10,34 +10,20 @@ use crate::cmd::cmd_type::TaskStack;
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist"
 )]
 pub struct DropArgs {
-    #[structopt(
-        short = 'n',
-        long,
-        default_value = "",
-        help = "Use the stack from the given namespace instead of the global one"
-    )]
+    #[structopt(short = 'n', long, default_value = "")]
+    /// Use the stack from the given namespace instead of the global one
     pub namespace: String,
-    #[structopt(
-        short = 'a',
-        long,
-        help = "Drop the entire stack of commands to run",
-        conflicts_with = "count"
-    )]
+    #[structopt(short = 'a', long, conflicts_with = "count")]
+    /// Drop the entire stack of commands to run.
     pub all: bool,
-    #[structopt(
-        short = 'c',
-        long,
-        default_value = "1",
-        help = "Number of commands to drop"
-    )]
+    #[structopt(short = 'c', long, default_value = "1")]
+    /// Number of commands to drop
     pub count: u32,
-    #[structopt(
-        short = 'e',
-        long,
-        help = "Drop command from the end (last) instead of as the next"
-    )]
+    #[structopt(short = 'e', long)]
+    /// Drop command from the end (last) instead of as the next
     pub end: bool,
-    #[structopt(short = 'q', long, help = "Do not log command(s)")]
+    #[structopt(short = 'q', long)]
+    /// Do not log command(s).
     pub quiet: bool,
 }
 

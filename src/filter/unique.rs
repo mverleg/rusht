@@ -14,21 +14,17 @@ use crate::common::{get_first_match_or_all, LineReader};
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
 pub struct UniqueArgs {
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", help = "Sort the entries. Buffers all the input.")]
+    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", )]
+    /// Sort the entries. Buffers all the input.
     pub order: Order,
-    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", help = "Invert the behaviour, removing all first occurrences and keeping any subsequent duplicates.", conflicts_with = "prefix", )]
+    #[structopt(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", conflicts_with = "prefix")]
+    /// Invert the behaviour, removing all first occurrences and keeping any subsequent duplicates.
     pub keep: Keep,
-    #[structopt(
-        long,
-        help = "Use a given regular expression that captures the key to deduplicate by. Uses the first capture group if any, or the whole match otherwise. Only buffers per-line, i.e. near-real-time."
-    )]
+    #[structopt(long)]
+    /// Use a given regular expression that captures the key to deduplicate by. Uses the first capture group if any, or the whole match otherwise. Only buffers per-line, i.e. near-real-time.
     pub by: Option<Regex>,
-    #[structopt(
-        short = 'p',
-        long = "prefix",
-        help = "Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter. Buffers all the input.",
-        conflicts_with = "by"
-    )]
+    #[structopt(short = 'p', long = "prefix", conflicts_with = "by")]
+    /// Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter. Buffers all the input.
     pub prefix: bool,
 }
 

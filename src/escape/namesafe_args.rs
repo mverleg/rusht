@@ -11,40 +11,27 @@ pub struct NamesafeArgs {
         parse(from_flag = Charset::from_allow),
         short = 'u',
         long = "allow-unicode",
-        help = "Allow non-ascii letters (but no non-letter symbols)."
-    )]
+        )]
+    /// Allow non-ascii letters (but no non-letter symbols).
     pub charset: Charset,
     #[structopt(
         short = 'x',
         long = "hash",
         default_value = "changed",  //TODO @mverleg: not sure why Default impl doesn't work
-        help = "In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever)."
-    )]
+        )]
+    /// In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever).
     pub hash_policy: HashPolicy,
-    #[structopt(
-        short = 'l',
-        long = "max-length",
-        default_value = "32",
-        help = "Maximum number of characters in the cleaned line (min 8)."
-    )]
+    #[structopt(short = 'l', long = "max-length", default_value = "32")]
+    /// Maximum number of characters in the cleaned line (min 8).
     pub max_length: u32,
-    #[structopt(
-        short = 'e',
-        long = "extension",
-        help = "If the line appears to contain an filename extension (max 4 chars), preserve it."
-    )]
+    #[structopt(short = 'e', long = "extension")]
+    /// If the line appears to contain an filename extension (max 4 chars), preserve it.
     pub keep_extension: bool,
-    #[structopt(
-        short = '0',
-        long = "allow-empty",
-        help = "Do not fail if there are no input lines."
-    )]
+    #[structopt(short = '0', long = "allow-empty")]
+    /// Do not fail if there are no input lines.
     pub allow_empty: bool,
-    #[structopt(
-        short = '1',
-        long = "single",
-        help = "Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty."
-    )]
+    #[structopt(short = '1', long = "single")]
+    /// Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty.
     pub single_line: bool,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)

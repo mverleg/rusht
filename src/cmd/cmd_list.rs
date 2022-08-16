@@ -12,32 +12,17 @@ use crate::cmd::cmd_io::stack_pth;
     about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
 )]
 pub struct ListArgs {
-    #[structopt(
-        short = 'n',
-        long,
-        default_value = "",
-        help = "Use the stack from the given namespace instead of the global one"
-    )]
+    #[structopt(short = 'n', long, default_value = "")]
+    /// Use the stack from the given namespace instead of the global one
     pub namespace: String,
-    #[structopt(
-        short = 'p',
-        long,
-        help = "Show the path to the stack file, instead of commands"
-    )]
+    #[structopt(short = 'p', long)]
+    /// Show the path to the stack file, instead of commands
     pub file_path: bool,
-    #[structopt(
-        short = 'c',
-        long,
-        help = "Maximum number of (newest) commands to show",
-        conflicts_with = "file-path"
-    )]
+    #[structopt(short = 'c', long, conflicts_with = "file-path")]
+    /// Maximum number of (newest) commands to show.
     pub count: Option<u32>,
-    #[structopt(
-        short = 'e',
-        long,
-        help = "Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise)",
-        conflicts_with = "file-path"
-    )]
+    #[structopt(short = 'e', long, conflicts_with = "file-path")]
+    /// Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise).
     pub exit_code: bool,
 }
 
