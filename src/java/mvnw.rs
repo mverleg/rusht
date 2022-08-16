@@ -1,9 +1,9 @@
+use ::std::env;
 use ::std::env::current_dir;
 use ::std::path::PathBuf;
-use std::env;
 
+use ::itertools::Itertools;
 use ::log::debug;
-use itertools::Itertools;
 
 use crate::common::LineWriter;
 use crate::java::MvnCmdConfig;
@@ -36,7 +36,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     if ! java_home.is_dir() {
         return Err(format!("JAVA_HOME directory does not exist at {}", java_home.to_string_lossy()));
     }
-    let java_home = java_home.to_str().expect("JAVA_HOME path is not unicode").to_owned();
+    let java_home = java_home.to_str().ok_or_else(|| "JAVA_HOME path is not unicode".to_owned())?.to_owned();
     let cmd_config = MvnCmdConfig {
         modules,
         tests: args.tests,
@@ -63,6 +63,9 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         }
         let status = cmd.execute(false);
         if !status.success() {
+            if ! args.update {
+                eprintln!("note: failed in offline mode, use -U for online")
+            }
             return Err(format!(
                 "command {} failed with code {}",
                 cmd.as_str(),

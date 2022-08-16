@@ -10,37 +10,30 @@ use ::clap::ValueEnum;
     after_help = "Thanks for using! Note: some options are only visible with --help (not with -h).",
 )]
 pub struct MvnwArgs {
-    #[structopt(short = 'c', long)]
     /// Do a clean build (also cleans unaffected modules).
+    #[structopt(short = 'c', long)]
     pub clean: bool,
-    #[structopt(short = 'i', long)]
     /// Install the modules into local .m2 after building them.
+    #[structopt(short = 'i', long)]
     pub install: bool,
-    #[structopt(short = 'a', long)]
     /// Build all the code, not just affected files.
+    #[structopt(short = 'a', long)]
     pub all: bool,
-    #[structopt(short = 'U', long)]
     /// Update snapshots, even if it was recently done.
+    #[structopt(short = 'U', long)]
     pub update: bool,
-    #[structopt(short = 't', long)]
     /// Run tests in affected modules.
-    pub tests: bool,
-    #[structopt(short = 'p', long, conflicts_with = "tests")]
+    #[structopt(flatten)]
+    pub tests: TestArgs,
     /// Only build prod (main) code, skip building tests.
+    #[structopt(short = 'p', long, conflicts_with = "tests")]
     pub prod_only: bool,
-    #[structopt(short = 'v', long)]
     /// Show the maven commands being run, and the build output.
+    #[structopt(short = 'v', long)]
     pub verbose: bool,
-    #[structopt(short = 'V', long, hide_short_help = true)]
     /// Only show the maven commands to be ran, do not actually run them.
+    #[structopt(short = 'V', long, hide_short_help = true)]
     pub show_cmds_only: bool,
-    #[structopt(
-        value_enum,
-        short = 'x',
-        long = "affected",
-        default_value = "recent",
-        conflicts_with = "all"
-    )]
     /// How to determine which files/modules have been affected.
     ///
     /// [u]ncommitted: uncommitted changes (staged or otherwise)
@@ -48,21 +41,28 @@ pub struct MvnwArgs {
     /// {n}[b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
     /// {n}[a]ny-change: uncommitted + branch
     /// {n}[r]ecent: head + branch
+    #[structopt(
+        value_enum,
+        short = 'x',
+        long = "affected",
+        default_value = "recent",
+        conflicts_with = "all"
+    )]
     pub affected_policy: AffectedPolicy,
-    #[structopt(long, hide_short_help = true)]
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
+    #[structopt(long, hide_short_help = true)]
     pub threads: Option<u32>,
-    #[structopt(long = "max-memory", default_value = "8192", hide_short_help = true)]
     /// Maximum memory to build, in MB.
+    #[structopt(long = "max-memory", default_value = "8192", hide_short_help = true)]
     pub max_memory_mb: u32,
-    #[structopt(long, default_value = "mvn", hide_short_help = true)]
     /// Maven executable. Can be used to select a different path or switch to mvnd.
+    #[structopt(long, default_value = "mvn", hide_short_help = true)]
     pub mvn_exe: String,
-    #[structopt(long = "mvn-arg", hide_short_help = true)]
     /// Extra arguments to pass to maven.
+    #[structopt(long = "mvn-arg", hide_short_help = true)]
     pub mvn_args: Vec<String>,
-    #[structopt(short = 'P', long = "profile", hide_short_help = true)]
     /// Maven profiles to activate. Prefix '!' to deactivate.
+    #[structopt(short = 'P', long = "profile", hide_short_help = true)]
     pub profiles: Vec<String>,
 }
 //TODO @mverleg: also include linting?
@@ -94,6 +94,23 @@ impl FromStr for AffectedPolicy {
             other => return Err(format!("unknown affected files policy: {}", other)),
         })
     }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[structopt(group = clap::ArgGroup::new("test").multiple(false))]
+pub struct TestArgs {
+    /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed).
+    #[structopt(long = "test-files", group = "test")]
+    files: bool,
+    /// All tests in modules that contain changes.
+    #[structopt(short = "t", long = "test-modules", group = "test")]
+    modules: bool,
+    /// Run all the tests.
+    #[structopt(long = "all-tests", group = "test")]
+    all: bool,
+    /// Do not run any tests.
+    #[structopt(short = "T", long = "no-tests", group = "test")]
+    none: bool,
 }
 
 #[test]
