@@ -8,6 +8,7 @@ use ::clap::ValueEnum;
     name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
     after_help = "Thanks for using! Note: some options are only visible with --help (not with -h).",
+    group = clap::ArgGroup::new("test").multiple(false),
 )]
 pub struct MvnwArgs {
     /// Do a clean build (also cleans unaffected modules).
@@ -22,9 +23,20 @@ pub struct MvnwArgs {
     /// Update snapshots, even if it was recently done.
     #[structopt(short = 'U', long)]
     pub update: bool,
-    /// Run tests in affected modules.
-    #[structopt(flatten)]
-    pub tests: TestArgs,
+
+    /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed).
+    #[structopt(long = "test-files", group = "test")]
+    test_files: bool,
+    /// All tests in modules that contain changes.
+    #[structopt(short = "t", long = "test-modules", group = "test")]
+    test_modules: bool,
+    /// Run all the tests.
+    #[structopt(long = "all-tests", group = "test")]
+    test_all: bool,
+    /// Do not run any tests.
+    #[structopt(short = "T", long = "no-tests", group = "test")]
+    test_none: bool,
+
     /// Only build prod (main) code, skip building tests.
     #[structopt(short = 'p', long, conflicts_with = "tests")]
     pub prod_only: bool,
@@ -97,20 +109,38 @@ impl FromStr for AffectedPolicy {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-#[structopt(group = clap::ArgGroup::new("test").multiple(false))]
-pub struct TestArgs {
-    /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed).
-    #[structopt(long = "test-files", group = "test")]
-    files: bool,
-    /// All tests in modules that contain changes.
-    #[structopt(short = "t", long = "test-modules", group = "test")]
-    modules: bool,
-    /// Run all the tests.
-    #[structopt(long = "all-tests", group = "test")]
-    all: bool,
-    /// Do not run any tests.
-    #[structopt(short = "T", long = "no-tests", group = "test")]
-    none: bool,
+pub enum TestMode {
+    #[default]
+    Files,
+    Modules,
+    All,
+    None,
+}
+
+impl TestMode {
+    pub fn any(&self) -> bool {
+        self != TestMode::None
+    }
+}
+
+impl MvnwArgs {
+    pub fn test(&self) -> TestMode {
+        match (self.test_files, self.test_modules, self.test_all, self.test_none) {
+            (true, false, false, false) => TestMode::Files,
+            (false, false, false, false) => TestMode::Files,
+            (false, true, false, false) => TestMode::Modules,
+            (false, false, true, false) => TestMode::All,
+            (false, false, false, true) => TestMode::None,
+            _ => unreachable!("mutually exclusive arguments provided, CLI should prevent this"),
+        }
+    }
+
+    pub fn is_test_arg_provided(&self) -> bool {
+        match (self.test_files, self.test_modules, self.test_all, self.test_none) {
+            (false, false, false, false) => false,
+            _ => true,
+        }
+    }
 }
 
 #[test]

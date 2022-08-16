@@ -7,12 +7,13 @@ use ::smallvec::{smallvec, SmallVec};
 use itertools::Itertools;
 
 use crate::common::Task;
+use crate::java::mvnw_args::TestMode;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
     /// Which modules to build. Empty means everything.
     pub modules: Vec<String>,
-    pub tests: bool,
+    pub tests: TestMode,
     pub verbose: bool,
     pub update: bool,
     pub clean: bool,
@@ -58,7 +59,7 @@ impl MvnCmdConfig {
         // Determine maven stage
         let stage = if self.install {
             "install"
-        } else if self.tests && single_cmd {
+        } else if self.tests.any() && single_cmd {
             "test"
         } else {
             "compile"
