@@ -11,13 +11,13 @@ use ::clap::ValueEnum;
     group = clap::ArgGroup::new("test").multiple(false),
 )]
 pub struct MvnwArgs {
-    /// Do a clean build (also cleans unaffected modules).
+    /// Do a clean build (also cleans unchanged modules).
     #[structopt(short = 'c', long)]
     pub clean: bool,
     /// Install the modules into local .m2 after building them.
     #[structopt(short = 'i', long)]
     pub install: bool,
-    /// Build all the code, not just affected files.
+    /// Build all the code, not just changed files.
     #[structopt(short = 'a', long)]
     pub all: bool,
     /// Update snapshots, even if it was recently done.
@@ -38,7 +38,8 @@ pub struct MvnwArgs {
     test_none: bool,
     /// Only build prod (main) code, skip building tests.
     #[structopt(short = 'T', long = "prod-only", group = "test")]
-    pub prod_only: bool,
+    prod_only: bool,
+    //TODO @mverleg: implement all the test flags
 
     /// Show the maven commands being run, and the build output.
     #[structopt(short = 'v', long)]
@@ -46,7 +47,7 @@ pub struct MvnwArgs {
     /// Only show the maven commands to be ran, do not actually run them.
     #[structopt(short = 'V', long, hide_short_help = true)]
     pub show_cmds_only: bool,
-    /// How to determine which files/modules have been affected.
+    /// How to determine which files/modules have been changed.
     ///
     /// [u]ncommitted: uncommitted changes (staged or otherwise)
     /// {n}[h]ead: changes from the head commit
@@ -103,7 +104,7 @@ impl FromStr for AffectedPolicy {
             "u" | "uncommitted" => AffectedPolicy::Uncommitted,
             "h" | "head" => AffectedPolicy::Head,
             "b" | "branch" => AffectedPolicy::Branch,
-            other => return Err(format!("unknown affected files policy: {}", other)),
+            other => return Err(format!("unknown changed files policy: {}", other)),
         })
     }
 }

@@ -36,6 +36,12 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         return Err(format!("JAVA_HOME directory does not exist at {}", java_home.to_string_lossy()));
     }
     let java_home = java_home.to_str().ok_or_else(|| "JAVA_HOME path is not unicode".to_owned())?.to_owned();
+
+    for profile in &args.profiles {
+        assert!(!profile.contains(' '), "profile name must not contain spaces");
+        assert!(!profile.contains('\''), "profile name must not contain quotes");
+    }
+
     let cmd_config = MvnCmdConfig {
         modules,
         tests: args.test(),
@@ -43,7 +49,6 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         update: args.update,
         clean: args.clean,
         install: args.install,
-        prod_only: args.prod_only,
         profiles: args.profiles.into_iter().sorted().unique().collect(),
         threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
         max_memory_mb: args.max_memory_mb,

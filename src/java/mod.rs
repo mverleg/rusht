@@ -7,3 +7,4 @@ mod handle;
 mod mvn_cmd;
 mod mvnw;
 mod mvnw_args;
+mod newtype;
