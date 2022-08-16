@@ -2,6 +2,7 @@ use ::std::fmt::{Display, Formatter};
 use ::std::str::FromStr;
 
 use ::clap::StructOpt;
+use ::clap::ValueEnum;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -56,18 +57,19 @@ pub struct MvnwArgs {
     /// Only show the maven commands to be ran, do not actually run them.
     pub show_cmds_only: bool,
     #[structopt(
+        value_enum,
         short = 'x',
         long = "affected",
         default_value = "any-change",
         conflicts_with = "all"
     )]
-    /// How to determine which files/modules have been affected: [a]ny-change / [r]ecent / [u]ncommitted / [h]ead / [b]ranch.
+    /// How to determine which files/modules have been affected.
     ///
     /// [u]ncommitted: uncommitted changes (staged or otherwise)
-    /// [h]ead: changes from the head commit
-    /// [b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
-    /// [a]ny-change: uncommitted + branch
-    /// [r]ecent: head + branch
+    /// {n}[h]ead: changes from the head commit
+    /// {n}[b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
+    /// {n}[a]ny-change: uncommitted + branch
+    /// {n}[r]ecent: head + branch
     pub affected_policy: AffectedPolicy,
     #[structopt(
         long,
@@ -93,7 +95,7 @@ pub struct MvnwArgs {
 //TODO @mverleg: pass extra maven args directly
 //TODO @mverleg: also include linting?
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(ValueEnum, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum AffectedPolicy {
     /// `Branch` + `Uncommmitted`
     AnyChange,
@@ -120,22 +122,6 @@ impl FromStr for AffectedPolicy {
             "b" | "branch" => AffectedPolicy::Branch,
             other => return Err(format!("unknown affected files policy: {}", other)),
         })
-    }
-}
-
-impl Display for AffectedPolicy {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                AffectedPolicy::AnyChange => "any-change",
-                AffectedPolicy::Recent => "recent",
-                AffectedPolicy::Uncommitted => "uncommitted",
-                AffectedPolicy::Head => "head",
-                AffectedPolicy::Branch => "branch",
-            }
-        )
     }
 }
 
