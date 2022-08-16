@@ -22,9 +22,9 @@ pub struct MvnCmdConfig {
     pub profiles: Vec<Profile>,
     pub threads: u32,
     pub max_memory_mb: u32,
-    pub mvn_exe: String,
+    pub mvn_exe: PathBuf,
     pub mvn_arg: Vec<String>,
-    pub java_home: String,
+    pub java_home: PathBuf,
     pub cwd: PathBuf,
 }
 
@@ -154,14 +154,14 @@ impl MvnCmdConfig {
         );
         extra_env.insert(
             "JAVA_HOME".to_owned(),
-            self.java_home.clone(),
+            self.java_home.to_str().unwrap().to_owned(),
         );
         if !self.profiles.is_empty() {
             debug!("(de)activating {} maven profiles", self.profiles.len());
             args.push(format!("--activate-profiles='{}'", self.profiles.iter().join(",")));
         }
         Task::new_with_env(
-            self.mvn_exe.to_owned(),
+            self.mvn_exe.to_str().unwrap().to_owned(),
             args,
             self.cwd.to_owned(),
             extra_env,

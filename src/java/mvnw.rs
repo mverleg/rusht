@@ -35,7 +35,6 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     if ! java_home.is_dir() {
         return Err(format!("JAVA_HOME directory does not exist at {}", java_home.to_string_lossy()));
     }
-    let java_home = java_home.to_str().ok_or_else(|| "JAVA_HOME path is not unicode".to_owned())?.to_owned();
 
     let cmd_config = MvnCmdConfig {
         modules,

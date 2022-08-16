@@ -1,3 +1,4 @@
+use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
 use ::clap::StructOpt;
@@ -71,7 +72,7 @@ pub struct MvnwArgs {
     pub max_memory_mb: u32,
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     #[structopt(long, default_value = "mvn", hide_short_help = true)]
-    pub mvn_exe: String,
+    pub mvn_exe: PathBuf,
     /// Extra arguments to pass to maven.
     #[structopt(long = "mvn-arg", hide_short_help = true)]
     pub mvn_args: Vec<String>,
