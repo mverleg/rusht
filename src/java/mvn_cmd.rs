@@ -4,9 +4,9 @@ use ::std::path::PathBuf;
 
 use ::log::debug;
 use ::smallvec::{smallvec, SmallVec};
+use itertools::Itertools;
 
 use crate::common::Task;
-use crate::escape::{HashPolicy, namesafe_line, NamesafeArgs};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
@@ -39,16 +39,16 @@ impl MvnCmdConfig {
 
         // Clean
         if self.clean {
-            if single_cmd {
-                debug!("clean and build in same command because of --all");
-                args.push("clean".to_owned());
-            } else {
-                debug!("clean and build in separate commands, to clean everything while building a subset");
+            if ! single_cmd || ! self.profiles.is_empty() {
+                debug!("clean and build in separate commands, to clean everything while only building a subset (either because no --all or because of profiles)");
                 let mut clean_args = vec!["clean".to_owned()];
                 if !self.verbose {
                     clean_args.push("--quiet".to_owned());
                 }
                 cmds.push(self.make_task(clean_args));
+            } else {
+                debug!("clean and build in same command because of --all");
+                args.push("clean".to_owned());
             }
         } else {
             debug!("not cleaning, incremental build");
@@ -75,15 +75,10 @@ impl MvnCmdConfig {
 
         // Profiles
         for profile in &self.profiles {
-            let safe_profile = namesafe_line(profile, &NamesafeArgs {
-                hash_policy: HashPolicy::Never,
-                ..Default::default()
-            });
-            if profile != &safe_profile {
-                panic!("profile name contains invalid characters, did you mean '{}'?", safe_profile);
-            }
-            args.push(format!("-P='{}'", safe_profile));
+            assert!(!profile.contains(' '), "profile name must not contain spaces");
+            assert!(!profile.contains('\''), "profile name must not contain quotes");
         }
+        args.push(format!("--activate-profiles='{}'", self.profiles.iter().join(",")));
 
         // Modifier flags
         args.push(format!("--threads={}", self.threads));

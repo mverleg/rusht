@@ -2,6 +2,7 @@ use ::std::env::current_dir;
 use ::std::path::PathBuf;
 
 use ::log::debug;
+use itertools::Itertools;
 
 use crate::common::LineWriter;
 use crate::java::MvnCmdConfig;
@@ -34,16 +35,17 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         clean: args.clean,
         install: args.install,
         prod_only: args.prod_only,
-        profiles: args.profiles,
+        profiles: args.profiles.into_iter().sorted().unique().collect(),
         threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
         max_memory_mb: args.max_memory_mb,
         mvn_exe: args.mvn_exe,
-        mvn_arg: args.mvn_args,
+        mvn_arg: args.mvn_args.into_iter().sorted().collect(),
         cwd: current_dir().unwrap(),
     };
 
-    for cmd in cmd_config.build_cmds() {
-        writer.write_line(format!("going to run: {}", cmd.as_str())).await;
+    let cmds = cmd_config.build_cmds();
+    for (nr, cmd) in cmds.iter().enumerate() {
+        writer.write_line(format!("going to run [{}/{}]: {}", nr + 1, cmds.len(), cmd.as_str())).await;
         if args.show_cmds_only {
             continue;
         }
