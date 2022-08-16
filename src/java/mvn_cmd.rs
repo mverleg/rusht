@@ -6,8 +6,9 @@ use ::log::debug;
 use ::smallvec::{smallvec, SmallVec};
 
 use crate::common::Task;
+use crate::escape::{HashPolicy, namesafe_line, NamesafeArgs};
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
     /// Which modules to build. Empty means everything.
     pub modules: Vec<String>,
@@ -17,6 +18,7 @@ pub struct MvnCmdConfig {
     pub clean: bool,
     pub install: bool,
     pub prod_only: bool,
+    pub profiles: Vec<String>,
     pub threads: u32,
     pub max_memory_mb: u32,
     pub mvn_exe: String,
@@ -69,6 +71,18 @@ impl MvnCmdConfig {
                 args.push(format!(":{}", module));
             }
             args.push("--also-make".to_owned())
+        }
+
+        // Profiles
+        for profile in &self.profiles {
+            let safe_profile = namesafe_line(profile, &NamesafeArgs {
+                hash_policy: HashPolicy::Never,
+                ..Default::default()
+            });
+            if profile != &safe_profile {
+                panic!("profile name contains invalid characters, did you mean '{}'?", safe_profile);
+            }
+            args.push(format!("-P='{}'", safe_profile));
         }
 
         // Modifier flags

@@ -7,7 +7,7 @@ use ::clap::ValueEnum;
 #[structopt(
     name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
-    after_help = "Use --help for more options.",
+    after_help = "Thanks for using! Note: some options are only visible with --help (not with -h).",
 )]
 pub struct MvnwArgs {
     #[structopt(short = 'c', long)]
@@ -58,11 +58,13 @@ pub struct MvnwArgs {
     #[structopt(long, default_value = "mvn", hide_short_help = true)]
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     pub mvn_exe: String,
-    #[structopt(long, hide_short_help = true)]
+    #[structopt(long = "mvn-arg", hide_short_help = true)]
     /// Extra arguments to pass to maven.
-    pub mvn_arg: Vec<String>,
+    pub mvn_args: Vec<String>,
+    #[structopt(short = 'P', long = "profile", hide_short_help = true)]
+    /// Maven profiles to activate. Prefix '!' to deactivate.
+    pub profiles: Vec<String>,
 }
-//TODO @mverleg: pass extra maven args directly
 //TODO @mverleg: also include linting?
 
 #[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]

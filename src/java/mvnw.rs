@@ -34,10 +34,11 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         clean: args.clean,
         install: args.install,
         prod_only: args.prod_only,
+        profiles: args.profiles,
         threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
         max_memory_mb: args.max_memory_mb,
         mvn_exe: args.mvn_exe,
-        mvn_arg: args.mvn_arg,
+        mvn_arg: args.mvn_args,
         cwd: current_dir().unwrap(),
     };
 
