@@ -59,7 +59,7 @@ impl MvnCmdConfig {
         // Determine maven stage
         let stage = if self.install {
             "install"
-        } else if self.tests.any() && single_cmd {
+        } else if self.tests.run_any() && single_cmd {
             "test"
         } else {
             "compile"
@@ -102,7 +102,7 @@ impl MvnCmdConfig {
 
         // Tests
         let mut test_task = None;
-        if self.tests {
+        if self.tests.run_any() {
             if single_cmd {
                 debug!("build and test in same command because of --all");
                 self.add_test_args(&mut args);

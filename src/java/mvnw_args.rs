@@ -24,22 +24,22 @@ pub struct MvnwArgs {
     #[structopt(short = 'U', long)]
     pub update: bool,
 
-    /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed).
+    /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed). Default.
     #[structopt(long = "test-files", group = "test")]
     test_files: bool,
     /// All tests in modules that contain changes.
-    #[structopt(short = "t", long = "test-modules", group = "test")]
+    #[structopt(short = 't', long = "test-modules", group = "test")]
     test_modules: bool,
     /// Run all the tests.
-    #[structopt(long = "all-tests", group = "test")]
+    #[structopt(long = "test-all", group = "test")]
     test_all: bool,
-    /// Do not run any tests.
-    #[structopt(short = "T", long = "no-tests", group = "test")]
+    /// Do not run any tests (but still build them).
+    #[structopt(long = "test-none", group = "test")]
     test_none: bool,
-
     /// Only build prod (main) code, skip building tests.
-    #[structopt(short = 'p', long, conflicts_with = "tests")]
+    #[structopt(short = 'T', long = "prod-only", group = "test")]
     pub prod_only: bool,
+
     /// Show the maven commands being run, and the build output.
     #[structopt(short = 'v', long)]
     pub verbose: bool,
@@ -114,23 +114,25 @@ pub enum TestMode {
     Files,
     Modules,
     All,
-    None,
+    NoRun,
+    NoBuild,
 }
 
 impl TestMode {
-    pub fn any(&self) -> bool {
-        self != TestMode::None
+    pub fn run_any(&self) -> bool {
+        *self != TestMode::NoRun && *self != TestMode::NoBuild
     }
 }
 
 impl MvnwArgs {
     pub fn test(&self) -> TestMode {
-        match (self.test_files, self.test_modules, self.test_all, self.test_none) {
-            (true, false, false, false) => TestMode::Files,
-            (false, false, false, false) => TestMode::Files,
-            (false, true, false, false) => TestMode::Modules,
-            (false, false, true, false) => TestMode::All,
-            (false, false, false, true) => TestMode::None,
+        match (self.test_files, self.test_modules, self.test_all, self.test_none, self.prod_only) {
+            (true, false, false, false, false) => TestMode::Files,
+            (false, false, false, false, false) => TestMode::Files,
+            (false, true, false, false, false) => TestMode::Modules,
+            (false, false, true, false, false) => TestMode::All,
+            (false, false, false, true, false) => TestMode::NoRun,
+            (false, false, false, false, true) => TestMode::NoBuild,
             _ => unreachable!("mutually exclusive arguments provided, CLI should prevent this"),
         }
     }

@@ -7,21 +7,9 @@ use ::log::debug;
 
 use crate::common::LineWriter;
 use crate::java::MvnCmdConfig;
-use crate::java::mvnw_args::TestMode;
 use crate::java::MvnwArgs;
 
 pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), String> {
-    let mut test_mode = args.test();
-    if args.prod_only {
-        if !args.is_test_arg_provided() {
-            debug!("disabling tests (--no-tests) because --prod-only was requested");
-            test_mode = TestMode::None;
-        } else {
-            if test_mode != TestMode::None {
-                return Err("cannot run tests in --prod-only mode".to_owned());
-            }
-        }
-    }
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
     debug!("arguments: {:?}", &args);
@@ -50,7 +38,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     let java_home = java_home.to_str().ok_or_else(|| "JAVA_HOME path is not unicode".to_owned())?.to_owned();
     let cmd_config = MvnCmdConfig {
         modules,
-        tests,
+        tests: args.test(),
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
