@@ -12,74 +12,82 @@ pub struct MvnwArgs {
     #[structopt(
         short = 'c',
         long,
-        help = "Do a clean build (also cleans unaffected modules)."
     )]
+    /// Do a clean build (also cleans unaffected modules).
     pub clean: bool,
     #[structopt(
         short = 'i',
         long,
-        help = "Install the modules into local .m2 after building them."
     )]
+    /// Install the modules into local .m2 after building them.
     pub install: bool,
     #[structopt(
         short = 'a',
         long,
-        help = "Build all the code, not just affected files."
     )]
+    /// Build all the code, not just affected files.
     pub all: bool,
     #[structopt(
         short = 'U',
         long,
-        help = "Update snapshots, even if it was recently done."
     )]
+    /// Update snapshots, even if it was recently done.
     pub update: bool,
-    #[structopt(short = 't', long, help = "Run tests in affected modules.")]
+    #[structopt(short = 't', long)]
+    /// Run tests in affected modules.
     pub tests: bool,
     #[structopt(
         short = 'p',
         long,
-        help = "Only build prod (main) code, skip building tests.",
         conflicts_with = "tests"
     )]
+    /// Only build prod (main) code, skip building tests.
     pub prod_only: bool,
     #[structopt(
         short = 'v',
         long,
-        help = "Show the maven commands being run, and the build output."
     )]
+    /// Show the maven commands being run, and the build output.
     pub verbose: bool,
     #[structopt(
         short = 'V',
         long,
-        help = "Only show the maven commands to be ran, do not actually run them."
     )]
+    /// Only show the maven commands to be ran, do not actually run them.
     pub show_cmds_only: bool,
     #[structopt(
         short = 'x',
         long = "affected",
-        help = "How to determine which files/modules have been affected: [a]ny-change / [r]ecent / [u]ncommitted / [c]ommit / [b]ranch.",
         default_value = "any-change",
         conflicts_with = "all"
     )]
+    /// How to determine which files/modules have been affected: [a]ny-change / [r]ecent / [u]ncommitted / [h]ead / [b]ranch.
+    ///
+    /// [u]ncommitted: uncommitted changes (staged or otherwise)
+    /// [h]ead: changes from the head commit
+    /// [b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
+    /// [a]ny-change: uncommitted + branch
+    /// [r]ecent: head + branch
     pub affected_policy: AffectedPolicy,
     #[structopt(
         long,
-        help = "Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests."
     )]
+    /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
     pub threads: Option<u32>,
     #[structopt(
         long = "max-memory",
-        help = "Maximum memory to build, in MB.",
         default_value = "8192"
     )]
+    /// Maximum memory to build, in MB.
     pub max_memory_mb: u32,
     #[structopt(
         long,
-        help = "Maven executable. Can be used to select a different path or switch to mvnd.",
         default_value = "mvn"
     )]
+    /// Maven executable. Can be used to select a different path or switch to mvnd.
     pub mvn_exe: String,
-    #[structopt(long, help = "Extra arguments to pass to maven.")]
+    #[structopt(long)]
+    /// Extra arguments to pass to maven.
     pub mvn_arg: Vec<String>,
 }
 //TODO @mverleg: pass extra maven args directly
@@ -95,7 +103,7 @@ pub enum AffectedPolicy {
     /// All uncommitted changes.
     Uncommitted,
     /// All changes in the head commit.
-    Commit,
+    Head,
     /// All commits in the branch (that are not in master).
     Branch,
 }
@@ -108,7 +116,7 @@ impl FromStr for AffectedPolicy {
             "a" | "any-change" | "all" => AffectedPolicy::AnyChange,
             "r" | "recent" => AffectedPolicy::Recent,
             "u" | "uncommitted" => AffectedPolicy::Uncommitted,
-            "c" | "commit" => AffectedPolicy::Commit,
+            "h" | "head" => AffectedPolicy::Head,
             "b" | "branch" => AffectedPolicy::Branch,
             other => return Err(format!("unknown affected files policy: {}", other)),
         })
@@ -124,7 +132,7 @@ impl Display for AffectedPolicy {
                 AffectedPolicy::AnyChange => "any-change",
                 AffectedPolicy::Recent => "recent",
                 AffectedPolicy::Uncommitted => "uncommitted",
-                AffectedPolicy::Commit => "commit",
+                AffectedPolicy::Head => "head",
                 AffectedPolicy::Branch => "branch",
             }
         )
