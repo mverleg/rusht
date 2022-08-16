@@ -39,19 +39,17 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     };
 
     for cmd in cmd_config.build_cmds() {
+        writer.write_line(cmd.as_str()).await;
         if args.show_cmds_only {
-            writer.write_line(cmd.as_cmd_str()).await;
-        } else {
-            debug!("{}", cmd.as_cmd_str());
-            //TODO @mverleg: maybe some logging
-            let status = cmd.execute(false);
-            if !status.success() {
-                return Err(format!(
-                    "command {} failed with code {}",
-                    cmd.as_cmd_str(),
-                    status.code().unwrap_or(-1)
-                ));
-            }
+            continue;
+        }
+        let status = cmd.execute(false);
+        if !status.success() {
+            return Err(format!(
+                "command {} failed with code {}",
+                cmd.as_str(),
+                status.code().unwrap_or(-1)
+            ));
         }
     }
 
