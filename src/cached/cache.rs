@@ -124,6 +124,10 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
 }
 
 fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
+    assert!(!key_templ.contains("${git_uncommitted}"), "not implemented");
+    assert!(!key_templ.contains("${git_head}"), "not implemented");
+    assert!(!key_templ.contains("${git}"), "not implemented");
+    //TODO @mverleg:  ^
     let key = key_templ
         .replace("${pwd}", task.working_dir.to_string_lossy().as_ref())
         .replace(
