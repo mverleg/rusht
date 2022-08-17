@@ -1,10 +1,10 @@
 
-pub struct KeyBuilder<'a> {
+pub struct KeyBuilder {
     template: String,
-    generators: Vec<(&'a str, &'a dyn FnOnce() -> String)>,
+    generators: Vec<(String, Box<dyn FnOnce() -> String>)>,
 }
 
-impl <'a> KeyBuilder<'a> {
+impl KeyBuilder {
     pub fn new(template: impl Into<String>) -> Self {
         KeyBuilder {
             template: template.into(),
@@ -12,8 +12,8 @@ impl <'a> KeyBuilder<'a> {
         }
     }
 
-    pub fn add(&mut self, name: &'a str, generator: &'a dyn FnOnce() -> String) {
-        self.generators.push((name, generator));
+    pub fn add(&mut self, name: impl Into<String>, generator: Box<dyn FnOnce() -> String>) {
+        self.generators.push((name.into(), generator));
     }
 
     pub fn build(self) -> String {
@@ -22,7 +22,7 @@ impl <'a> KeyBuilder<'a> {
             let token = format!("${{{}}}", name);
             if key.contains(&token) {
                 let value = generator();
-                key.replace(&token, &value);
+                key = key.replace(&token, &value);
             }
         }
         debug_assert!(!key.contains("${"));
@@ -38,11 +38,11 @@ mod tests {
     fn build_key() {
         let mut builder = KeyBuilder::new("${pwd}_${env}.cache");
         let owned_home_value = "HOME=/Users/me".to_owned();
-        let fn_once: dyn FnOnce() -> String = &|| owned_home_value;
-        builder.add("pwd", &|| "hello/world".to_owned());
-        builder.add("env", &fn_once);
-        builder.add("cmd", &|| panic!());
+        let fn_once: Box<dyn FnOnce() -> String> = Box::new(|| owned_home_value);
+        builder.add("pwd", Box::new(|| "hello/world".to_owned()));
+        builder.add("env", fn_once);
+        builder.add("cmd", Box::new(|| panic!()));
         let key = builder.build();
-        assert_eq!(key, "");
+        assert_eq!(key, "hello/world_HOME=/Users/me.cache");
     }
 }

@@ -12,7 +12,8 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, unique_filename, Task};
+use crate::cached::key_builder::KeyBuilder;
+use crate::common::{fail, unique_filename, Task, git_head_ref};
 
 pub const DATA_VERSION: u32 = 1;
 
@@ -128,17 +129,16 @@ fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
     assert!(!key_templ.contains("${git_head}"), "not implemented");
     assert!(!key_templ.contains("${git}"), "not implemented");
     //TODO @mverleg:  ^
-    let key = key_templ
-        .replace("${pwd}", task.working_dir.to_string_lossy().as_ref())
-        .replace(
-            "${env}",
-            &task
-                .extra_envs
-                .iter()
-                .map(|(k, v)| format!("{}{}", k, v))
-                .join("_"),
-        )
-        .replace("${cmd}", &task.as_cmd_str());
+    let mut builder = KeyBuilder::new(key_templ);
+    builder.add("${pwd}", Box::new(|| task.working_dir.to_string_lossy().into_owned()));
+    builder.add("${env}", Box::new(|| task.extra_envs.iter()
+        .map(|(k, v)| format!("{}{}", k, v))
+        .join("_")));
+    builder.add("${cmd}", Box::new(|| task.as_cmd_str()));
+    builder.add("${git_head}", Box::new(|| git_head_ref(&task.working_dir)
+        .expect("failed to read git head")));
+        //TODO @mverleg: handle git error
+    let key = builder.build();
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push(format!("cmdcache_v{}", DATA_VERSION));

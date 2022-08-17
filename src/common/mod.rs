@@ -16,6 +16,7 @@ pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
 pub use self::write::StdoutWriter;
 pub use self::write::VecWriter;
+pub use self::git::git_head_ref;
 
 mod err;
 mod git;
