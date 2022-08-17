@@ -12,7 +12,6 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::cached::key_builder::KeyBuilder;
 use crate::common::{fail, unique_filename, Task, git_head_ref};
 
 pub const DATA_VERSION: u32 = 1;
@@ -33,7 +32,7 @@ struct Cache {
 
 pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
     let task = args.cmd.into_task();
-    let cache_pth = get_cache_path(&args.key, &task);
+    let cache_pth = get_cache_path(&args.key, &task)?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output));
@@ -124,25 +123,36 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
         });
 }
 
-fn get_cache_path(key_templ: &str, task: &Task) -> PathBuf {
-    assert!(!key_templ.contains("${git_uncommitted}"), "not implemented");
-    assert!(!key_templ.contains("${git_head}"), "not implemented");
-    assert!(!key_templ.contains("${git}"), "not implemented");
+fn get_cache_path(key_templ: &str, task: &Task) -> Result<PathBuf, String> {
     //TODO @mverleg:  ^
-    let mut builder = KeyBuilder::new(key_templ);
-    builder.add("${pwd}", Box::new(|| task.working_dir.to_string_lossy().into_owned()));
-    builder.add("${env}", Box::new(|| task.extra_envs.iter()
-        .map(|(k, v)| format!("{}{}", k, v))
-        .join("_")));
-    builder.add("${cmd}", Box::new(|| task.as_cmd_str()));
-    builder.add("${git_head}", Box::new(|| git_head_ref(&task.working_dir)
-        .expect("failed to read git head")));
-        //TODO @mverleg: handle git error
-    let key = builder.build();
+    let key = build_key(key_templ, task)?;
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push(format!("cmdcache_v{}", DATA_VERSION));
     create_dir_all(&pth).unwrap();
     pth.push(filename);
-    pth
+    Ok(pth)
+}
+
+fn build_key(key_templ: &str, task: &Task) -> Result<String, String> {
+    assert!(!key_templ.contains("${git_uncommitted}"), "not implemented");
+    assert!(!key_templ.contains("${git}"), "not implemented");
+    let mut key = key_templ.to_owned();
+    key = key.replace("${git}", "${git_head}_${git_uncommitted}");
+    if key.contains("${pwd}") {
+        key = key.replace("${pwd}", &task.working_dir.to_string_lossy().into_owned());
+    }
+    if key.contains("${env}") {
+        key = key.replace("${env}", &task.extra_envs.iter()
+            .map(|(k, v)| format!("{}{}", k, v))
+            .join("_"));
+    }
+    if key.contains("${cmd}") {
+        key = key.replace("${cmd}", &task.as_cmd_str());
+    }
+    if key.contains("${git_head}") {
+        key = key.replace("${git_head}", &git_head_ref(&task.working_dir)
+            .map_err(|err| format!("cache key contains git reference, but could not read git head, err: {}", err))?);
+    }
+    Ok(key)
 }
