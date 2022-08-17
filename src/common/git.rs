@@ -4,6 +4,22 @@ use ::std::path::Path;
 
 use ::git2::Repository;
 
+pub fn git_head_ref(dir: &Path) -> Result<String, String> {
+    let repo = Repository::open(dir).map_err(|err| {
+        format!(
+            "failed to read git repository at {}, err {}",
+            dir.to_string_lossy(),
+            err
+        )
+    })?;
+    let head = repo
+        .head()
+        .unwrap()
+        .peel_to_commit()
+        .unwrap();
+    Ok(head.id().to_string())
+}
+
 pub fn git_master_base() {
     //git base-cmt HEAD || git rev-list --max-parents=0 HEAD
 }
