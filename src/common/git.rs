@@ -1,4 +1,4 @@
-#![allow(unused)]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+#![allow(unused)] //TODO @mverleg: TEMPORARY! REMOVE THIS!
 
 use ::std::path::Path;
 

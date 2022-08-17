@@ -41,7 +41,7 @@ impl MvnCmdConfig {
 
         // Clean
         if self.clean {
-            if ! single_cmd || ! self.profiles.is_empty() {
+            if !single_cmd || !self.profiles.is_empty() {
                 debug!("clean and build in separate commands, to clean everything while only building a subset (either because no --all or because of profiles)");
                 let mut clean_args = vec!["clean".to_owned()];
                 if !self.verbose {
@@ -71,7 +71,10 @@ impl MvnCmdConfig {
 
         // Affected build modules
         if !self.modules.is_empty() {
-            debug!("building {} specific modules and their dependencies", self.modules.len());
+            debug!(
+                "building {} specific modules and their dependencies",
+                self.modules.len()
+            );
             for module in &self.modules {
                 args.push("--projects".to_owned());
                 args.push(format!(":{}", module));
@@ -158,7 +161,10 @@ impl MvnCmdConfig {
         );
         if !self.profiles.is_empty() {
             debug!("(de)activating {} maven profiles", self.profiles.len());
-            args.push(format!("--activate-profiles='{}'", self.profiles.iter().join(",")));
+            args.push(format!(
+                "--activate-profiles='{}'",
+                self.profiles.iter().join(",")
+            ));
         }
         Task::new_with_env(
             self.mvn_exe.to_str().unwrap().to_owned(),

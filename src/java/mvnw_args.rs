@@ -129,7 +129,13 @@ impl TestMode {
 
 impl MvnwArgs {
     pub fn test(&self) -> TestMode {
-        match (self.test_files, self.test_modules, self.test_all, self.test_none, self.prod_only) {
+        match (
+            self.test_files,
+            self.test_modules,
+            self.test_all,
+            self.test_none,
+            self.prod_only,
+        ) {
             (true, false, false, false, false) => TestMode::Files,
             (false, false, false, false, false) => TestMode::Files,
             (false, true, false, false, false) => TestMode::Modules,
@@ -141,7 +147,12 @@ impl MvnwArgs {
     }
 
     pub fn is_test_arg_provided(&self) -> bool {
-        match (self.test_files, self.test_modules, self.test_all, self.test_none) {
+        match (
+            self.test_files,
+            self.test_modules,
+            self.test_all,
+            self.test_none,
+        ) {
             (false, false, false, false) => false,
             _ => true,
         }

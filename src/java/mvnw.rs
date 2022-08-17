@@ -13,8 +13,8 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
     debug!("arguments: {:?}", &args);
-    if ! args.all {
-        return Err("--all required for now".to_owned());  //TODO @mverleg: --all required for now
+    if !args.all {
+        return Err("--all required for now".to_owned()); //TODO @mverleg: --all required for now
     }
     if !PathBuf::from("pom.xml").is_file() {
         return Err("must be run from a maven project directory (containing pom.xml)".to_owned());
@@ -29,11 +29,16 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         unimplemented!()
     };
     debug!("JAVA_HOME = {:?}", env::var("JAVA_HOME"));
-    let java_home = PathBuf::try_from(env::var("JAVA_HOME")
-        .map_err(|err| format!("could not read JAVA_HOME from env, err: {}", err))?)
-        .map_err(|err| format!("JAVA_HOME env does not contain a valid path, err: {}", err))?;
-    if ! java_home.is_dir() {
-        return Err(format!("JAVA_HOME directory does not exist at {}", java_home.to_string_lossy()));
+    let java_home = PathBuf::try_from(
+        env::var("JAVA_HOME")
+            .map_err(|err| format!("could not read JAVA_HOME from env, err: {}", err))?,
+    )
+    .map_err(|err| format!("JAVA_HOME env does not contain a valid path, err: {}", err))?;
+    if !java_home.is_dir() {
+        return Err(format!(
+            "JAVA_HOME directory does not exist at {}",
+            java_home.to_string_lossy()
+        ));
     }
 
     let cmd_config = MvnCmdConfig {
@@ -55,13 +60,20 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
     for (nr, cmd) in cmds.iter().enumerate() {
-        writer.write_line(format!("going to run [{}/{}]: {}", nr + 1, cmds.len(), cmd.as_str())).await;
+        writer
+            .write_line(format!(
+                "going to run [{}/{}]: {}",
+                nr + 1,
+                cmds.len(),
+                cmd.as_str()
+            ))
+            .await;
         if args.show_cmds_only {
             continue;
         }
         let status = cmd.execute(false);
         if !status.success() {
-            if ! args.update {
+            if !args.update {
                 eprintln!("note: failed in offline mode, use -U for online")
             }
             return Err(format!(

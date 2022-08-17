@@ -10,7 +10,9 @@ lazy_static! {
     static ref PROFILE_RE: Regex = Regex::new(r"^!?\w[\w/]*\w?$").unwrap();
 }
 
-#[derive(Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(try_from = "String", into = "String")]
 pub struct Profile {
     value: String,
@@ -20,11 +22,9 @@ impl Profile {
     pub fn new(value: impl Into<String>) -> Result<Self, String> {
         let value = value.into();
         if !PROFILE_RE.is_match(&value) {
-            return Err("profile name must be alphanumeric and may contain slashes".to_string())
+            return Err("profile name must be alphanumeric and may contain slashes".to_string());
         }
-        Ok(Profile {
-            value
-        })
+        Ok(Profile { value })
     }
 }
 
@@ -33,7 +33,6 @@ impl From<Profile> for String {
         format!("{}", profile)
     }
 }
-
 
 impl FromStr for Profile {
     type Err = String;
