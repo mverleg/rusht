@@ -28,6 +28,9 @@ pub struct CachedArgs {
     // #[structopt(short = 'g', long = "git", conflicts_with = "duration", conflicts_with = "key")]
     // pub git: bool,
     /// Print extra information, e.g. whether the command was run or not.
+    /// When loading from cache, do not show the previous output.
+    #[structopt(short = 's', long)]
+    pub no_cached_output: bool,
     #[structopt(short = 'v', long)]
     pub verbose: bool,
     #[structopt(subcommand)]
