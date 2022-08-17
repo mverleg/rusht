@@ -5,8 +5,9 @@ use ::std::path::PathBuf;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::LineWriter;
+use crate::common::{git_affected_files_head, LineWriter};
 use crate::java::MvnCmdConfig;
+use crate::java::mvnw_args::AffectedPolicy;
 use crate::java::MvnwArgs;
 
 pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), String> {
@@ -16,6 +17,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     if !args.all {
         return Err("--all required for now".to_owned()); //TODO @mverleg: --all required for now
     }
+    let cwd = current_dir().expect("could not determine working directory");
     if !PathBuf::from("pom.xml").is_file() {
         return Err("must be run from a maven project directory (containing pom.xml)".to_owned());
     }
@@ -40,8 +42,19 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
             java_home.to_string_lossy()
         ));
     }
+    if args.affected_policy != AffectedPolicy::Head {
+        eprintln!("ignoring provided --affected and using --affected=head instead");
+        //TODO @mverleg: ^
+    }
+    let files = git_affected_files_head(&cwd)?;
+    if let Some(example) = files.iter().next() {
+        debug!("found {} affected files for {}, e.g. {}", files.len(), args.affected_policy, example.to_string_lossy());
+    } else {
+        debug!("no affected files for {}, e.g. {}", files.len(), args.affected_policy);
+    }
 
     let cmd_config = MvnCmdConfig {
+        files,
         modules,
         tests: args.test(),
         lint: !args.no_lint,
@@ -56,7 +69,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         mvn_exe: args.mvn_exe,
         mvn_arg: args.mvn_args.into_iter().sorted().collect(),
         java_home,
-        cwd: current_dir().unwrap(),
+        cwd,
     };
 
     debug!("command config: {:?}", cmd_config);

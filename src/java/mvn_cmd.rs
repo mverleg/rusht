@@ -1,6 +1,7 @@
 use ::std::cmp::min;
 use ::std::collections::HashMap;
 use ::std::path::PathBuf;
+use std::collections::HashSet;
 
 use ::log::debug;
 use ::smallvec::{smallvec, SmallVec};
@@ -13,6 +14,8 @@ use crate::java::newtype::Profile;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
+    /// Which files were changed. Might have been deleted.
+    pub files: HashSet<PathBuf>,
     /// Which modules to build. Empty means everything.
     pub modules: Vec<String>,
     pub tests: TestMode,
@@ -103,7 +106,11 @@ impl MvnCmdConfig {
         self.add_opt_args(&mut args);
 
         // Lint
-        if self.lint {
+        if !self.lint {
+            debug!("no lint requested, skipping checkstyle");
+        } else if self.files.is_empty() {
+            debug!("no affected files, checkstyle lint was requested but will be skipped");
+        } else {
             let mut checkstyle_conf_pth = self.cwd.clone();
             checkstyle_conf_pth.push("sputnik-rules");
             checkstyle_conf_pth.push("checkstyle.xml");
@@ -113,14 +120,18 @@ impl MvnCmdConfig {
                 if let Some(task) = task {
                     cmds.push(task);
                 }
+                let mut lint_args = vec![
+                    "-jar".to_owned(),
+                    checkstyle_jar_pth.to_str().unwrap().to_owned(),
+                    "-c".to_owned(),
+                    checkstyle_conf_pth.to_str().unwrap().to_owned(),
+                ];
+                lint_args.extend_from_slice(&self.files.iter()
+                    .map(|af| af.to_str().expect("changed file path not unicode").to_owned())
+                    .collect::<Vec<_>>());
                 cmds.push(Task::new(
                     "java".to_owned(),
-                    vec![
-                        "-jar".to_owned(),
-                        checkstyle_jar_pth.to_str().unwrap().to_owned(),
-                        "-c".to_owned(),
-                        checkstyle_conf_pth.to_str().unwrap().to_owned(),
-                    ], self.cwd.clone(),
+                    lint_args, self.cwd.clone(),
                 ));
             } else {
                 warn!("skipping checkstyle because config was not found at '{}'", checkstyle_conf_pth.to_string_lossy());

@@ -1,5 +1,7 @@
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
+use core::fmt;
+use std::fmt::Formatter;
 
 use ::clap::StructOpt;
 use ::clap::ValueEnum;
@@ -111,6 +113,18 @@ impl FromStr for AffectedPolicy {
             "h" | "head" => AffectedPolicy::Head,
             "b" | "branch" => AffectedPolicy::Branch,
             other => return Err(format!("unknown changed files policy: {}", other)),
+        })
+    }
+}
+
+impl fmt::Display for AffectedPolicy {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            AffectedPolicy::AnyChange => "any-change",
+            AffectedPolicy::Recent => "recent",
+            AffectedPolicy::Uncommitted => "uncommitted",
+            AffectedPolicy::Head => "head",
+            AffectedPolicy::Branch => "branch",
         })
     }
 }

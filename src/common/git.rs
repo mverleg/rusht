@@ -1,6 +1,8 @@
 #![allow(unused)] //TODO @mverleg: TEMPORARY! REMOVE THIS!
 
 use ::std::path::Path;
+use std::collections::HashSet;
+use std::path::PathBuf;
 
 use ::git2::Repository;
 
@@ -24,7 +26,7 @@ pub fn git_master_base() {
     //git base-cmt HEAD || git rev-list --max-parents=0 HEAD
 }
 
-pub fn git_affected_files_commit(dir: &Path) -> Result<Vec<String>, String> {
+pub fn git_affected_files_head(dir: &Path) -> Result<HashSet<PathBuf>, String> {
     let repo = Repository::open(dir).map_err(|err| {
         format!(
             "failed to read git repository at {}, err {}",
@@ -42,6 +44,7 @@ pub fn git_affected_files_commit(dir: &Path) -> Result<Vec<String>, String> {
     // .iter()
     // .map(|entry| entry.name().expect("non-utf8 filename").to_owned())
     // .collect::<Vec<_>>();
+    let mut changed_files = HashSet::new();
     let head_parent_tree = repo
         .head()
         .unwrap()
@@ -55,16 +58,16 @@ pub fn git_affected_files_commit(dir: &Path) -> Result<Vec<String>, String> {
         .diff_tree_to_tree(Some(&head_tree), Some(&head_parent_tree), None)
         .unwrap();
     for delta in diff.deltas() {
-        eprintln!("{}", &delta.old_file().path().unwrap().to_string_lossy());
-        if &delta.old_file().path() != &delta.new_file().path() {
-            eprintln!("{}", &delta.new_file().path().unwrap().to_string_lossy());
+        if let Some(pth) = delta.old_file().path() {
+            changed_files.insert(pth.to_path_buf());
+        }
+        if let Some(pth) = delta.new_file().path() {
+            if ! changed_files.contains(pth) {
+                changed_files.insert(pth.to_path_buf());
+            }
         }
     }
-    // .map_err(|err| format!("could not get git head commit at {}, err {}", dir.to_string_lossy(), err))?;
-    // let files = repo.commi(repo.head(), repo.head().)
-    //     .map_err(|err| format!("couldn't determine diff for head commit"))?;
-    //diff-tree --no-commit-id --name-only -r HEAD;
-    Ok(vec![])
+    Ok(changed_files)
 }
 
 pub fn git_affected_files_uncommitted() {
@@ -84,6 +87,6 @@ mod tests {
 
     #[test]
     fn test_add() {
-        git_affected_files_commit(&PathBuf::from("/Users/mverleg/data/goat")).unwrap();
+        git_affected_files_head(&PathBuf::from("/Users/mverleg/data/goat")).unwrap();
     }
 }

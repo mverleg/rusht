@@ -1,6 +1,8 @@
 #![feature(future_join)]
 #![feature(async_closure)]
 
+extern crate core;
+
 pub mod cached;
 pub mod cmd;
 pub mod common;
