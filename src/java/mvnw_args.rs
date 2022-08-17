@@ -43,6 +43,10 @@ pub struct MvnwArgs {
     #[structopt(short = 'T', long = "prod-only", group = "test")]
     prod_only: bool,
 
+    /// Do not run checkstyle lints on the code.
+    #[structopt(short = 'L', long = "no-lint")]
+    pub no_lint: bool,
+
     /// Show the maven commands being run, and the build output.
     #[structopt(short = 'v', long)]
     pub verbose: bool,

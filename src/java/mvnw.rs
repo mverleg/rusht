@@ -44,6 +44,8 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
     let cmd_config = MvnCmdConfig {
         modules,
         tests: args.test(),
+        lint: !args.no_lint,
+        checkstyle_version: "8.1".to_string(),
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
@@ -73,7 +75,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), St
         }
         let status = cmd.execute(false);
         if !status.success() {
-            if !args.update {
+            if !args.update && cmd.cmd == "mvn" {
                 eprintln!("note: failed in offline mode, use -U for online")
             }
             return Err(format!(

@@ -5,6 +5,7 @@ use ::std::path::PathBuf;
 use ::log::debug;
 use ::smallvec::{smallvec, SmallVec};
 use itertools::Itertools;
+use log::warn;
 
 use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
@@ -15,6 +16,8 @@ pub struct MvnCmdConfig {
     /// Which modules to build. Empty means everything.
     pub modules: Vec<String>,
     pub tests: TestMode,
+    pub lint: bool,
+    pub checkstyle_version: String,
     pub verbose: bool,
     pub update: bool,
     pub clean: bool,
@@ -99,15 +102,40 @@ impl MvnCmdConfig {
         // Default optimization flags
         self.add_opt_args(&mut args);
 
+        // Lint
+        if self.lint {
+            let mut checkstyle_conf_pth = self.cwd.clone();
+            checkstyle_conf_pth.push("sputnik-rules");
+            checkstyle_conf_pth.push("checkstyle.xml");
+            if checkstyle_conf_pth.is_file() {
+                debug!("linting enabled, found checkstyle config at: {}", checkstyle_conf_pth.to_string_lossy());
+                let (task, checkstyle_jar_pth) = ensure_checkstyle_jar_exists(&self.checkstyle_version);
+                if let Some(task) = task {
+                    cmds.push(task);
+                }
+                cmds.push(Task::new(
+                    "java".to_owned(),
+                    vec![
+                        "-jar".to_owned(),
+                        checkstyle_jar_pth.to_str().unwrap().to_owned(),
+                        "-c".to_owned(),
+                        checkstyle_conf_pth.to_str().unwrap().to_owned(),
+                    ], self.cwd.clone(),
+                ));
+            } else {
+                warn!("skipping checkstyle because config was not found at '{}'", checkstyle_conf_pth.to_string_lossy());
+            }
+        }
+
         // Tests
         match self.tests {
             TestMode::Files => {
                 debug!("only running tests for changed files");
-                unimplemented!()
+                unimplemented!("test mode files not implemented")
             }
             TestMode::Modules => {
                 debug!("running tests for all modules that have changed files");
-                unimplemented!()
+                unimplemented!("test mode modules not implemented")
             }
             TestMode::All => {
                 debug!("running all tests");
@@ -198,4 +226,26 @@ impl MvnCmdConfig {
             }
         ));
     }
+}
+
+fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
+    let cache_dir = dirs::cache_dir().expect("failed to find cache directory");
+    let mut checkstyle_jar_pth = cache_dir.clone();
+    checkstyle_jar_pth.push(format!("checkstyle-{}.jar", version));
+    if checkstyle_jar_pth.is_file() {
+        debug!("found checkstyle jar at: {}", checkstyle_jar_pth.to_string_lossy());
+        return (None, checkstyle_jar_pth)
+    }
+    let task = Task::new(
+        "curl".to_owned(),
+        vec![
+            "-L".to_owned(),
+            format!("https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.1/checkstyle-{}-all.jar", version),
+            "--silent".to_owned(),
+            "--output".to_owned(),
+            checkstyle_jar_pth.to_str().unwrap().to_owned(),
+        ], cache_dir
+    );
+    debug!("creating task to download checkstyle jar: {}", task.as_str());
+    (Some(task), checkstyle_jar_pth)
 }
