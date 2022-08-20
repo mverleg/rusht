@@ -129,11 +129,15 @@ impl Task {
             )),
         };
         let mut out = BufReader::new(child.stdout.take().unwrap());
+        let mut line = String::new();
         loop {
-            let mut line = String::new();
+            line.clear();
             match out.read_line(&mut line) {
                 Ok(0) => break,
-                Ok(_) => writer.write_line(&line).await,
+                Ok(_) => {
+                    line.pop();  // strip newline  //TODO @mverleg: cross-platform?
+                    writer.write_line(&line).await
+                },
                 Err(err) => panic!(
                     "failed to read output of the task, task: {}, err: {}",
                     self.as_str(),

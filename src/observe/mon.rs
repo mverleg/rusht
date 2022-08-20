@@ -9,6 +9,6 @@ pub async fn mon(
 ) -> ExitStatus {
     let task = args.cmd.into_task();
     let status = task.execute(false);
-    ExitStatus::of_err(status.code())
+    ExitStatus::of_code(status.code())
     //TODO @mverleg:
 }

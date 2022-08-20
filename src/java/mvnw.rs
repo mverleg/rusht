@@ -78,7 +78,7 @@ pub async fn mvnw(
             if is_offline && cmd.cmd == "mvn" {
                 eprintln!("note: failed in offline mode, use -U for online")
             }
-            return Err((ExitStatus::of_err(status.code()), "".to_owned()));
+            return Err((ExitStatus::of_code(status.code()), "".to_owned()));
         }
     }
 
