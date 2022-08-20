@@ -42,7 +42,7 @@ impl MvnCmdConfig {
         let mut args = vec![];
         if self.verbose {
             debug!("printing versions because of verbose mode");
-            cmds.push(self.make_task(vec!["--version".to_owned()]));
+            cmds.push(self.make_mvn_task(vec!["--version".to_owned()]));
         }
 
         // Clean
@@ -53,7 +53,7 @@ impl MvnCmdConfig {
                 if !self.verbose {
                     clean_args.push("--quiet".to_owned());
                 }
-                cmds.push(self.make_task(clean_args));
+                cmds.push(self.make_mvn_task(clean_args));
             } else {
                 debug!("clean and build in same command because of --all");
                 args.push("clean".to_owned());
@@ -125,6 +125,8 @@ impl MvnCmdConfig {
                     cmds.push(task);
                 }
                 let mut lint_args = vec![
+                    "-Xmx{}m".to_owned(),
+                    self.max_memory_mb.to_string(),
                     "-jar".to_owned(),
                     checkstyle_jar_pth.to_str().unwrap().to_owned(),
                     "-c".to_owned(),
@@ -183,11 +185,11 @@ impl MvnCmdConfig {
                 let mut test_args = vec!["test".to_owned()];
                 self.add_opt_args(&mut test_args);
                 self.add_test_args(&mut test_args);
-                test_task = Some(self.make_task(test_args));
+                test_task = Some(self.make_mvn_task(test_args));
             }
         }
 
-        cmds.push(self.make_task(args));
+        cmds.push(self.make_mvn_task(args));
         if let Some(tsk) = test_task {
             cmds.push(tsk);
         }
@@ -195,8 +197,7 @@ impl MvnCmdConfig {
         cmds
     }
 
-    fn make_task(&self, mut args: Vec<String>) -> Task {
-        args.extend_from_slice(&self.mvn_arg);
+    fn make_mvn_task(&self, mut args: Vec<String>) -> Task {
         let mut extra_env = HashMap::new();
         extra_env.insert(
             "MAVEN_OPTS".to_owned(),
@@ -206,6 +207,11 @@ impl MvnCmdConfig {
                 self.max_memory_mb
             ),
         );
+        self.make_task(self.mvn_exe.to_str().unwrap(), args, extra_env)
+    }
+
+    fn make_task(&self, exe: impl Into<String>, mut args: Vec<String>, mut extra_env: HashMap<String, String>) -> Task {
+        args.extend_from_slice(&self.mvn_arg);
         extra_env.insert(
             "JAVA_HOME".to_owned(),
             self.java_home.to_str().unwrap().to_owned(),
@@ -218,7 +224,7 @@ impl MvnCmdConfig {
             ));
         }
         Task::new_with_env(
-            self.mvn_exe.to_str().unwrap().to_owned(),
+            exe.into(),
             args,
             self.cwd.to_owned(),
             extra_env,
