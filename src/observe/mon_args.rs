@@ -5,13 +5,13 @@ use crate::common::CommandArgs;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name = "mon",
-    about = "Monitor a command: log the command, the outcome, timings and play a sound."
+    about = "Log the command, the outcome, timings and play a sound."
 )]
 pub struct MonArgs {
     /// Do not show the command before running it
     #[structopt(short = 'c', long)]
-    pub no_cmd: bool,
-    /// Do not show timing of commands
+    pub no_print_cmd: bool,
+    /// Do not show timing and exit status of the command
     #[structopt(short = 't', long)]
     pub no_timing: bool,
     /// Do not play a sound when the command succeeds
