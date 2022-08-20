@@ -1,12 +1,14 @@
+use crate::common::{LineWriter, StdoutWriter};
 use super::cached;
 use super::CacheStatus;
 use super::CachedArgs;
 use crate::ExitStatus;
 
-pub fn handle_cached(args: CachedArgs) -> ExitStatus {
+pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
     let verbose = args.verbose;
     let show_cached_output = !args.no_cached_output;
-    match cached(args) {
+    let mut writer = StdoutWriter::new();
+    match cached(args, &mut writer).await {
         Ok(status) => match status {
             CacheStatus::RanSuccessfully => {
                 if verbose {
@@ -17,7 +19,7 @@ pub fn handle_cached(args: CachedArgs) -> ExitStatus {
             }
             CacheStatus::FromCache(out) => {
                 if show_cached_output {
-                    print!("{}", out);
+                    writer.write_line(out).await;
                 }
                 if verbose {
                     eprintln!("loaded from cache")

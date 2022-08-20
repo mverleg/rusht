@@ -12,7 +12,7 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, git_head_ref, unique_filename, Task};
+use crate::common::{fail, git_head_ref, unique_filename, Task, LineWriter};
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -31,7 +31,7 @@ struct Cache {
     output: String,
 }
 
-pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
+pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter,) -> Result<CacheStatus, String> {
     let task = args.cmd.into_task();
     let cache_pth = get_cache_path(&args.key, &task)?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
@@ -39,10 +39,10 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
         return Ok(CacheStatus::FromCache(output));
     }
     let mut output = String::new();
-    let exit_code = task.execute_with_stdout(!args.verbose, |line| {
-        print!("{}", line);
+    let exit_code = task.execute_with_stdout(!args.verbose, async |line| {
+        writer.write_line(line).await;
         output.push_str(line);
-    });
+    }).await;
     if !exit_code.success() {
         return Ok(CacheStatus::Failed(ExitStatus::of_err(exit_code.code())));
     }

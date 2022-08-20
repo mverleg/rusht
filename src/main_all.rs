@@ -58,7 +58,7 @@ async fn main() -> ExitStatus {
     env_logger::init();
     let args = RushtArgs::from_args();
     match args.subcommand {
-        SubCmd::Cached(sub_args) => handle_cached(sub_args),
+        SubCmd::Cached(sub_args) => handle_cached(sub_args).await,
         SubCmd::Cmadd(sub_args) => handle_add(sub_args),
         SubCmd::Cmdo(sub_args) => handle_do(sub_args),
         SubCmd::Cmlist(sub_args) => handle_list(sub_args),

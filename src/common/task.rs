@@ -1,5 +1,6 @@
 use ::std::collections::HashMap;
 use ::std::env::current_dir;
+use ::std::future::Future;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
@@ -11,6 +12,7 @@ use ::clap::StructOpt;
 use ::itertools::Itertools;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use async_std::task::block_on;
 
 use crate::common::fail;
 
@@ -100,14 +102,16 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ProcStatus {
-        self.execute_with_stdout(quiet, |line| print!("{}", line))
+        block_on(self.execute_with_stdout(quiet, async |line| print!("{}", line)))
+        //TODO @mverleg: block on for now since it does not have suspend points anyway
     }
 
-    pub fn execute_with_stdout(
+    pub async fn execute_with_stdout<Fut>(
         &self,
         quiet: bool,
-        mut out_line_handler: impl FnMut(&str),
-    ) -> ProcStatus {
+        mut async_out_line_handler: impl FnMut(&str) -> Fut,
+    ) -> ProcStatus
+    where Fut: Future<Output = ()> {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
@@ -131,7 +135,7 @@ impl Task {
             let mut line = String::new();
             match out.read_line(&mut line) {
                 Ok(0) => break,
-                Ok(_) => out_line_handler(&line),
+                Ok(_) => async_out_line_handler(&line).await,
                 Err(err) => panic!(
                     "failed to read output of the task, task: {}, err: {}",
                     self.as_str(),
