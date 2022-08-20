@@ -102,14 +102,14 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ProcStatus {
-        block_on(self.execute_with_stdout(quiet, async |line| print!("{}", line)))
+        block_on(self.execute_with_stdout(quiet, &mut async move |line| print!("{}", line)))
         //TODO @mverleg: block on for now since it does not have suspend points anyway
     }
 
     pub async fn execute_with_stdout<Fut>(
         &self,
         quiet: bool,
-        mut async_out_line_handler: impl FnMut(&str) -> Fut,
+        async_out_line_handler: impl FnMut(&str) -> Fut,
     ) -> ProcStatus
     where Fut: Future<Output = ()> {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)

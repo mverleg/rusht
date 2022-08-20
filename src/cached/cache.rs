@@ -39,7 +39,7 @@ pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter,) -> Result<C
         return Ok(CacheStatus::FromCache(output));
     }
     let mut output = String::new();
-    let exit_code = task.execute_with_stdout(!args.verbose, async |line| {
+    let exit_code = task.execute_with_stdout(!args.verbose, async move |line| {
         writer.write_line(line).await;
         output.push_str(line);
     }).await;
