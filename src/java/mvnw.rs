@@ -60,11 +60,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), (i
             if is_offline && cmd.cmd == "mvn" {
                 eprintln!("note: failed in offline mode, use -U for online")
             }
-            // return Err(format!(
-            //     "command {} failed with code {}",
-            //     cmd.as_str(),
-            //     status.code().unwrap_or(-1)
-            // ));
+            return Err((status.code().unwrap_or(-1), "".to_owned()))
         }
     }
 
@@ -83,15 +79,15 @@ fn builds_cmds(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCm
         eprintln!("ignoring provided --affected and using --affected=head instead");
         //TODO @mverleg: ^
     }
-    let files = git_affected_files_head(&cwd)?;
-    if let Some(example) = files.iter().next() {
-        debug!("found {} affected files for {}, e.g. {}", files.len(), args.affected_policy, example.to_string_lossy());
+    let (changed_files, _) = git_affected_files_head(&cwd)?;
+    if let Some(example) = changed_files.iter().next() {
+        debug!("found {} affected files for {}, e.g. {}", changed_files.len(), args.affected_policy, example.to_string_lossy());
     } else {
-        debug!("no affected files for {}, e.g. {}", files.len(), args.affected_policy);
+        debug!("no affected files for {}, e.g. {}", changed_files.len(), args.affected_policy);
     }
 
     let cmd_config = MvnCmdConfig {
-        files,
+        changed_files,
         modules,
         tests: args.test(),
         lint: !args.no_lint,

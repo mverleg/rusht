@@ -26,7 +26,8 @@ pub fn git_master_base() {
     //git base-cmt HEAD || git rev-list --max-parents=0 HEAD
 }
 
-pub fn git_affected_files_head(dir: &Path) -> Result<HashSet<PathBuf>, String> {
+/// Returns changed and deleted files (separately) in head
+pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<PathBuf>), String> {
     let repo = Repository::open(dir).map_err(|err| {
         format!(
             "failed to read git repository at {}, err {}",
@@ -44,7 +45,6 @@ pub fn git_affected_files_head(dir: &Path) -> Result<HashSet<PathBuf>, String> {
     // .iter()
     // .map(|entry| entry.name().expect("non-utf8 filename").to_owned())
     // .collect::<Vec<_>>();
-    let mut changed_files = HashSet::new();
     let head_parent_tree = repo
         .head()
         .unwrap()
@@ -57,17 +57,24 @@ pub fn git_affected_files_head(dir: &Path) -> Result<HashSet<PathBuf>, String> {
     let diff = repo
         .diff_tree_to_tree(Some(&head_tree), Some(&head_parent_tree), None)
         .unwrap();
+    let mut changed_files = HashSet::new();
     for delta in diff.deltas() {
-        if let Some(pth) = delta.old_file().path() {
+        // Only add the new files, because old ones are either the same or don't exist anymore
+        if let Some(pth) = delta.new_file().path() {
             changed_files.insert(pth.to_path_buf());
         }
-        if let Some(pth) = delta.new_file().path() {
+    }
+    let mut deleted_files = HashSet::new();
+    for delta in diff.deltas() {
+        // Only add the new files, because old ones are either the same or don't exist anymore
+        if let Some(pth) = delta.old_file().path() {
             if ! changed_files.contains(pth) {
-                changed_files.insert(pth.to_path_buf());
+                deleted_files.insert(pth.to_path_buf());
             }
         }
     }
-    Ok(changed_files)
+    //TODO @mverleg: ^ this (hopefully) works for the specific commit, but when combining multiple commits, the files don't necessarily exist anymore at the end
+    Ok((changed_files, deleted_files))
 }
 
 pub fn git_affected_files_uncommitted() {

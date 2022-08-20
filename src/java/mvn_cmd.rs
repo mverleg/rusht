@@ -15,7 +15,7 @@ use crate::java::newtype::Profile;
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
     /// Which files were changed. Might have been deleted.
-    pub files: HashSet<PathBuf>,
+    pub changed_files: HashSet<PathBuf>,
     /// Which modules to build. Empty means everything.
     pub modules: Vec<String>,
     pub tests: TestMode,
@@ -108,7 +108,7 @@ impl MvnCmdConfig {
         // Lint
         if !self.lint {
             debug!("no lint requested, skipping checkstyle");
-        } else if self.files.is_empty() {
+        } else if self.changed_files.is_empty() {
             debug!("no affected files, checkstyle lint was requested but will be skipped");
         } else {
             let mut checkstyle_conf_pth = self.cwd.clone();
@@ -126,7 +126,7 @@ impl MvnCmdConfig {
                     "-c".to_owned(),
                     checkstyle_conf_pth.to_str().unwrap().to_owned(),
                 ];
-                lint_args.extend_from_slice(&self.files.iter()
+                lint_args.extend_from_slice(&self.changed_files.iter()
                     .map(|af| af.to_str().expect("changed file path not unicode").to_owned())
                     .collect::<Vec<_>>());
                 cmds.push(Task::new(

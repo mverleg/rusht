@@ -127,11 +127,11 @@ fn get_cache_path(key_templ: &str, task: &Task) -> Result<PathBuf, String> {
     //TODO @mverleg:  ^
     let key = build_key(key_templ, task)?;
     let filename = unique_filename(&key);
-    debug!("created filename {} from template key {}", &filename, &key_templ);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push(format!("cmdcache_v{}", DATA_VERSION));
     create_dir_all(&pth).unwrap();
     pth.push(filename);
+    debug!("created cache path {} from template key {}", pth.to_string_lossy(), &key_templ);
     Ok(pth)
 }
 
