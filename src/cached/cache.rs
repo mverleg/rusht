@@ -12,7 +12,7 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, git_head_ref, unique_filename, Task, LineWriter, TeeWriter, VecWriter};
+use crate::common::{fail, git_head_ref, unique_filename, LineWriter, Task, TeeWriter, VecWriter};
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -31,20 +31,18 @@ struct Cache {
     output: String,
 }
 
-pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter,) -> Result<CacheStatus, String> {
+pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter) -> Result<CacheStatus, String> {
     let task = args.cmd.into_task();
     let cache_pth = get_cache_path(&args.key, &task)?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output));
     }
-    let vec_writer = VecWriter::new();
-    let mut writer = TeeWriter::new(writer, vec_writer);
-    let exit_code = task.execute_with_stdout(!args.verbose, &mut writer).await;
-    // let exit_code = task.execute_with_stdout(!args.verbose, async move |line| {
-    //     writer.write_line(line).await;
-    //     output.push_str(line);
-    // }).await;
+    let mut vec_writer = VecWriter::new();
+    let mut tee_writer = TeeWriter::new(writer, &mut vec_writer);
+    let exit_code = task
+        .execute_with_stdout(!args.verbose, &mut tee_writer)
+        .await;
     if !exit_code.success() {
         return Ok(CacheStatus::Failed(ExitStatus::of_err(exit_code.code())));
     }

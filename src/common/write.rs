@@ -1,4 +1,3 @@
-use std::future::join;
 use ::async_std::io::stdout;
 use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
@@ -6,6 +5,7 @@ use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
+use std::future::join;
 
 #[async_trait]
 pub trait LineWriter: Send {
@@ -97,7 +97,7 @@ impl CollectorWriter {
     pub fn new() -> Self {
         CollectorWriter {
             lines: LineContainer {
-                lines: Arc::new(Mutex::new(vec![]))
+                lines: Arc::new(Mutex::new(vec![])),
             },
         }
     }
@@ -149,27 +149,21 @@ impl LineWriter for FirstItemWriter {
 }
 
 #[derive(Debug)]
-pub struct TeeWriter<W1: LineWriter, W2: LineWriter> {
-    first: W1,
-    second: W2,
+pub struct TeeWriter<'a, W1: LineWriter, W2: LineWriter> {
+    first: &'a mut W1,
+    second: &'a mut W2,
 }
 
-impl <W1: LineWriter, W2: LineWriter> TeeWriter<W1, W2> {
-    pub fn new(first: W1, second: W2) -> Self {
-        TeeWriter {
-            first,
-            second,
-        }
+impl<'a, W1: LineWriter, W2: LineWriter> TeeWriter<'a, W1, W2> {
+    pub fn new(first: &'a mut W1, second: &'a mut W2) -> Self {
+        TeeWriter { first, second }
     }
 }
 
 #[async_trait]
-impl <W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<W1, W2> {
+impl<'a, W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<'a, W1, W2> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let line = line.as_ref();
-        let _: ((), ()) = join!(
-            self.first.write_line(line),
-            self.second.write_line(line),
-        ).await;
+        let _: ((), ()) = join!(self.first.write_line(line), self.second.write_line(line),).await;
     }
 }

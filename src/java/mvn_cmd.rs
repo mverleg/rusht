@@ -197,7 +197,7 @@ impl MvnCmdConfig {
         cmds
     }
 
-    fn make_mvn_task(&self, mut args: Vec<String>) -> Task {
+    fn make_mvn_task(&self, args: Vec<String>) -> Task {
         let mut extra_env = HashMap::new();
         extra_env.insert(
             "MAVEN_OPTS".to_owned(),
@@ -210,7 +210,12 @@ impl MvnCmdConfig {
         self.make_task(self.mvn_exe.to_str().unwrap(), args, extra_env)
     }
 
-    fn make_task(&self, exe: impl Into<String>, mut args: Vec<String>, mut extra_env: HashMap<String, String>) -> Task {
+    fn make_task(
+        &self,
+        exe: impl Into<String>,
+        mut args: Vec<String>,
+        mut extra_env: HashMap<String, String>,
+    ) -> Task {
         args.extend_from_slice(&self.mvn_arg);
         extra_env.insert(
             "JAVA_HOME".to_owned(),
@@ -223,12 +228,7 @@ impl MvnCmdConfig {
                 self.profiles.iter().join(",")
             ));
         }
-        Task::new_with_env(
-            exe.into(),
-            args,
-            self.cwd.to_owned(),
-            extra_env,
-        )
+        Task::new_with_env(exe.into(), args, self.cwd.to_owned(), extra_env)
     }
 
     fn add_opt_args(&self, args: &mut Vec<String>) {

@@ -93,10 +93,12 @@ pub struct MvnwArgs {
 
 fn strictly_positive(val: &str) -> Result<u32, String> {
     match val.parse::<u32>() {
-        Ok(nr) => if nr >= 1 {
-            Ok(nr)
-        } else {
-            Err("must be at least 1".to_owned())
+        Ok(nr) => {
+            if nr >= 1 {
+                Ok(nr)
+            } else {
+                Err("must be at least 1".to_owned())
+            }
         }
         Err(err) => Err(err.to_string()),
     }

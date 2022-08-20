@@ -1,7 +1,7 @@
-use crate::common::{LineWriter, StdoutWriter};
 use super::cached;
 use super::CacheStatus;
 use super::CachedArgs;
+use crate::common::{LineWriter, StdoutWriter};
 use crate::ExitStatus;
 
 pub async fn handle_cached(args: CachedArgs) -> ExitStatus {

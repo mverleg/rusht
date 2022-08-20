@@ -18,8 +18,8 @@ pub use self::write::CollectorWriter;
 pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
 pub use self::write::StdoutWriter;
-pub use self::write::VecWriter;
 pub use self::write::TeeWriter;
+pub use self::write::VecWriter;
 
 mod err;
 mod git;
