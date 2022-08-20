@@ -11,6 +11,7 @@ pub mod filter;
 pub mod find;
 pub mod java;
 pub mod wait;
+pub mod observe;
 
 #[cfg(test)]
 mod tests {
