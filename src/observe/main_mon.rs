@@ -1,7 +1,7 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
-use ::rusht::filter::handle_grab;
-use ::rusht::filter::GrabArgs;
+use ::rusht::observe::handle_mon;
+use ::rusht::observe::MonArgs;
 
 #[async_std::main]
 async fn main() {
