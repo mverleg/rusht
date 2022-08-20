@@ -3,9 +3,12 @@ use crate::observe::mon_args::MonArgs;
 use crate::ExitStatus;
 
 pub async fn mon(
-    _args: MonArgs,
+    args: MonArgs,
     _reader: &mut impl LineReader,
     _writer: &mut impl LineWriter,
 ) -> ExitStatus {
-    unimplemented!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    let task = args.cmd.into_task();
+    let status = task.execute(false);
+    ExitStatus::of_err(status.code())
+    //TODO @mverleg:
 }
