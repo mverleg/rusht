@@ -125,8 +125,7 @@ impl MvnCmdConfig {
                     cmds.push(task);
                 }
                 let mut lint_args = vec![
-                    "-Xmx{}m".to_owned(),
-                    self.max_memory_mb.to_string(),
+                    format!("-Xmx{}m", self.max_memory_mb),
                     "-jar".to_owned(),
                     checkstyle_jar_pth.to_str().unwrap().to_owned(),
                     "-c".to_owned(),
