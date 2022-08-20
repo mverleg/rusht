@@ -12,7 +12,7 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, git_head_ref, unique_filename, Task, LineWriter};
+use crate::common::{fail, git_head_ref, unique_filename, Task, LineWriter, TeeWriter, VecWriter};
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -38,14 +38,17 @@ pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter,) -> Result<C
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output));
     }
-    let mut output = String::new();
-    let exit_code = task.execute_with_stdout(!args.verbose, async move |line| {
-        writer.write_line(line).await;
-        output.push_str(line);
-    }).await;
+    let vec_writer = VecWriter::new();
+    let mut writer = TeeWriter::new(writer, vec_writer);
+    let exit_code = task.execute_with_stdout(!args.verbose, &mut writer).await;
+    // let exit_code = task.execute_with_stdout(!args.verbose, async move |line| {
+    //     writer.write_line(line).await;
+    //     output.push_str(line);
+    // }).await;
     if !exit_code.success() {
         return Ok(CacheStatus::Failed(ExitStatus::of_err(exit_code.code())));
     }
+    let output = vec_writer.get().join("");
     update_cache(output, task, &cache_pth);
     Ok(CacheStatus::RanSuccessfully)
 }
