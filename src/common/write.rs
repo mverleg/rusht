@@ -1,3 +1,4 @@
+use std::future::join;
 use ::async_std::io::stdout;
 use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
@@ -144,5 +145,31 @@ impl Default for FirstItemWriter {
 impl LineWriter for FirstItemWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         self.line.get_or_insert_with(|| line.as_ref().to_owned());
+    }
+}
+
+#[derive(Debug)]
+pub struct TeeWriter<W1: LineWriter, W2: LineWriter> {
+    first: W1,
+    second: W2,
+}
+
+impl <W1: LineWriter, W2: LineWriter> TeeWriter<W1, W2> {
+    pub fn new(first: W1, second: W2) -> Self {
+        TeeWriter {
+            first,
+            second,
+        }
+    }
+}
+
+#[async_trait]
+impl <W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<W1, W2> {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let line = line.as_ref();
+        let _: ((), ()) = join!(
+            self.first.write_line(line),
+            self.second.write_line(line),
+        ).await;
     }
 }
