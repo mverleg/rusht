@@ -3,6 +3,7 @@ use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
+use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
 
 #[async_trait]
@@ -77,17 +78,30 @@ impl LineWriter for VecWriter {
 
 #[derive(Debug)]
 pub struct CollectorWriter {
+    lines: LineContainer,
+}
+
+#[derive(Debug, Clone)]
+pub struct LineContainer {
     lines: Arc<Mutex<Vec<String>>>,
+}
+
+impl LineContainer {
+    pub async fn snapshot(&self) -> MutexGuard<Vec<String>> {
+        self.lines.lock().await
+    }
 }
 
 impl CollectorWriter {
     pub fn new() -> Self {
         CollectorWriter {
-            lines: Arc::new(Mutex::new(vec![])),
+            lines: LineContainer {
+                lines: Arc::new(Mutex::new(vec![]))
+            },
         }
     }
 
-    pub fn get_lines(&self) -> Arc<Mutex<Vec<String>>> {
+    pub fn lines(&self) -> LineContainer {
         self.lines.clone()
     }
 }
@@ -101,7 +115,7 @@ impl Default for CollectorWriter {
 #[async_trait]
 impl LineWriter for CollectorWriter {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
-        self.lines.lock().await.push(line.as_ref().to_owned())
+        self.lines.lines.lock().await.push(line.as_ref().to_owned())
     }
 }
 

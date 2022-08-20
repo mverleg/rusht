@@ -99,14 +99,14 @@ mod tests {
         expected: Vec<T>,
     ) {
         let writer = CollectorWriter::new();
-        let lines = writer.get_lines();
+        let lines = writer.lines();
         grab(args, VecReader::new(input), writer).await.unwrap();
         let expected = expected
             .into_iter()
             .map(|s| s.into())
             .collect::<Vec<String>>();
-        let line_vec = &*lines.lock().await;
-        assert_eq!(line_vec, &expected)
+        let line_vec = lines.snapshot().await;
+        assert_eq!(&*line_vec, &expected)
     }
 
     #[async_std::test]

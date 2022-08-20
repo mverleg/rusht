@@ -48,7 +48,7 @@ mod tests {
         };
 
         let mut out2 = CollectorWriter::new();
-        let lines = out2.get_lines();
+        let lines = out2.lines();
         let unique_args = UniqueArgs {
             order: Order::Preserve,
             keep: Keep::First,
@@ -64,8 +64,8 @@ mod tests {
         res.unwrap();
 
         let expected = vec!["world", "Mars", "Venus", "bye world"];
-        let actual = &*lines.lock().await;
-        assert_eq!(actual, &expected);
+        let actual = lines.snapshot().await;
+        assert_eq!(&*actual, &expected);
     }
 
     #[derive(Debug, PartialEq, Eq)]
