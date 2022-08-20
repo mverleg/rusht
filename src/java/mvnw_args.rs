@@ -1,11 +1,10 @@
+use ::std::fmt;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
-use core::fmt;
-use std::fmt::Formatter;
 
 use ::clap::StructOpt;
 use ::clap::ValueEnum;
-use regex::Regex;
+use ::regex::Regex;
 
 use crate::java::newtype::Profile;
 
@@ -72,10 +71,10 @@ pub struct MvnwArgs {
     )]
     pub affected_policy: AffectedPolicy,
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
-    #[structopt(long, hide_short_help = true)]
+    #[structopt(long, validator = strictly_positive, hide_short_help = true)]
     pub threads: Option<u32>,
     /// Maximum memory to build, in MB.
-    #[structopt(long = "max-memory", default_value = "8192", hide_short_help = true)]
+    #[structopt(long = "max-memory", validator = strictly_positive, default_value = "8192", hide_short_help = true)]
     pub max_memory_mb: u32,
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     #[structopt(long, default_value = "mvn", hide_short_help = true)]
@@ -88,10 +87,20 @@ pub struct MvnwArgs {
     pub profiles: Vec<Profile>,
 
     /// Re-run the commands with --clean --update if the output matches this pattern
-    #[structopt(short = 'C', long)]
-    pub clean_if_match: Vec<Regex>,
+    #[structopt(short = 'C', long, hide_short_help = true)]
+    pub rebuild_if_match: Vec<Regex>,
 }
-//TODO @mverleg: also include linting?
+
+fn strictly_positive(val: &str) -> Result<u32, String> {
+    match val.parse::<u32>() {
+        Ok(nr) => if nr >= 1 {
+            Ok(nr)
+        } else {
+            Err("must be at least 1".to_owned())
+        }
+        Err(err) => Err(err.to_string()),
+    }
+}
 
 #[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AffectedPolicy {
@@ -123,7 +132,7 @@ impl FromStr for AffectedPolicy {
 }
 
 impl fmt::Display for AffectedPolicy {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{}",

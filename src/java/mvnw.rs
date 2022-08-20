@@ -17,6 +17,7 @@ pub async fn mvnw(
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
+    assert!(args.rebuild_if_match.is_empty(), "not supported yet");
     debug!("arguments: {:?}", &args);
     if !args.all {
         return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
