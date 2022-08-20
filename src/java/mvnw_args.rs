@@ -5,6 +5,7 @@ use std::fmt::Formatter;
 
 use ::clap::StructOpt;
 use ::clap::ValueEnum;
+use regex::Regex;
 
 use crate::java::newtype::Profile;
 
@@ -85,6 +86,10 @@ pub struct MvnwArgs {
     /// Maven profiles to activate. Prefix '!' to deactivate.
     #[structopt(short = 'P', long = "profile")]
     pub profiles: Vec<Profile>,
+
+    /// Re-run the commands with --clean --update if the output matches this pattern
+    #[structopt(short = 'C', long)]
+    pub clean_if_match: Vec<Regex>,
 }
 //TODO @mverleg: also include linting?
 
