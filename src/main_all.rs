@@ -1,3 +1,4 @@
+
 use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
@@ -53,7 +54,7 @@ fn test_cli_args() {
 }
 
 #[async_std::main]
-async fn main() {
+async fn main() -> ExitCode {
     env_logger::init();
     let args = RushtArgs::from_args();
     match args.subcommand {

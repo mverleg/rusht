@@ -1,16 +1,16 @@
 use ::std::process::exit;
 
-use crate::common::stdin_lines;
 use crate::common::EmptyLineHandling;
+use crate::common::stdin_lines;
 
-use super::list_cmds;
-use super::ListArgs;
-use super::ListErr;
 use super::{add_cmd, AddArgs};
 use super::{do_cmd, DoArgs};
 use super::{drop_cmd, DropArgs};
+use super::list_cmds;
+use super::ListArgs;
+use super::ListErr;
 
-pub fn handle_add(mut args: AddArgs) {
+pub fn handle_add(mut args: AddArgs) -> ExitCode {
     if args.lines {
         args.lines_with = Some("{}".to_owned());
     }

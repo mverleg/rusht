@@ -20,7 +20,7 @@ pub const DATA_VERSION: u32 = 1;
 pub enum CacheStatus {
     RanSuccessfully,
     FromCache(String),
-    Failed(i32),
+    Failed(ExitCode),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -43,7 +43,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
         output.push_str(line);
     });
     if !exit_code.success() {
-        return Ok(CacheStatus::Failed(exit_code.code().unwrap_or(1)));
+        return Ok(CacheStatus::Failed(exit_code.code().unwrap_or(ExitCode::FAILURE)));
     }
     update_cache(output, task, &cache_pth);
     Ok(CacheStatus::RanSuccessfully)
