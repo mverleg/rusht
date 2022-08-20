@@ -1,9 +1,9 @@
-
 use super::cached;
-use super::CachedArgs;
 use super::CacheStatus;
+use super::CachedArgs;
+use crate::ExitStatus;
 
-pub fn handle_cached(args: CachedArgs) -> ExitCode {
+pub fn handle_cached(args: CachedArgs) -> ExitStatus {
     let verbose = args.verbose;
     let show_cached_output = !args.no_cached_output;
     match cached(args) {
@@ -13,7 +13,7 @@ pub fn handle_cached(args: CachedArgs) -> ExitCode {
                     eprintln!("successfully ran")
                     //TODO @mverleg: better msg?
                 }
-                ExitCode::SUCCESS
+                ExitStatus::ok()
             }
             CacheStatus::FromCache(out) => {
                 if show_cached_output {
@@ -23,7 +23,7 @@ pub fn handle_cached(args: CachedArgs) -> ExitCode {
                     eprintln!("loaded from cache")
                     //TODO @mverleg: better msg?
                 }
-                ExitCode::SUCCESS
+                ExitStatus::ok()
             }
             CacheStatus::Failed(exit_code) => {
                 eprintln!(
@@ -35,7 +35,7 @@ pub fn handle_cached(args: CachedArgs) -> ExitCode {
         },
         Err(err) => {
             eprintln!("failed: {}", err);
-            ExitCode::from(1)
+            ExitStatus::err()
         }
     }
 }

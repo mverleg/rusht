@@ -1,14 +1,14 @@
-use ::std::process::exit;
+use crate::ExitStatus;
 
 use super::locked;
 use super::LockedArgs;
 
-pub fn handle_locked(args: LockedArgs) {
+pub fn handle_locked(args: LockedArgs) -> ExitStatus {
     match locked(args) {
-        Ok(()) => {}
+        Ok(()) => ExitStatus::ok(),
         Err(err) => {
             eprintln!("failed: {}", err);
-            exit(1)
+            ExitStatus::err()
         }
     }
 }

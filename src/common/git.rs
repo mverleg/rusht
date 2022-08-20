@@ -14,11 +14,7 @@ pub fn git_head_ref(dir: &Path) -> Result<String, String> {
             err
         )
     })?;
-    let head = repo
-        .head()
-        .unwrap()
-        .peel_to_commit()
-        .unwrap();
+    let head = repo.head().unwrap().peel_to_commit().unwrap();
     Ok(head.id().to_string())
 }
 
@@ -68,7 +64,7 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
     for delta in diff.deltas() {
         // Only add the new files, because old ones are either the same or don't exist anymore
         if let Some(pth) = delta.old_file().path() {
-            if ! changed_files.contains(pth) {
+            if !changed_files.contains(pth) {
                 deleted_files.insert(pth.to_path_buf());
             }
         }

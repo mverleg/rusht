@@ -6,40 +6,57 @@ use ::itertools::Itertools;
 use ::log::debug;
 
 use crate::common::{git_affected_files_head, LineWriter};
-use crate::java::MvnCmdConfig;
 use crate::java::mvnw_args::AffectedPolicy;
+use crate::java::MvnCmdConfig;
 use crate::java::MvnwArgs;
+use crate::ExitStatus;
 
-pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), (i32, String)> {
+pub async fn mvnw(
+    args: MvnwArgs,
+    writer: &mut impl LineWriter,
+) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
     debug!("arguments: {:?}", &args);
     if !args.all {
-        return Err((1, "--all required for now".to_owned())); //TODO @mverleg: --all required for now
+        return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
     }
     let cwd = current_dir().expect("could not determine working directory");
     if !PathBuf::from("pom.xml").is_file() {
-        return Err((1, "must be run from a maven project directory (containing pom.xml)".to_owned()));
+        return Err((
+            ExitStatus::err(),
+            "must be run from a maven project directory (containing pom.xml)".to_owned(),
+        ));
     }
     let args = args;
     // //TODO @mverleg: affected_policy
 
     debug!("JAVA_HOME = {:?}", env::var("JAVA_HOME"));
-    let java_home = PathBuf::try_from(
-        env::var("JAVA_HOME")
-            .map_err(|err| (1, format!("could not read JAVA_HOME from env, err: {}", err)))?,
-    )
-        .map_err(|err| (1, format!("JAVA_HOME env does not contain a valid path, err: {}", err)))?;
+    let java_home = PathBuf::try_from(env::var("JAVA_HOME").map_err(|err| {
+        (
+            ExitStatus::err(),
+            format!("could not read JAVA_HOME from env, err: {}", err),
+        )
+    })?)
+    .map_err(|err| {
+        (
+            ExitStatus::err(),
+            format!("JAVA_HOME env does not contain a valid path, err: {}", err),
+        )
+    })?;
     if !java_home.is_dir() {
-        return Err((1, format!(
-            "JAVA_HOME directory does not exist at {}",
-            java_home.to_string_lossy()
-        )));
+        return Err((
+            ExitStatus::err(),
+            format!(
+                "JAVA_HOME directory does not exist at {}",
+                java_home.to_string_lossy()
+            ),
+        ));
     }
 
     let show_cmds_only = args.show_cmds_only;
-    let is_offline = ! args.update;
-    let cmd_config = builds_cmds(cwd, java_home, args).map_err(|err| (1, err))?;
+    let is_offline = !args.update;
+    let cmd_config = builds_cmds(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
@@ -60,7 +77,7 @@ pub async fn mvnw(args: MvnwArgs, writer: &mut impl LineWriter) -> Result<(), (i
             if is_offline && cmd.cmd == "mvn" {
                 eprintln!("note: failed in offline mode, use -U for online")
             }
-            return Err((status.code().unwrap_or(-1), "".to_owned()))
+            return Err((ExitStatus::of_err(status.code()), "".to_owned()));
         }
     }
 
@@ -81,9 +98,18 @@ fn builds_cmds(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCm
     }
     let (changed_files, _) = git_affected_files_head(&cwd)?;
     if let Some(example) = changed_files.iter().next() {
-        debug!("found {} affected files for {}, e.g. {}", changed_files.len(), args.affected_policy, example.to_string_lossy());
+        debug!(
+            "found {} affected files for {}, e.g. {}",
+            changed_files.len(),
+            args.affected_policy,
+            example.to_string_lossy()
+        );
     } else {
-        debug!("no affected files for {}, e.g. {}", changed_files.len(), args.affected_policy);
+        debug!(
+            "no affected files for {}, e.g. {}",
+            changed_files.len(),
+            args.affected_policy
+        );
     }
 
     let cmd_config = MvnCmdConfig {

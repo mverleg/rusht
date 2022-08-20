@@ -3,7 +3,7 @@ use ::std::env::current_dir;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
-use ::std::process::ExitStatus;
+use ::std::process::ExitStatus as ProcStatus;
 use ::std::process::Stdio;
 use ::std::time::Instant;
 
@@ -99,7 +99,7 @@ impl Task {
         format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
     }
 
-    pub fn execute(&self, quiet: bool) -> ExitStatus {
+    pub fn execute(&self, quiet: bool) -> ProcStatus {
         self.execute_with_stdout(quiet, |line| print!("{}", line))
     }
 
@@ -107,7 +107,7 @@ impl Task {
         &self,
         quiet: bool,
         mut out_line_handler: impl FnMut(&str),
-    ) -> ExitStatus {
+    ) -> ProcStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
@@ -151,7 +151,12 @@ impl Task {
             if status.success() {
                 println!("command {} successfully ran in {} ms", cmd_str, duration);
             } else {
-                eprintln!("command {} FAILED in {} ms (code {})", cmd_str, duration, status.code().unwrap_or(-1));
+                eprintln!(
+                    "command {} FAILED in {} ms (code {})",
+                    cmd_str,
+                    duration,
+                    status.code().unwrap_or(-1)
+                );
             }
         }
         status

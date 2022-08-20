@@ -115,8 +115,12 @@ impl MvnCmdConfig {
             checkstyle_conf_pth.push("sputnik-rules");
             checkstyle_conf_pth.push("checkstyle.xml");
             if checkstyle_conf_pth.is_file() {
-                debug!("linting enabled, found checkstyle config at: {}", checkstyle_conf_pth.to_string_lossy());
-                let (task, checkstyle_jar_pth) = ensure_checkstyle_jar_exists(&self.checkstyle_version);
+                debug!(
+                    "linting enabled, found checkstyle config at: {}",
+                    checkstyle_conf_pth.to_string_lossy()
+                );
+                let (task, checkstyle_jar_pth) =
+                    ensure_checkstyle_jar_exists(&self.checkstyle_version);
                 if let Some(task) = task {
                     cmds.push(task);
                 }
@@ -126,15 +130,23 @@ impl MvnCmdConfig {
                     "-c".to_owned(),
                     checkstyle_conf_pth.to_str().unwrap().to_owned(),
                 ];
-                lint_args.extend_from_slice(&self.changed_files.iter()
-                    .map(|af| af.to_str().expect("changed file path not unicode").to_owned())
-                    .collect::<Vec<_>>());
-                cmds.push(Task::new(
-                    "java".to_owned(),
-                    lint_args, self.cwd.clone(),
-                ));
+                lint_args.extend_from_slice(
+                    &self
+                        .changed_files
+                        .iter()
+                        .map(|af| {
+                            af.to_str()
+                                .expect("changed file path not unicode")
+                                .to_owned()
+                        })
+                        .collect::<Vec<_>>(),
+                );
+                cmds.push(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
             } else {
-                warn!("skipping checkstyle because config was not found at '{}'", checkstyle_conf_pth.to_string_lossy());
+                warn!(
+                    "skipping checkstyle because config was not found at '{}'",
+                    checkstyle_conf_pth.to_string_lossy()
+                );
             }
         }
 
@@ -244,8 +256,11 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
     let mut checkstyle_jar_pth = cache_dir.clone();
     checkstyle_jar_pth.push(format!("checkstyle-{}.jar", version));
     if checkstyle_jar_pth.is_file() {
-        debug!("found checkstyle jar at: {}", checkstyle_jar_pth.to_string_lossy());
-        return (None, checkstyle_jar_pth)
+        debug!(
+            "found checkstyle jar at: {}",
+            checkstyle_jar_pth.to_string_lossy()
+        );
+        return (None, checkstyle_jar_pth);
     }
     let task = Task::new(
         "curl".to_owned(),
@@ -257,6 +272,9 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
             checkstyle_jar_pth.to_str().unwrap().to_owned(),
         ], cache_dir
     );
-    debug!("creating task to download checkstyle jar: {}", task.as_str());
+    debug!(
+        "creating task to download checkstyle jar: {}",
+        task.as_str()
+    );
     (Some(task), checkstyle_jar_pth)
 }

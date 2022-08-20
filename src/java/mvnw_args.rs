@@ -119,13 +119,17 @@ impl FromStr for AffectedPolicy {
 
 impl fmt::Display for AffectedPolicy {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            AffectedPolicy::AnyChange => "any-change",
-            AffectedPolicy::Recent => "recent",
-            AffectedPolicy::Uncommitted => "uncommitted",
-            AffectedPolicy::Head => "head",
-            AffectedPolicy::Branch => "branch",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                AffectedPolicy::AnyChange => "any-change",
+                AffectedPolicy::Recent => "recent",
+                AffectedPolicy::Uncommitted => "uncommitted",
+                AffectedPolicy::Head => "head",
+                AffectedPolicy::Branch => "branch",
+            }
+        )
     }
 }
 

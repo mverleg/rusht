@@ -1,23 +1,23 @@
-
 use ::clap::StructOpt;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::CachedArgs;
 use ::rusht::cached::handle_cached;
+use ::rusht::cached::CachedArgs;
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
 use ::rusht::escape::handle_namesafe;
 use ::rusht::escape::NamesafeArgs;
-use ::rusht::filter::{FilterArgs, handle_filter};
+use ::rusht::filter::{handle_filter, FilterArgs};
 use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::filter::{GrabArgs, UniqueArgs};
-use ::rusht::find::DirWithArgs;
 use ::rusht::find::handle_dir_with;
+use ::rusht::find::DirWithArgs;
 use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::observe::{handle_mon, MonArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
+use ::rusht::ExitStatus;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -54,7 +54,7 @@ fn test_cli_args() {
 }
 
 #[async_std::main]
-async fn main() -> ExitCode {
+async fn main() -> ExitStatus {
     env_logger::init();
     let args = RushtArgs::from_args();
     match args.subcommand {

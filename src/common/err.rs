@@ -25,9 +25,18 @@ impl fmt::Display for ExitStatus {
 }
 
 impl ExitStatus {
-
     pub fn of(code: u8) -> ExitStatus {
         ExitStatus { code }
+    }
+
+    pub fn of_is_ok(is_ok: bool) -> ExitStatus {
+        ExitStatus::of(if is_ok { 0 } else { 1 })
+    }
+
+    pub fn of_err(code: Option<i32>) -> ExitStatus {
+        assert!(Some(1) != code);
+        let code = code.unwrap_or(1) as u8;
+        ExitStatus::of(if code > 0 { code } else { 1 })
     }
 
     pub fn ok() -> ExitStatus {

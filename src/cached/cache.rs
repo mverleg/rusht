@@ -12,7 +12,8 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, unique_filename, Task, git_head_ref};
+use crate::common::{fail, git_head_ref, unique_filename, Task};
+use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
 
@@ -20,7 +21,7 @@ pub const DATA_VERSION: u32 = 1;
 pub enum CacheStatus {
     RanSuccessfully,
     FromCache(String),
-    Failed(ExitCode),
+    Failed(ExitStatus),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -43,7 +44,7 @@ pub fn cached(args: CachedArgs) -> Result<CacheStatus, String> {
         output.push_str(line);
     });
     if !exit_code.success() {
-        return Ok(CacheStatus::Failed(exit_code.code().unwrap_or(ExitCode::FAILURE)));
+        return Ok(CacheStatus::Failed(ExitStatus::of_err(exit_code.code())));
     }
     update_cache(output, task, &cache_pth);
     Ok(CacheStatus::RanSuccessfully)
@@ -131,7 +132,11 @@ fn get_cache_path(key_templ: &str, task: &Task) -> Result<PathBuf, String> {
     pth.push(format!("cmdcache_v{}", DATA_VERSION));
     create_dir_all(&pth).unwrap();
     pth.push(filename);
-    debug!("created cache path {} from template key {}", pth.to_string_lossy(), &key_templ);
+    debug!(
+        "created cache path {} from template key {}",
+        pth.to_string_lossy(),
+        &key_templ
+    );
     Ok(pth)
 }
 
@@ -141,19 +146,31 @@ fn build_key(key_templ: &str, task: &Task) -> Result<String, String> {
     let mut key = key_templ.to_owned();
     key = key.replace("${git}", "${git_head}_${git_uncommitted}");
     if key.contains("${pwd}") {
-        key = key.replace("${pwd}", &task.working_dir.to_string_lossy().into_owned());
+        key = key.replace("${pwd}", &task.working_dir.to_string_lossy());
     }
     if key.contains("${env}") {
-        key = key.replace("${env}", &task.extra_envs.iter()
-            .map(|(k, v)| format!("{}{}", k, v))
-            .join("_"));
+        key = key.replace(
+            "${env}",
+            &task
+                .extra_envs
+                .iter()
+                .map(|(k, v)| format!("{}{}", k, v))
+                .join("_"),
+        );
     }
     if key.contains("${cmd}") {
         key = key.replace("${cmd}", &task.as_cmd_str());
     }
     if key.contains("${git_head}") {
-        key = key.replace("${git_head}", &git_head_ref(&task.working_dir)
-            .map_err(|err| format!("cache key contains git reference, but could not read git head, err: {}", err))?);
+        key = key.replace(
+            "${git_head}",
+            &git_head_ref(&task.working_dir).map_err(|err| {
+                format!(
+                    "cache key contains git reference, but could not read git head, err: {}",
+                    err
+                )
+            })?,
+        );
     }
     Ok(key)
 }
