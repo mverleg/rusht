@@ -33,10 +33,13 @@ impl ExitStatus {
         ExitStatus::of(if is_ok { 0 } else { 1 })
     }
 
-    pub fn of_err(code: Option<i32>) -> ExitStatus {
-        assert!(Some(1) != code);
-        let code = code.unwrap_or(1) as u8;
-        ExitStatus::of(if code > 0 { code } else { 1 })
+    pub fn of_code(code: Option<i32>) -> ExitStatus {
+        let code = code.map(|val| val.try_into());
+        ExitStatus::of(match code {
+            Some(Ok(nr)) => nr,
+            Some(Err(_)) => u8::MAX,
+            None => 1,
+        })
     }
 
     pub fn ok() -> ExitStatus {
