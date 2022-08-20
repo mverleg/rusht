@@ -148,7 +148,11 @@ impl Task {
         };
         if !quiet {
             let duration = t0.elapsed().as_millis();
-            println!("took {} ms to run: {}", duration, cmd_str);
+            if status.success() {
+                println!("command {} successfully ran in {} ms", cmd_str, duration);
+            } else {
+                eprintln!("command {} FAILED in {} ms (code {})", cmd_str, duration, status.code().unwrap_or(-1));
+            }
         }
         status
     }

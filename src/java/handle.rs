@@ -7,9 +7,11 @@ use crate::java::MvnwArgs;
 pub async fn handle_mvnw(args: MvnwArgs) {
     match mvnw(args, &mut StdoutWriter::new()).await {
         Ok(()) => {}
-        Err(err) => {
-            eprintln!("{}", err);
-            exit(1);
+        Err((code, err_msg)) => {
+            if ! err_msg.is_empty() {
+                eprintln!("{}", err_msg);
+            }
+            exit(if code > 0 { code } else { 1 });
         }
     }
 }
