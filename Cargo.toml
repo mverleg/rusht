@@ -94,6 +94,7 @@ async-trait = "0.1.56"
 num_cpus = "1.13.1"
 git2 = "0.15.0"
 derive_more = "0.99.17"
+rodio = "0.15.0"
 
 [dev-dependencies]
 tempfile = "3.3.0"
