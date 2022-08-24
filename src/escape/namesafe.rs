@@ -47,7 +47,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .map(|c| if args.charset.is_allowed(c) { c } else { '_' })
         .filter(|c| skip_subsequent_special(*c, &mut is_prev_special))
         .inspect(|_| count += 1)
-        .take((max_length + 1) as usize)
+        //.take((max_length + 1) as usize)
         .collect::<String>();
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
@@ -120,6 +120,20 @@ mod tests {
         let res = namesafe_line(
             " _ hello WORLD hello world 你好 你好 你好 hello world- !!! !@#$%^& bye 123",
             &NamesafeArgs::default(),
+        );
+        assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
+    }
+
+    #[test]
+    fn long_legal_filename_tail() {
+        let res = namesafe_line(
+            "The King is dead. Long live the Queen!",
+            &NamesafeArgs {
+                max_length: 15,
+                keep_tail: true,
+                hash_policy: HashPolicy::Never,
+                ..Default::default()
+            },
         );
         assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
     }
