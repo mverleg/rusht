@@ -135,9 +135,9 @@ impl Task {
             match out.read_line(&mut line) {
                 Ok(0) => break,
                 Ok(_) => {
-                    line.pop();  // strip newline  //TODO @mverleg: cross-platform?
+                    line.pop(); // strip newline  //TODO @mverleg: cross-platform?
                     writer.write_line(&line).await
-                },
+                }
                 Err(err) => panic!(
                     "failed to read output of the task, task: {}, err: {}",
                     self.as_str(),
