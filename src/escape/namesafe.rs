@@ -62,7 +62,11 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let hash = compute_hash(original, hash_length);
     let text_len = args.max_length as usize - hash.len();
     // use iterator because string slice can break up characters
-    let mut new = filtered.chars().take(text_len).collect::<String>();
+    let mut new = if args.keep_tail {
+        filtered.chars().skip(count - text_len).collect::<String>()
+    } else {
+        filtered.chars().take(text_len).collect::<String>()
+    };
     new.push_str(&hash);
     new
 }

@@ -7,31 +7,34 @@ use ::std::str::FromStr;
     about = "Convert each line to a string that is safe for names (no whitespace or special characters, not too long)."
 )]
 pub struct NamesafeArgs {
+    /// Allow non-ascii letters (but no non-letter symbols).
     #[structopt(
         parse(from_flag = Charset::from_allow),
         short = 'u',
         long = "allow-unicode",
-        )]
-    /// Allow non-ascii letters (but no non-letter symbols).
+    )]
     pub charset: Charset,
+    /// In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever).
     #[structopt(
         short = 'x',
         long = "hash",
         default_value = "changed",  //TODO @mverleg: not sure why Default impl doesn't work
-        )]
-    /// In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever).
+    )]
     pub hash_policy: HashPolicy,
-    #[structopt(short = 'l', long = "max-length", default_value = "32")]
     /// Maximum number of characters in the cleaned line (min 8).
+    #[structopt(short = 'l', long = "max-length", default_value = "32")]
     pub max_length: u32,
-    #[structopt(short = 'e', long = "extension")]
     /// If the line appears to contain an filename extension (max 4 chars), preserve it.
+    #[structopt(short = 'e', long = "extension")]
     pub keep_extension: bool,
-    #[structopt(short = '0', long = "allow-empty")]
+    /// If the command has to be shortened, keep the end part instead of the start.
+    #[structopt(short = 'E', long = "keep-tail")]
+    pub keep_tail: bool,
     /// Do not fail if there are no input lines.
+    #[structopt(short = '0', long = "allow-empty")]
     pub allow_empty: bool,
-    #[structopt(short = '1', long = "single")]
     /// Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty.
+    #[structopt(short = '1', long = "single")]
     pub single_line: bool,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
@@ -107,6 +110,7 @@ impl Default for NamesafeArgs {
             hash_policy: Default::default(),
             max_length: 32,
             keep_extension: false,
+            keep_tail: false,
             allow_empty: false,
             single_line: false,
         }
