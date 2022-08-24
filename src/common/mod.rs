@@ -17,7 +17,7 @@ pub use self::task::Task;
 pub use self::write::CollectorWriter;
 pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
-pub use self::write::StdoutWriter;
+pub use self::write::StdWriter;
 pub use self::write::TeeWriter;
 pub use self::write::VecWriter;
 

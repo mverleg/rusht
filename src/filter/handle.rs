@@ -1,4 +1,4 @@
-use crate::common::{StdinReader, StdoutWriter};
+use crate::common::{StdinReader, StdWriter};
 use crate::filter::filter;
 use crate::filter::unique;
 use crate::filter::FilterArgs;
@@ -8,7 +8,7 @@ use crate::ExitStatus;
 use super::{grab, GrabArgs};
 
 pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
-    match grab(args, StdinReader::new(), StdoutWriter::new()).await {
+    match grab(args, StdinReader::new(), StdWriter::stdout()).await {
         Ok(()) => ExitStatus::ok(),
         Err(err) => {
             eprintln!("{}", err);
@@ -18,11 +18,11 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
 }
 
 pub async fn handle_unique(args: UniqueArgs) -> ExitStatus {
-    unique(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
+    unique(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await;
     ExitStatus::ok()
 }
 
 pub async fn handle_filter(args: FilterArgs) -> ExitStatus {
-    filter(args, &mut StdinReader::new(), &mut StdoutWriter::new()).await;
+    filter(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await;
     ExitStatus::ok()
 }

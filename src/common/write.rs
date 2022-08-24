@@ -1,11 +1,14 @@
-use ::async_std::io::stdout;
+use ::std::fmt::Write;
+use ::std::future::join;
+use std::io::Stderr;
+
+use ::async_std::io;
 use ::async_std::io::Stdout;
 use ::async_std::io::WriteExt;
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
-use std::future::join;
 
 #[async_trait]
 pub trait LineWriter: Send {
@@ -21,25 +24,34 @@ pub trait LineWriter: Send {
     }
 }
 
+//TODO @mverleg: not called Std?
 #[derive(Debug)]
-pub struct StdoutWriter {
-    writer: Stdout,
+pub struct StdWriter<W: Write + Send> {
+    writer: W,
 }
 
-impl StdoutWriter {
-    pub fn new() -> Self {
-        StdoutWriter { writer: stdout() }
+impl <W: Write + Send> StdWriter<W> {
+    pub fn of(writer: W) -> Self {
+        StdWriter { writer }
+    }
+
+    pub fn stdout() -> StdWriter<io::Stdout> {
+        StdWriter::of(io::stdout())
+    }
+
+    pub fn stderr() -> StdWriter<io::Stderr> {
+        StdWriter::of(io::stderr())
     }
 }
 
-impl Default for StdoutWriter {
+impl <W: Write + Send> Default for StdWriter<W> {
     fn default() -> Self {
-        Self::new()
+        Self::stdout()
     }
 }
 
 #[async_trait]
-impl LineWriter for StdoutWriter {
+impl <W: Write + Send> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();

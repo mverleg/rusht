@@ -19,7 +19,7 @@ use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
 
-use crate::common::{fail, LineWriter, StdoutWriter};
+use crate::common::{fail, LineWriter, StdWriter};
 
 lazy_static! {
     static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
@@ -116,7 +116,7 @@ impl Task {
     }
 
     pub fn execute(&self, quiet: bool) -> ProcStatus {
-        block_on(self.execute_with_stdout(quiet, &mut StdoutWriter::new()))
+        block_on(self.execute_with_stdout(quiet, &mut StdWriter::stdout()))
         //TODO @mverleg: block on for now since it does not have suspend points anyway
     }
 
