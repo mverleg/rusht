@@ -1,4 +1,5 @@
 use ::std::collections::HashMap;
+use ::std::env;
 use ::std::env::current_dir;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
@@ -6,17 +7,23 @@ use ::std::process::Command;
 use ::std::process::ExitStatus as ProcStatus;
 use ::std::process::Stdio;
 use ::std::time::Instant;
-use std::env;
 
+use ::async_std::task::block_on;
 use ::clap::StructOpt;
+use ::dashmap::DashMap;
 use ::itertools::Itertools;
+use ::lazy_static::lazy_static;
+use ::log::{debug, warn};
+use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use async_std::task::block_on;
-use log::{debug, warn};
-use which::which_all;
+use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdoutWriter};
+
+lazy_static! {
+    static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, StructOpt)]
 #[structopt(name = "command")]
@@ -48,7 +55,8 @@ pub struct Task {
 
 impl Task {
     pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
-        Task::new_with_env(cmd, args, working_dir, HashMap::new())
+        let full_cmd = resolve_executable(&cmd);
+        Task::new_with_env(full_cmd, args, working_dir, HashMap::new())
     }
 
     pub fn new_with_env(
@@ -121,8 +129,7 @@ impl Task {
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
         let cmd_str = self.as_str();
-        let full_cmd = resolve_executable(&self.cmd);
-        let mut child = match Command::new(full_cmd)
+        let mut child = match Command::new(&self.cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
@@ -178,17 +185,24 @@ impl Task {
 }
 
 fn resolve_executable(base_cmd: &str) -> String {
+    if let Some(cached_exe) = EXE_CACHE.get(base_cmd) {
+        debug!("using cached executable {} for {}", cached_exe.value(), base_cmd);
+        return cached_exe.value().clone()
+    }
+    let do_warn = !env::var("RUSHT_SUPPRESS_EXE_RESOLVE").is_ok();
     let mut full_cmds = which_all(base_cmd)
         .unwrap_or_else(|err| panic!("error while trying to find command '{}' on path, err: {}", base_cmd, err));
     let full_cmd: String = match full_cmds.next() {
         Some(cmd) => {
             if let Some(more_cmd) = full_cmds.next() {
-                warn!("more than one command found for {}: {} and {}", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+                if do_warn {
+                    info!("more than one command found for {}: {} and {} (choosing the first)", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+                }
             }
             cmd.to_str().unwrap_or_else(|| panic!("command {} executable {} not unicode", base_cmd, cmd.to_string_lossy())).to_owned()
         },
         None => {
-            if let Ok(_) = env::var("RUSHT_SUPPRESS_EXE_RESOLVE") {
+            if do_warn {
                 warn!("could not find executable for {}, will try to run anyway", base_cmd);
             }
             base_cmd.to_owned()
