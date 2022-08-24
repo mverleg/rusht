@@ -6,6 +6,7 @@ use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
+use crate::filter::filter;
 
 use super::NamesafeArgs;
 
@@ -47,28 +48,34 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .map(|c| if args.charset.is_allowed(c) { c } else { '_' })
         .filter(|c| skip_subsequent_special(*c, &mut is_prev_special))
         .inspect(|_| count += 1)
-        //.take((max_length + 1) as usize)
         .collect::<String>();
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
     let do_hash = filtered.len() < 2 || args.hash_policy.should_hash(was_changed, was_too_long);
-    if !do_hash {
-        return filtered;
+    while filtered.ends_with('_') {
+        filtered.pop();
     }
-    if !is_prev_special {
-        filtered.push('_')
+    if !do_hash {
+        return shorten(&filtered, count, max_length, args.keep_tail);
+    }
+    if !filtered.is_empty() {
+        filtered.push('_');
     }
     let hash_length = min(12, max_length / 2);
     let hash = compute_hash(original, hash_length);
     let text_len = args.max_length as usize - hash.len();
+    let mut shortened = shorten(&filtered, count, text_len, args.keep_tail);
+    shortened.push_str(&hash);
+    shortened
+}
+
+fn shorten(filtered: &str, actual_len: usize, goal_len: usize, keep_tail: bool) -> String {
     // use iterator because string slice can break up characters
-    let mut new = if args.keep_tail {
-        filtered.chars().skip(count - text_len).collect::<String>()
+    if keep_tail {
+        filtered.chars().skip(actual_len - goal_len).collect::<String>()
     } else {
-        filtered.chars().take(text_len).collect::<String>()
-    };
-    new.push_str(&hash);
-    new
+        filtered.chars().take(goal_len).collect::<String>()
+    }
 }
 
 fn skip_subsequent_special(symbol: char, is_prev_special: &mut bool) -> bool {
@@ -135,7 +142,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
+        assert_eq!(res, "live_the_Queen");
     }
 
     #[test]
