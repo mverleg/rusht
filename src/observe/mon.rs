@@ -4,11 +4,6 @@ use std::env;
 use ::log::debug;
 use ::log::warn;
 use ::rodio::{PlayError, Decoder, OutputStream, Source};
-use rodio::{cpal, Devices};
-use rodio::cpal::{Host, host_from_id};
-use rodio::cpal::platform::CoreAudioHost;
-use rodio::cpal::traits::HostTrait;
-use rodio::DeviceTrait;
 
 use crate::common::{LineReader, LineWriter};
 use crate::ExitStatus;
@@ -30,18 +25,6 @@ pub async fn mon(
 }
 
 fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
-    let mut chosen_device = None;
-    for host in cpal::available_hosts() {
-        let host = host_from_id(host).unwrap();
-        debug!("host: {:?}", host.id());
-        for dev in host.output_devices().unwrap() {
-            debug!("  audio device: {:?}", dev.name());
-            if dev.name().unwrap() == "Razer Kraken X USB" {
-                chosen_device = Some(dev);
-            }
-        }
-    }
-
     let cursor = if is_success && args.sound_success {
         Cursor::new(include_bytes!("../../resource/success-sound.mp3").as_ref())
     } else if !is_success && args.sound_failure {
@@ -50,24 +33,11 @@ fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
         debug!("not playing sound because not requested for success={}", is_success);
         return Ok(())
     };
-
     //TODO @mverleg: for some reason I cannot extract below into a function because it complains about lifetime of cursor
     let decoder = Decoder::new(cursor)
         .map_err(|err| format!("failed to decode sound, err: {}", err))?;
-
-    let (_, stream_handle) = OutputStream::try_from_device(&chosen_device.unwrap()).unwrap();
-    // let (_, stream_handle) = stream.or_else(|original_err| {
-    //     // default device didn't work, try other ones
-    //     let mut devices = match cpal::default_host().output_devices() {
-    //         Ok(d) => d,
-    //         Err(_) => return Err(original_err),
-    //     };
-    //
-    //     devices
-    //         .find_map(|d| Self::try_from_device(&d).ok())
-    //         .ok_or(original_err)
-    // })
-    //    .map_err(|err| format!("failed to get default sound output device, err: {}", err))?;
+    let (_, stream_handle) = OutputStream::try_default()
+        .map_err(|err| format!("failed to get default sound output device, err: {}", err))?;
     match stream_handle.play_raw(decoder.convert_samples()) {
         Ok(()) => Ok(()),
         Err(err) => match err {
