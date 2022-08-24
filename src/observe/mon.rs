@@ -38,12 +38,10 @@ fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
 }
 
 fn play_sound(sound_cursor: Cursor<&[u8]>) -> Result<(), String> {
-    let sound_cursor = Cursor::new(include_bytes!("../../resource/success-sound.mp3").as_ref());  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     let decoder = Decoder::new(sound_cursor)
         .map_err(|err| format!("failed to decode sound, err: {}", err))?;
-    let (output_stream, stream_handle) = OutputStream::try_default()
+    let (_, stream_handle) = OutputStream::try_default()
         .map_err(|err| format!("failed to get default sound output device, err: {}", err))?;
-    debug!("output stream for notification: {:?}", &output_stream);
     match stream_handle.play_raw(decoder.convert_samples()) {
         Ok(()) => Ok(()),
         Err(err) => match err {
