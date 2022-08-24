@@ -69,9 +69,12 @@ impl MvnCmdConfig {
         } else if self.tests.run_any() && single_cmd {
             debug!("maven test because no install requested, there are tests, and the tests don't run in a separate command");
             "test"
-        } else {
-            debug!("maven compile because no install requested, and either there are no tests or they run in a separate command");
+        } else if self.tests == TestMode::NoBuild {
+            debug!("maven compile because no install or tests requested");
             "compile"
+        } else {
+            debug!("maven test-compile because no install requested, and tests are run in a separate command");
+            "test-compile"
         };
         args.push(stage.to_owned());
 
