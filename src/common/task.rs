@@ -121,24 +121,8 @@ impl Task {
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
         let cmd_str = self.as_str();
-        let mut full_cmds = which_all(&self.cmd)
-            .map_err(|err| format!("error while trying to find command '{}' on path, err: {}", &self.cmd, err))?;
-        let full_cmd = match full_cmds.next() {
-            Some(cmd) => {
-                if let Some(more_cmd) = full_cmds.next() {
-                    warn!("more than one command found for {}: {} and {}", &&self.cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
-                }
-                cmd.to_str().map_err(|err| format!("command {} executable {} not unicode", &&self.cmd, cmd.to_string_lossy()))?.to_owned()
-            },
-            None => {
-                if let Ok(_) = env::var("RUSHT_SUPPRESS_EXE_RESOLVE") {
-                    warn!("could not find executable for {}, will try to run anyway", &&self.cmd);
-                }
-                &self.cmd.clone()
-            }
-        };
-        debug!("found {} executables for {}: {}", cmd_str, full_cmds.len(), full_cmds.iter().join(", "));
-        let mut child = match Command::new(full_cmds[0])
+        let full_cmd = resolve_executable(&self.cmd);
+        let mut child = match Command::new(full_cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
@@ -191,4 +175,25 @@ impl Task {
         }
         status
     }
+}
+
+fn resolve_executable(base_cmd: &str) -> String {
+    let mut full_cmds = which_all(base_cmd)
+        .unwrap_or_else(|err| panic!("error while trying to find command '{}' on path, err: {}", base_cmd, err));
+    let full_cmd: String = match full_cmds.next() {
+        Some(cmd) => {
+            if let Some(more_cmd) = full_cmds.next() {
+                warn!("more than one command found for {}: {} and {}", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+            }
+            cmd.to_str().unwrap_or_else(|| panic!("command {} executable {} not unicode", base_cmd, cmd.to_string_lossy())).to_owned()
+        },
+        None => {
+            if let Ok(_) = env::var("RUSHT_SUPPRESS_EXE_RESOLVE") {
+                warn!("could not find executable for {}, will try to run anyway", base_cmd);
+            }
+            base_cmd.to_owned()
+        }
+    };
+    debug!("using executable {} for {}", &full_cmd, base_cmd);
+    full_cmd
 }
