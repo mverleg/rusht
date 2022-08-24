@@ -201,7 +201,7 @@ impl MvnCmdConfig {
         extra_env.insert(
             "MAVEN_OPTS".to_owned(),
             format!(
-                "-XX:+UseParallelGC -Xms{}m -Xmx{}m",
+                "-XX:+UseG1GC -Xms{}m -Xmx{}m",
                 min(256, self.max_memory_mb),
                 self.max_memory_mb
             ),

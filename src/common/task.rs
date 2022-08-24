@@ -77,7 +77,11 @@ impl Task {
     }
 
     pub fn as_cmd_str(&self) -> String {
-        format!("{} {}", self.cmd, self.args.join(" "))
+        if self.args.is_empty() {
+            format!("{}", self.cmd)
+        } else {
+            format!("{} {}", self.cmd, self.args.join(" "))
+        }
     }
 
     pub fn as_str(&self) -> String {
