@@ -152,6 +152,12 @@ mod tests {
     }
 
     #[async_std::test]
+    async fn multiple_per_line() {
+        let expected: Vec<String> = vec!["aa".to_owned(), "aa".to_owned()];
+        test_grab(vec!["aabbcaa"], expected).await;
+    }
+
+    #[async_std::test]
     async fn full_match_if_no_group() {
         let input = vec!["aab"];
         let expected: Vec<String> = vec!["aab".to_owned()];

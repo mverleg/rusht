@@ -32,12 +32,16 @@ impl <W: Write + Unpin + Send> StdWriter<W> {
     pub fn of(writer: W) -> Self {
         StdWriter { writer }
     }
+}
 
-    pub fn stdout() -> StdWriter<io::Stdout> {
+impl StdWriter<io::Stdout> {
+    pub fn stdout() -> Self {
         StdWriter::of(io::stdout())
     }
+}
 
-    pub fn stderr() -> StdWriter<io::Stderr> {
+impl StdWriter<io::Stderr> {
+    pub fn stderr() -> Self {
         StdWriter::of(io::stderr())
     }
 }

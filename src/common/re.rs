@@ -15,6 +15,7 @@ pub async fn get_matches(
             let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
             let mut any_groups = false;
             for mtch_opt in caps {
+                eprintln!("match {:?}", mtch_opt);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
                 any_groups = true;
                 if let Some(mtch) = mtch_opt {
                     writer.write_line(mtch.as_str()).await;
