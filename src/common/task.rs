@@ -169,7 +169,12 @@ impl Task {
         if !quiet {
             let duration = t0.elapsed().as_millis();
             if status.success() {
-                println!("command {} successfully ran in {} ms", cmd_str, duration);
+                if cmd_str.len() > 128 {  // approximate for non-ascii
+                    println!("took {} ms to run {}...", duration,
+                             cmd_str.chars().take(128).collect::<String>());
+                } else {
+                    println!("took {} ms to run {}", duration, cmd_str);
+                }
             } else {
                 eprintln!(
                     "command {} FAILED in {} ms (code {})",

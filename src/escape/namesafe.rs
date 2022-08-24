@@ -6,7 +6,6 @@ use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
-use crate::filter::filter;
 
 use super::NamesafeArgs;
 
