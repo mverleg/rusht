@@ -1,9 +1,7 @@
-use ::std::fmt::Write;
 use ::std::future::join;
-use std::io::Stderr;
 
 use ::async_std::io;
-use ::async_std::io::Stdout;
+use ::async_std::io::Write;
 use ::async_std::io::WriteExt;
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
@@ -26,11 +24,11 @@ pub trait LineWriter: Send {
 
 //TODO @mverleg: not called Std?
 #[derive(Debug)]
-pub struct StdWriter<W: Write + Send> {
+pub struct StdWriter<W: Write + Unpin + Send> {
     writer: W,
 }
 
-impl <W: Write + Send> StdWriter<W> {
+impl <W: Write + Unpin + Send> StdWriter<W> {
     pub fn of(writer: W) -> Self {
         StdWriter { writer }
     }
@@ -44,14 +42,8 @@ impl <W: Write + Send> StdWriter<W> {
     }
 }
 
-impl <W: Write + Send> Default for StdWriter<W> {
-    fn default() -> Self {
-        Self::stdout()
-    }
-}
-
 #[async_trait]
-impl <W: Write + Send> LineWriter for StdWriter<W> {
+impl <W: Write + Unpin + Send> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();
@@ -177,5 +169,15 @@ impl<'a, W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<'a, W1, W2> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let line = line.as_ref();
         let _: ((), ()) = join!(self.first.write_line(line), self.second.write_line(line),).await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_craete_writer_without_type_annotation() {
+        let _ = StdWriter::stdout();
     }
 }

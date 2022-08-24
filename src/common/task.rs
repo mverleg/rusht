@@ -1,6 +1,5 @@
 use ::std::collections::HashMap;
 use ::std::env;
-use ::std::env::current_dir;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
@@ -75,7 +74,7 @@ impl Task {
 
     pub fn new_split_in_cwd(parts: Vec<String>) -> Self {
         let (cmd, args) = parts.split_first().unwrap();
-        Task::new(cmd.to_owned(), args.to_vec(), current_dir().unwrap())
+        Task::new(cmd.to_owned(), args.to_vec(), env::current_dir().unwrap())
     }
 
     pub fn new_split(parts: Vec<String>, working_dir: PathBuf) -> Self {
@@ -96,7 +95,7 @@ impl Task {
     }
 
     pub fn as_str(&self) -> String {
-        let cmd_str = if self.working_dir == current_dir().unwrap() {
+        let cmd_str = if self.working_dir == env::current_dir().unwrap() {
             "".to_owned()
         } else {
             format!(" @ {}", self.working_dir.to_string_lossy())

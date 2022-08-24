@@ -1,8 +1,9 @@
-use super::cached;
-use super::CacheStatus;
-use super::CachedArgs;
 use crate::common::{LineWriter, StdWriter};
 use crate::ExitStatus;
+
+use super::cached;
+use super::CachedArgs;
+use super::CacheStatus;
 
 pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
     let verbose = args.verbose;
