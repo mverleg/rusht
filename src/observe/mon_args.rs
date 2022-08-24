@@ -9,8 +9,11 @@ use crate::common::CommandArgs;
 )]
 pub struct MonArgs {
     /// Do not show the command before running it.
-    #[structopt(short = 'c', long)]
+    #[structopt(short = 'c', long = "no-print-cmd")]
     pub no_print_cmd: bool,
+    /// Only print output if the command fails.
+    #[structopt(short = 'b', long = "no-output-on-success")]
+    pub no_output_on_success: bool,
     /// Do not show timing and exit status of the command.
     #[structopt(short = 't', long)]
     pub no_timing: bool,

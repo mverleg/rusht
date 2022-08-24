@@ -169,9 +169,9 @@ impl Task {
         if !quiet {
             let duration = t0.elapsed().as_millis();
             if status.success() {
-                if cmd_str.len() > 128 {  // approximate for non-ascii
+                if cmd_str.len() > 256 {  // approximate for non-ascii
                     println!("took {} ms to run {}...", duration,
-                             cmd_str.chars().take(128).collect::<String>());
+                             cmd_str.chars().take(256).collect::<String>());
                 } else {
                     println!("took {} ms to run {}", duration, cmd_str);
                 }

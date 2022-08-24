@@ -5,7 +5,7 @@ use ::log::debug;
 use ::log::warn;
 use ::rodio::{PlayError, Decoder, OutputStream, Source};
 
-use crate::common::{LineReader, LineWriter};
+use crate::common::{LineReader, LineWriter, StdWriter, VecWriter};
 use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 
@@ -15,7 +15,18 @@ pub async fn mon(
     _writer: &mut impl LineWriter,
 ) -> ExitStatus {
     let task = args.cmd.clone().into_task();
-    let status = task.execute(false);
+    let mut out_writer = StdWriter::stdout();
+    let status = if args.no_output_on_success {
+        let mut out_buffer = VecWriter::new();
+        let status = task.execute_with_stdout(false, &mut out_buffer).await;
+        if !status.success() {
+            eprintln!("printing all output because process failed");
+            out_writer.write_all_lines(out_buffer.get().iter()).await;
+        }
+        status
+    } else {
+        task.execute_with_stdout(false, &mut out_writer).await
+    };
     if let Err(err) = sound_notification(&args, status.success()) {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
