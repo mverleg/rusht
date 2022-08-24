@@ -142,16 +142,16 @@ fn get_cache_path(key_templ: &str, task: &Task) -> Result<PathBuf, String> {
 }
 
 fn build_key(key_templ: &str, task: &Task) -> Result<String, String> {
-    assert!(!key_templ.contains("${git_uncommitted}"), "not implemented");
-    assert!(!key_templ.contains("${git}"), "not implemented");
+    assert!(!key_templ.contains("%{git_uncommitted}"), "not implemented");
+    assert!(!key_templ.contains("%{git}"), "not implemented");
     let mut key = key_templ.to_owned();
-    key = key.replace("${git}", "${git_head}_${git_uncommitted}");
-    if key.contains("${pwd}") {
-        key = key.replace("${pwd}", &task.working_dir.to_string_lossy());
+    key = key.replace("%{git}", "%{git_head}_%{git_uncommitted}");
+    if key.contains("%{pwd}") {
+        key = key.replace("%{pwd}", &task.working_dir.to_string_lossy());
     }
-    if key.contains("${env}") {
+    if key.contains("%{env}") {
         key = key.replace(
-            "${env}",
+            "%{env}",
             &task
                 .extra_envs
                 .iter()
@@ -159,12 +159,12 @@ fn build_key(key_templ: &str, task: &Task) -> Result<String, String> {
                 .join("_"),
         );
     }
-    if key.contains("${cmd}") {
-        key = key.replace("${cmd}", &task.as_cmd_str());
+    if key.contains("%{cmd}") {
+        key = key.replace("%{cmd}", &task.as_cmd_str());
     }
-    if key.contains("${git_head}") {
+    if key.contains("%{git_head}") {
         key = key.replace(
-            "${git_head}",
+            "%{git_head}",
             &git_head_ref(&task.working_dir).map_err(|err| {
                 format!(
                     "cache key contains git reference, but could not read git head, err: {}",

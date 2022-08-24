@@ -11,8 +11,8 @@ use crate::common::CommandArgs;
     about = "Do not start a command until a given lock is released."
 )]
 pub struct LockedArgs {
-    #[structopt(short = 'f', long = "lock-key", default_value = "${pwd}.lock")]
-    /// The key to use for the lock. Only other commands with the same key are blocked. Can use ${pwd} and ${cmd} placeholders. Defaults to current directory.
+    #[structopt(short = 'f', long = "lock-key", default_value = "%{pwd}.lock")]
+    /// The key to use for the lock. Only other commands with the same key are blocked. Can use %{pwd} and %{cmd} placeholders. Defaults to current directory.
     //TODO @mverleg: impl
     pub lock_key: String,
     #[structopt(
