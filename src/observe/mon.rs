@@ -1,7 +1,9 @@
 use ::std::io::Cursor;
+use std::env;
 
 use ::log::debug;
-use ::rodio::{Decoder, OutputStream, Source};
+use ::log::warn;
+use ::rodio::{PlayError, Decoder, OutputStream, Source};
 
 use crate::common::{LineReader, LineWriter};
 use crate::ExitStatus;
@@ -15,7 +17,7 @@ pub async fn mon(
     let task = args.cmd.clone().into_task();
     let status = task.execute(false);
     if let Err(err) = sound_notification(&args, status.success()) {
-        eprintln!("failed to play sound: {}", err);
+        eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
     }
     ExitStatus::of_code(status.code())
@@ -24,9 +26,9 @@ pub async fn mon(
 
 fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
     let cursor = if is_success && args.sound_success {
-        Cursor::new(include_bytes!("/Users/mverleg/rusht/resource/success-sound.mp3").as_ref())
+        Cursor::new(include_bytes!("../../resource/success-sound.mp3").as_ref())
     } else if !is_success && args.sound_failure {
-        Cursor::new(include_bytes!("/Users/mverleg/rusht/resource/error-sound.mp3").as_ref())
+        Cursor::new(include_bytes!("../../resource/error-sound.mp3").as_ref())
         //TODO @mverleg: path
     } else {
         debug!("not playing sound because not requested for success={}", is_success);
@@ -36,10 +38,24 @@ fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
 }
 
 fn play_sound(sound_cursor: Cursor<&[u8]>) -> Result<(), String> {
+    let sound_cursor = Cursor::new(include_bytes!("../../resource/success-sound.mp3").as_ref());  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     let decoder = Decoder::new(sound_cursor)
         .map_err(|err| format!("failed to decode sound, err: {}", err))?;
-    let (_, stream_handle) = OutputStream::try_default()
+    let (output_stream, stream_handle) = OutputStream::try_default()
         .map_err(|err| format!("failed to get default sound output device, err: {}", err))?;
-    stream_handle.play_raw(decoder.convert_samples())
-        .map_err(|err| format!("failed to play sound, err: {}", err))
+    debug!("output stream for notification: {:?}", &output_stream);
+    match stream_handle.play_raw(decoder.convert_samples()) {
+        Ok(()) => Ok(()),
+        Err(err) => match err {
+            PlayError::DecoderError(err) => Err(format!("failed to play notification sound because it could not be decoded, err: {}", err)),
+            PlayError::NoDevice => {
+                let debug_env_name = "MON_SUPPRESS_AUDIO_DEVICE_WARNING";
+                if !env::var(debug_env_name).is_ok() {
+                    warn!("could not play notification sound because no default output device was found");
+                    debug!("no default audio device; set env {} to suppress warning", debug_env_name);
+                }
+                Ok(())
+            }
+        }
+    }
 }
