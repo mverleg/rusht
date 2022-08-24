@@ -6,12 +6,15 @@ use ::std::process::Command;
 use ::std::process::ExitStatus as ProcStatus;
 use ::std::process::Stdio;
 use ::std::time::Instant;
+use std::env;
 
 use ::clap::StructOpt;
 use ::itertools::Itertools;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use async_std::task::block_on;
+use log::{debug, warn};
+use which::which_all;
 
 use crate::common::{fail, LineWriter, StdoutWriter};
 
@@ -118,7 +121,24 @@ impl Task {
         // even with threading so for now do only the stdout.
         let t0 = Instant::now();
         let cmd_str = self.as_str();
-        let mut child = match Command::new(&self.cmd)
+        let mut full_cmds = which_all(&self.cmd)
+            .map_err(|err| format!("error while trying to find command '{}' on path, err: {}", &self.cmd, err))?;
+        let full_cmd = match full_cmds.next() {
+            Some(cmd) => {
+                if let Some(more_cmd) = full_cmds.next() {
+                    warn!("more than one command found for {}: {} and {}", &&self.cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+                }
+                cmd.to_str().map_err(|err| format!("command {} executable {} not unicode", &&self.cmd, cmd.to_string_lossy()))?.to_owned()
+            },
+            None => {
+                if let Ok(_) = env::var("RUSHT_SUPPRESS_EXE_RESOLVE") {
+                    warn!("could not find executable for {}, will try to run anyway", &&self.cmd);
+                }
+                &self.cmd.clone()
+            }
+        };
+        debug!("found {} executables for {}: {}", cmd_str, full_cmds.len(), full_cmds.iter().join(", "));
+        let mut child = match Command::new(full_cmds[0])
             .args(&self.args)
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)

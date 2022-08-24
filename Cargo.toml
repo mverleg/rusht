@@ -95,6 +95,7 @@ num_cpus = "1.13.1"
 git2 = "0.15.0"
 derive_more = "0.99.17"
 rodio = "0.15.0"
+which = "4.2.5"
 
 [dev-dependencies]
 tempfile = "3.3.0"
