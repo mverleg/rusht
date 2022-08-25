@@ -53,10 +53,7 @@ impl AsyncGate {
 
     /// Wait for the gate until someone else opens it.
     pub fn wait(&self) -> AsyncGateFuture {
-        if self.content.is_open.load(Ordering::Acquire) {
-            return AsyncGateFuture(&self)
-        }
-        unimplemented!()
+        return AsyncGateFuture(&self)
     }
 }
 
@@ -77,10 +74,12 @@ impl <'a> Future for AsyncGateFuture<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::thread;
-    use std::thread::sleep;
-    use std::time::Duration;
-    use async_std::future::timeout;
+    use ::std::thread;
+    use ::std::thread::sleep;
+    use ::std::time::Duration;
+
+    use ::async_std::future::timeout;
+    use ::futures::future::join;
 
     use super::*;
 
@@ -106,10 +105,30 @@ mod tests {
     async fn open_while_waiting() {
         let gate = AsyncGate::new();
         assert!(!gate.is_open());
+        let gate_clone = gate.clone();
         thread::scope(|_| {
-            sleep(Duration::from_millis(10000));
-            gate.open()
+            sleep(Duration::from_millis(20));
+            gate_clone.open()
         });
+        assert!(gate.is_open());
         gate.wait().await;
+    }
+
+    #[async_std::test]
+    async fn multiple_waiters() {
+        let gate = AsyncGate::new();
+        assert!(!gate.is_open());
+        let gate_clone = gate.clone();
+        let _: ((((), ()), ((), ())), (((), ()), ((), ()))) = join(
+            join(
+                join(gate.wait(), gate.wait()),
+                join(gate_clone.wait(), gate.wait()),
+            ),
+            join(
+                join(gate.wait(), (async || gate.open())()),
+                join(gate.wait(), gate_clone.wait()),
+            ),
+        ).await;
+        assert!(gate.is_open());
     }
 }
