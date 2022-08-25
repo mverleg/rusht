@@ -51,7 +51,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
     let do_hash = filtered.len() < 2 || args.hash_policy.should_hash(was_changed, was_too_long);
-    while filtered.ends_with('_') {
+    while filtered.ends_with('_') || filtered.ends_with('-') {
         filtered.pop();
     }
     if !do_hash {
@@ -78,11 +78,8 @@ fn shorten(filtered: &str, actual_len: usize, goal_len: usize, keep_tail: bool) 
 }
 
 fn skip_subsequent_special(symbol: char, is_prev_special: &mut bool) -> bool {
-    if !*is_prev_special {
-        return true;
-    }
     let is_special = symbol == '_' || symbol == '-';
-    if is_special {
+    if is_special && *is_prev_special {
         return false;
     }
     *is_prev_special = is_special;
@@ -128,6 +125,18 @@ mod tests {
             &NamesafeArgs::default(),
         );
         assert_eq!(res, "hello_WORLD_hello_wozc4zyofxrnr1");
+    }
+
+    #[test]
+    fn subsequent_weird_symbols() {
+        let res = namesafe_line(
+            "_-_hello!@#$%^&world-_-",
+            &NamesafeArgs {
+                hash_policy: HashPolicy::Never,
+                ..Default::default()
+            },
+        );
+        assert_eq!(res, "hello_world");
     }
 
     #[test]
