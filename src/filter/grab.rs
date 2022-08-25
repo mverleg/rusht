@@ -18,7 +18,7 @@ pub async fn grab(
             &args.pattern,
             line,
             &mut writer,
-            args.first_only,
+            args.first_capture_only,
             args.keep_unmatched,
         )
         .await;
@@ -172,7 +172,7 @@ mod tests {
         test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
-                first_only: true,
+                first_capture_only: true,
                 ..GrabArgs::default()
             },
             input,
@@ -210,7 +210,8 @@ mod tests {
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
                 keep_unmatched: true,
-                first_only: true,
+                first_match_only: true,
+                first_capture_only: true,
                 max_lines: None,
             },
             input,

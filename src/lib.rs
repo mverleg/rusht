@@ -42,7 +42,8 @@ mod tests {
 
         let grab_args = GrabArgs {
             pattern: Regex::new("^hello (.*)").unwrap(),
-            first_only: true,
+            first_match_only: true,
+            first_capture_only: true,
             keep_unmatched: true,
             max_lines: None,
         };
