@@ -82,6 +82,11 @@ impl Task {
         Task::new(cmd.to_owned(), args.to_vec(), working_dir)
     }
 
+    #[cfg(test)]
+    pub fn noop() -> Self {
+        Task::new("true".to_owned(), vec![], env::current_dir().unwrap())
+    }
+
     pub fn push_arg(&mut self, extra_arg: &str) {
         self.args.push(extra_arg.to_owned());
     }
