@@ -1,53 +1,43 @@
 use ::std::process::ExitStatus as ProcStatus;
 use ::std::rc::Rc;
 
-use ::async_std::sync::Mutex;
-use ::async_std::sync::MutexGuard;
+use ::async_std::stream;
 use ::log::debug;
 use ::smallvec::SmallVec;
-use ::time::Duration;
+use ::wait_for_me::CountDownLatch;
+
+use ::futures::future::join_all;
 
 use crate::common::{StdWriter, Task};
 
-#[derive(Debug)]
 pub struct Dependency {
     name: Rc<String>,
-    lock: Rc<Mutex<()>>,
-    timeout: Duration,
-    //TODO @mverleg: how to timeout mutex? race two futures?
+    gate: Rc<CountDownLatch>,
 }
 
 impl Dependency {
-    pub fn new_unlimited(name: String, lock: Mutex<()>) -> Self {
-        Dependency::new_timeout(Rc::new(name), Rc::new(lock), Duration::new(i64::MAX, 0))
-    }
-
-    pub fn new_timeout(name: Rc<String>, lock: Rc<Mutex<()>>, timeout: Duration) -> Self {
+    pub fn new_with_gate(name: Rc<String>, gate: Rc<CountDownLatch>) -> Self {
         Dependency {
             name,
-            lock,
-            timeout,
+            gate,
         }
     }
 }
 
-#[derive(Debug)]
 pub struct Dependent {
     task: Task,
     name: Rc<String>,
-    current: Rc<Mutex<()>>,
+    current: Rc<CountDownLatch>,
     dependencies: SmallVec<[Dependency; 1]>,
 }
 
 impl Dependent {
     pub fn new(task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
         let name = Rc::new(task.as_str());
-        let lock = Mutex::new(());
-        //let guard = lock.try_lock().expect("newly created lock should be available");
         Dependent {
             task,
             name,
-            current: Rc::new(lock),
+            current: Rc::new(CountDownLatch::new(1)),
             dependencies: dependencies.into(),
         }
     }
@@ -55,33 +45,29 @@ impl Dependent {
     pub fn depends_on(&mut self, other: &Dependent) {
         self.dependencies.push(Dependency {
             name: other.name.clone(),
-            lock: other.current.clone(),
-            timeout: Default::default()
+            gate: other.current.clone(),
         })
     }
 
     pub async fn await_and_exec(&self) -> ProcStatus {
         for dependency in &self.dependencies {
-            let _guard: MutexGuard<()> = match dependency.lock.try_lock() {
-                None => {
-                    debug!("{} needs {} which needs to be awaited", self.name, dependency.name);
-                    dependency.lock.lock().await
-                }
-                Some(guard) => {
-                    debug!("{} needs {} which is immediately available", self.name, dependency.name);
-                    guard
-                },
-            };
+            if dependency.gate.count().await == 0 {
+                debug!("{} needs {} which is immediately available", self.name, dependency.name);
+            } else {
+                debug!("{} needs {} which needs to be awaited", self.name, dependency.name);
+                let _: () = dependency.gate.wait().await;
+                debug!("{} was waiting for {} which just became available", self.name, dependency.name);
+            }
         };
-        let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
-        status
+        self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await
     }
 }
 
 pub async fn run_all(dependents: &[Dependent]) {
-    dependents.iter()
+    let res = join_all(dependents.iter()
         .map(|dep| dep.await_and_exec())
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>());
+
     //join!(dependents).await
     unimplemented!()
 }
