@@ -27,6 +27,7 @@ mod re;
 mod read;
 mod stdin;
 mod task;
+mod async_gate;
 mod dependent;
 mod write;
 

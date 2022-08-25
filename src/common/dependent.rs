@@ -42,10 +42,12 @@ pub struct Dependent {
 impl Dependent {
     pub fn new(task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
         let name = Rc::new(task.as_str());
+        let lock = Mutex::new(());
+        //let guard = lock.try_lock().expect("newly created lock should be available");
         Dependent {
             task,
             name,
-            current: Rc::new(Mutex::new(())),
+            current: Rc::new(lock),
             dependencies: dependencies.into(),
         }
     }
