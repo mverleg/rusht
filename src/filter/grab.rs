@@ -1,5 +1,4 @@
 use ::log::debug;
-use ::regex::Regex;
 
 use crate::common::{get_matches, LineReader, LineWriter};
 use crate::filter::GrabArgs;
@@ -18,6 +17,7 @@ pub async fn grab(
             &args.pattern,
             line,
             &mut writer,
+            args.first_match_only,
             args.first_capture_only,
             args.keep_unmatched,
         )
@@ -31,9 +31,6 @@ pub async fn grab(
                 break;
             }
         }
-        if args.first_match_only {
-            break
-        }
     }
     Ok(())
 }
@@ -41,6 +38,7 @@ pub async fn grab(
 #[cfg(test)]
 mod tests {
     use ::async_std;
+    use ::regex::Regex;
 
     use crate::common::CollectorWriter;
     use crate::common::VecReader;

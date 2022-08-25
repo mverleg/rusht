@@ -5,7 +5,8 @@ pub async fn get_matches(
     pattern: &Regex,
     text: &str,
     writer: &mut impl LineWriter,
-    first_only: bool,
+    first_match_only: bool,
+    first_capture_only: bool,
     keep_unmatched: bool,
 ) -> u32 {
     let mut match_cnt = 0;
@@ -23,12 +24,15 @@ pub async fn get_matches(
                 writer.write_line(mtch.as_str()).await;
                 match_cnt += 1
             }
-            if first_only {
+            if first_capture_only {
                 break;
             }
         }
         if !any_groups {
             writer.write_line(full_match).await;
+        }
+        if first_match_only {
+            break
         }
     }
     if !any_matches && keep_unmatched {
