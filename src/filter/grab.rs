@@ -153,8 +153,8 @@ mod tests {
 
     #[async_std::test]
     async fn multiple_per_line() {
-        let expected: Vec<String> = vec!["aa".to_owned(), "aa".to_owned()];
-        test_grab(vec!["aabbcaa"], expected).await;
+        let expected: Vec<String> = vec!["aa".to_owned(), "aaa".to_owned()];
+        test_grab(vec!["aabbcaaabb"], expected).await;
     }
 
     #[async_std::test]

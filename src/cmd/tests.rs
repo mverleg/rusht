@@ -38,7 +38,7 @@ fn batch_add_drop() {
             lines_with: Some("%".to_owned()),
             unique: true,
             working_dir: None,
-            cmd: CommandArgs::Cmd(vec!["echo".to_owned(), "hello".to_owned(), "%".to_owned()]),
+            cmd: CommandArgs::Cmd(vec!["print".to_owned(), "hello".to_owned(), "%".to_owned()]),
         },
         || {
             vec![
@@ -58,8 +58,8 @@ fn batch_add_drop() {
     assert_eq!(
         out,
         vec![
-            "echo hello Benjamin  # 1".to_owned(),
-            "echo hello Leonardo  # 2".to_owned(),
+            "print hello Benjamin  # 1".to_owned(),
+            "print hello Leonardo  # 2".to_owned(),
         ]
     );
     drop_cmd(DropArgs {
