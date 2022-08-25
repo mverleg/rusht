@@ -184,6 +184,21 @@ mod tests {
             input,
             expected,
         )
+            .await;
+    }
+
+    #[async_std::test]
+    async fn multiple_matches_with_multiple_groups() {
+        let input = vec!["aabccdabbcca"];
+        let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned(), "a".to_owned()];
+        test_grab_arg(
+            GrabArgs {
+                pattern: Regex::new("(a+)b(c{2}?)").unwrap(),
+                ..GrabArgs::default()
+            },
+            input,
+            expected,
+        )
         .await;
     }
 
