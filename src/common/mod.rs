@@ -27,6 +27,7 @@ mod re;
 mod read;
 mod stdin;
 mod task;
+mod dependent;
 mod write;
 
 pub fn unique_filename(text: &str) -> String {

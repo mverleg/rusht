@@ -3,10 +3,10 @@ use ::std::collections::HashMap;
 use ::std::path::PathBuf;
 use std::collections::HashSet;
 
+use ::itertools::Itertools;
 use ::log::debug;
-use ::smallvec::{smallvec, SmallVec};
-use itertools::Itertools;
-use log::warn;
+use ::log::warn;
+use ::smallvec::SmallVec;
 
 use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
@@ -34,16 +34,30 @@ pub struct MvnCmdConfig {
     pub cwd: PathBuf,
 }
 
+#[derive(Debug, Default)]
+struct MvnTasks {
+    version: Option<Task>,
+    clean: Option<Task>,
+    install_lint: Option<Task>,
+    lint: Option<Task>,
+    build: Option<Task>,
+    test: Option<Task>,
+}
+
 impl MvnCmdConfig {
-    /// Return a collection of command batches, where the commands in each batch can run concurrently.
-    pub fn build_cmds(&self) -> SmallVec<[SmallVec<[Task; 1]>; 1]> {
+    /// Return commands that can be started concurrently and will wait for eachother.
+    pub fn build_cmds(&self) -> SmallVec<[Task; 1]> {
+        self.collect_tasks().flatten()
+    }
+
+    fn collect_tasks(&self) -> MvnTasks {
         let single_cmd = self.modules.is_empty();
 
-        let mut cmds = smallvec![];
+        let mut tasks = MvnTasks::default();
         let mut args = vec![];
         if self.verbose {
             debug!("printing versions because of verbose mode");
-            cmds.push(self.make_mvn_task(vec!["--version".to_owned()]));
+            tasks.version = Some(self.make_mvn_task(vec!["--version".to_owned()]));
         }
 
         // Clean
@@ -54,7 +68,7 @@ impl MvnCmdConfig {
                 if !self.verbose {
                     clean_args.push("--quiet".to_owned());
                 }
-                cmds.push(self.make_mvn_task(clean_args));
+                tasks.clean = Some(self.make_mvn_task(clean_args));
             } else {
                 debug!("clean and build in same command because of --all");
                 args.push("clean".to_owned());
@@ -126,7 +140,7 @@ impl MvnCmdConfig {
                 let (task, checkstyle_jar_pth) =
                     ensure_checkstyle_jar_exists(&self.checkstyle_version);
                 if let Some(task) = task {
-                    cmds.push(task);
+                    tasks.install_lint = Some(task);
                 }
                 let mut lint_args = vec![
                     format!("-Xmx{}m", self.max_memory_mb),
@@ -146,7 +160,7 @@ impl MvnCmdConfig {
                         })
                         .collect::<Vec<_>>(),
                 );
-                cmds.push(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
+                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
             } else {
                 warn!(
                     "skipping checkstyle because config was not found at '{}'",
@@ -192,12 +206,12 @@ impl MvnCmdConfig {
             }
         }
 
-        cmds.push(self.make_mvn_task(args));
-        if let Some(tsk) = test_task {
-            cmds.push(tsk);
+        tasks.build = Some(self.make_mvn_task(args));
+        if let Some(test_tsk) = test_task {
+            tasks.test = Some(test_tsk);
         }
 
-        cmds
+        tasks
     }
 
     fn make_mvn_task(&self, args: Vec<String>) -> Task {
@@ -286,4 +300,11 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
         task.as_str()
     );
     (Some(task), checkstyle_jar_pth)
+}
+
+impl MvnTasks {
+    fn flatten(self) -> SmallVec<[Task; 1]> {
+        let MvnTasks { version, clean, install_lint, lint, build, test } = self;
+        unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    }
 }

@@ -34,6 +34,7 @@ pub struct MvnwArgs {
     /// {n}* Should contain `public static void main(String[] args)`.
     /// {n}* Class must be inside selected module, which may be controlled by --affected.
     /// {n}* Must be in selected profile, if any, and mvn exec plugin must be available.
+    /// {n}* This does not automatically disable running unit tests.
     #[structopt(short = 'm', long = "exec-main")]
     pub execs: Vec<String>,
 
