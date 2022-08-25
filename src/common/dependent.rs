@@ -74,16 +74,19 @@ pub async fn run_all(dependents: &[Dependent]) -> ProcStatus {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use ::std::time::Duration;
+    use ::std::future::Future;
+    use ::std::process::ExitStatus;
+
+    use ::async_std::task::sleep;
+    use ::futures::future::select;
     use ::smallvec::smallvec;
-    use async_std::task::sleep;
-    use futures::future::select;
-    use rayon::join;
+    use ::futures::future::Either;
 
     use super::*;
 
-    #[test]
-    fn dependency_tree() {
+    #[async_std::test]
+    async fn dependency_tree() {
         let top = Dependent::new(Task::noop(), smallvec![]);
         let mut mid1 = Dependent::new(Task::noop(), smallvec![]);
         mid1.depends_on(&top);
@@ -93,9 +96,13 @@ mod tests {
         botm.depends_on(&mid1);
         botm.depends_on(&mid2);
         let deps = vec![botm, mid1, top, mid2];
-        let did_complete_before_timeout = select(
-            async || { sleep(Duration::from_secs(1)).await; false; },
-            async || { run_all(&deps).await; true; }).await;
-        assert!(did_complete_before_timeout);
+        match select(
+                sleep(Duration::from_secs(1)),
+                run_all(&deps)
+        ).await {
+            Either::Left(()) => panic!("timeout"),
+            Either::Right(status) => {}
+        }
+
     }
 }

@@ -54,8 +54,7 @@ pub struct Task {
 
 impl Task {
     pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
-        let full_cmd = resolve_executable(&cmd);
-        Task::new_with_env(full_cmd, args, working_dir, HashMap::new())
+        Task::new_with_env(cmd, args, working_dir, HashMap::new())
     }
 
     pub fn new_with_env(
@@ -64,8 +63,9 @@ impl Task {
         working_dir: PathBuf,
         extra_envs: HashMap<String, String>,
     ) -> Self {
+        let full_cmd = resolve_executable(cmd);
         Task {
-            cmd,
+            cmd: full_cmd,
             args,
             working_dir,
             extra_envs,
@@ -193,30 +193,37 @@ impl Task {
     }
 }
 
-fn resolve_executable(base_cmd: &str) -> String {
-    if let Some(cached_exe) = EXE_CACHE.get(base_cmd) {
+fn resolve_executable(base_cmd: String) -> String {
+    if base_cmd.contains("/") {
+        debug!("command {} appears to already be a path, not resolving further", base_cmd);
+        return base_cmd
+    }
+    if let Some(cached_exe) = EXE_CACHE.get(&base_cmd) {
         debug!("using cached executable {} for {}", cached_exe.value(), base_cmd);
         return cached_exe.value().clone()
     }
     let do_warn = !env::var("RUSHT_SUPPRESS_EXE_RESOLVE").is_ok();
-    let mut full_cmds = which_all(base_cmd)
-        .unwrap_or_else(|err| panic!("error while trying to find command '{}' on path, err: {}", base_cmd, err));
-    let full_cmd: String = match full_cmds.next() {
-        Some(cmd) => {
-            if let Some(more_cmd) = full_cmds.next() {
-                if do_warn {
-                    info!("more than one command found for {}: {} and {} (choosing the first)", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+    let full_cmd: String = {
+        let mut full_cmds = which_all(&base_cmd)
+            .unwrap_or_else(|err| panic!("error while trying to find command '{}' on path, err: {}", base_cmd, err));
+        match full_cmds.next() {
+            Some(cmd) => {
+                if let Some(more_cmd) = full_cmds.next() {
+                    if do_warn {
+                        info!("more than one command found for {}: {} and {} (choosing the first)", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+                    }
                 }
+                cmd.to_str().unwrap_or_else(|| panic!("command {} executable {} not unicode", base_cmd, cmd.to_string_lossy())).to_owned()
+            },
+            None => {
+                if do_warn {
+                    warn!("could not find executable for {}, will try to run anyway", base_cmd);
+                }
+                base_cmd.clone()
             }
-            cmd.to_str().unwrap_or_else(|| panic!("command {} executable {} not unicode", base_cmd, cmd.to_string_lossy())).to_owned()
-        },
-        None => {
-            if do_warn {
-                warn!("could not find executable for {}, will try to run anyway", base_cmd);
-            }
-            base_cmd.to_owned()
         }
     };
-    debug!("using executable {} for {}", &full_cmd, base_cmd);
+    debug!("caching executable {} for {}", &full_cmd, &base_cmd);
+    EXE_CACHE.insert(base_cmd, full_cmd.clone());
     full_cmd
 }
