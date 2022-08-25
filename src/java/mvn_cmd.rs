@@ -35,7 +35,8 @@ pub struct MvnCmdConfig {
 }
 
 impl MvnCmdConfig {
-    pub fn build_cmds(&self) -> SmallVec<[Task; 1]> {
+    /// Return a collection of command batches, where the commands in each batch can run concurrently.
+    pub fn build_cmds(&self) -> SmallVec<[SmallVec<[Task; 1]>; 1]> {
         let single_cmd = self.modules.is_empty();
 
         let mut cmds = smallvec![];

@@ -61,8 +61,8 @@ pub async fn mvnw(
     let cmd_config = build_config(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
     debug!("command config: {:?}", cmd_config);
-    let cmds = cmd_config.build_cmds();
-    for (nr, cmd) in cmds.iter().enumerate() {
+    let cmd_groups = cmd_config.build_cmds();
+    for (nr, cmd_group) in cmd_groups.iter().enumerate() {
         writer
             .write_line(format!(
                 "going to run [{}/{}]: {}",
