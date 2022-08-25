@@ -69,7 +69,7 @@ impl <'a> Future for AsyncGateFuture<'a> {
         if self.0.is_open() {
             Poll::Ready(())
         } else {
-            self.0.content.wakers.lock().expect("AsyncGate lock poisoned").push(cx.waker());
+            self.0.content.wakers.lock().expect("AsyncGate lock poisoned").push(cx.waker().clone());
             Poll::Pending
         }
     }
@@ -77,12 +77,39 @@ impl <'a> Future for AsyncGateFuture<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::thread;
+    use std::thread::sleep;
+    use std::time::Duration;
+    use async_std::future::timeout;
+
     use super::*;
 
     #[async_std::test]
     async fn already_open() {
         let gate = AsyncGate::new();
+        assert!(!gate.is_open());
         gate.open();
+        gate.wait().await;
+        assert!(gate.is_open());
+    }
+
+    #[async_std::test]
+    async fn not_open() {
+        let gate = AsyncGate::new();
+        assert!(!gate.is_open());
+        let res = timeout(Duration::from_micros(20), gate.wait()).await;
+        assert!(!gate.is_open());
+        assert!(res.is_err(), "should timeout");
+    }
+
+    #[async_std::test]
+    async fn open_while_waiting() {
+        let gate = AsyncGate::new();
+        assert!(!gate.is_open());
+        thread::scope(|_| {
+            sleep(Duration::from_millis(10000));
+            gate.open()
+        });
         gate.wait().await;
     }
 }
