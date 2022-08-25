@@ -40,7 +40,7 @@ impl AsyncGate {
     pub fn open(&self) {
         let was_open = self.content.is_open.swap(true, Ordering::Release);
         if ! was_open {
-            for waker in &self.content.wakers.lock().drain() {
+            for waker in self.content.wakers.lock().expect("AsyncGate lock poisoned").drain(..) {
                 waker.wake();
             }
         }
@@ -52,26 +52,24 @@ impl AsyncGate {
     }
 
     /// Wait for the gate until someone else opens it.
-    pub async fn wait(&self) {
-        //pub fn wait(&self) -> AsyncGateFuture {
+    pub fn wait(&self) -> AsyncGateFuture {
         if self.content.is_open.load(Ordering::Acquire) {
-            return
+            return AsyncGateFuture(&self)
         }
         unimplemented!()
     }
 }
 
-// pub struct AsyncGateFuture(AsyncGate);
+pub struct AsyncGateFuture<'a>(&'a AsyncGate);
 
-impl Future for AsyncGate {
+impl <'a> Future for AsyncGateFuture<'a> {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let is_open = self.content.is_open.load(Ordering::Acquire);
-        if is_open {
+        if self.0.is_open() {
             Poll::Ready(())
         } else {
-            self.content.wakers.push(cx.waker());
+            self.0.content.wakers.lock().expect("AsyncGate lock poisoned").push(cx.waker());
             Poll::Pending
         }
     }
