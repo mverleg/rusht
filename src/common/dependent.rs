@@ -3,6 +3,7 @@ use ::std::rc::Rc;
 
 use ::futures::future::join_all;
 use ::log::debug;
+use ::log::warn;
 use ::smallvec::SmallVec;
 use ::wait_for_me::CountDownLatch;
 
@@ -48,6 +49,7 @@ impl Dependent {
     }
 
     pub async fn await_and_exec(&self) -> ProcStatus {
+        eprintln!(">> {} depends on {}", &self.name, self.dependencies.len());  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.count().await == 0 {
@@ -58,7 +60,9 @@ impl Dependent {
                 debug!("{} was waiting for {} [{}/{}] which just became available", self.name, dependency.name, nr + 1, count);
             }
         };
-        self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await
+        let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
+        self.current.count_down().await;
+        status
     }
 }
 
@@ -77,9 +81,9 @@ mod tests {
     use ::std::time::Duration;
 
     use ::async_std::task::sleep;
+    use ::futures::future::Either;
     use ::futures::future::select;
     use ::smallvec::smallvec;
-    use ::futures::future::Either;
 
     use super::*;
 
