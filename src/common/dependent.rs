@@ -3,7 +3,6 @@ use ::std::rc::Rc;
 
 use ::futures::future::join_all;
 use ::log::debug;
-use ::log::warn;
 use ::smallvec::SmallVec;
 use ::wait_for_me::CountDownLatch;
 
