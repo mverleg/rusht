@@ -106,4 +106,19 @@ mod tests {
             Either::Right(status) => {}
         }
     }
+
+    #[async_std::test]
+    async fn countdown_mwe() {
+        let cdl = CountDownLatch::new(2);
+        select(
+            select(
+                Box::pin(cdl.wait()),
+                Box::pin(cdl.count_down()),
+            ),
+            select(
+                Box::pin(cdl.wait()),
+                Box::pin(cdl.count_down()),
+            ),
+        ).await;
+    }
 }
