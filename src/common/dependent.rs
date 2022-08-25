@@ -18,21 +18,45 @@ use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::smallvec::SmallVec;
+use ::time::Duration;
 use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdWriter, Task};
 
 #[derive(Debug)]
+pub struct Dependency {
+    name: String,
+    lock: Mutex<()>,
+    timeout: Duration,
+}
+
+impl Dependency {
+    pub fn new_unlimited(name: String, lock: Mutex<()>) -> Self {
+        Dependency::new_timeout(name, lock, Duration::new(i64::MAX, 0))
+    }
+
+    pub fn new_timeout(name: String, lock: Mutex<()>, timeout: Duration) -> Self {
+        Dependency {
+            name,
+            lock,
+            timeout,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Dependent {
     task: Task,
-    deps: SmallVec<[Mutex<()>; 2]>,
+    current: Mutex<()>,
+    dependencies: SmallVec<[Dependency; 1]>,
 }
 
 impl Dependent {
-    pub fn new(task: Task, deps: impl Into<SmallVec<[Mutex<()>; 2]>>) -> Self {
+    pub fn new(task: Task, current: Mutex<()>, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
         Dependent {
             task,
-            deps: deps.into(),
+            current: Default::default(),
+            dependencies: dependencies.into(),
         }
     }
 }
