@@ -31,6 +31,9 @@ pub async fn grab(
                 break;
             }
         }
+        if args.first_match_only {
+            break
+        }
     }
     Ok(())
 }
@@ -109,9 +112,25 @@ mod tests {
     }
 
     #[async_std::test]
+    async fn all_of_multi_per_line() {
+        let expected: Vec<String> = vec!["aa".to_owned(), "a".to_owned()];
+        test_grab(vec!["aabab"], expected).await;
+    }
+
+    #[async_std::test]
     async fn first_of_multi_per_line() {
         let expected: Vec<String> = vec!["aa".to_owned()];
-        test_grab(vec!["aabab"], expected).await;
+        let input = vec!["aabab"];
+        test_grab_arg(
+            GrabArgs {
+                pattern: Regex::new("(a+)b").unwrap(),
+                first_match_only: true,
+                ..GrabArgs::default()
+            },
+            input,
+            expected,
+        )
+        .await;
     }
 
     #[async_std::test]
@@ -157,6 +176,24 @@ mod tests {
         test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b+(c{2})?").unwrap(),
+                ..GrabArgs::default()
+            },
+            input,
+            expected,
+        )
+        .await;
+    }
+
+    #[async_std::test]
+    async fn first_matches_with_first_groups() {
+        // First match is just 'cb', the first group of which is empty.
+        let input = vec!["cbdaavbb"];
+        let expected: Vec<String> = vec![];
+        test_grab_arg(
+            GrabArgs {
+                pattern: Regex::new("(a+)?c(b+)?").unwrap(),
+                first_match_only: true,
+                first_capture_only: true,
                 ..GrabArgs::default()
             },
             input,
