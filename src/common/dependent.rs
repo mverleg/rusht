@@ -62,21 +62,19 @@ impl Dependent {
     }
 }
 
-pub async fn run_all(dependents: &[Dependent]) -> ProcStatus {
+pub async fn run_all(dependents: Vec<Dependent>) -> ProcStatus {
     join_all(dependents.iter()
         .map(|dep| dep.await_and_exec())
         .collect::<Vec<_>>())
         .await
         .into_iter()
-        .max_by_key(|status| status.code())
+        .max_by_key(|status: &ProcStatus| status.code())
         .expect("no tasks to run")
 }
 
 #[cfg(test)]
 mod tests {
     use ::std::time::Duration;
-    use ::std::future::Future;
-    use ::std::process::ExitStatus;
 
     use ::async_std::task::sleep;
     use ::futures::future::select;
@@ -97,12 +95,11 @@ mod tests {
         botm.depends_on(&mid2);
         let deps = vec![botm, mid1, top, mid2];
         match select(
-                sleep(Duration::from_secs(1)),
-                run_all(&deps)
+                Box::pin(sleep(Duration::from_secs(3))),
+                Box::pin(run_all(deps))
         ).await {
-            Either::Left(()) => panic!("timeout"),
+            Either::Left(status) => panic!("timeout"),
             Either::Right(status) => {}
         }
-
     }
 }
