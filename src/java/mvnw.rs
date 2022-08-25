@@ -17,7 +17,8 @@ pub async fn mvnw(
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
-    assert!(args.rebuild_if_match.is_empty(), "not supported yet");
+    assert!(args.execs.is_empty(), "execs not supported yet");
+    assert!(args.rebuild_if_match.is_empty(), "rebuild_if_match not supported yet");
     debug!("arguments: {:?}", &args);
     if !args.all {
         return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
@@ -57,7 +58,7 @@ pub async fn mvnw(
 
     let show_cmds_only = args.show_cmds_only;
     let is_offline = !args.update;
-    let cmd_config = builds_cmds(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
+    let cmd_config = build_config(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
@@ -85,7 +86,7 @@ pub async fn mvnw(
     Ok(())
 }
 
-fn builds_cmds(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
+fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
     let modules = if args.all {
         vec![]
     } else {

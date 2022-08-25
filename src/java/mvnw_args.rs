@@ -28,6 +28,14 @@ pub struct MvnwArgs {
     /// Update snapshots, even if it was recently done.
     #[structopt(short = 'U', long)]
     pub update: bool,
+    /// Execute these java classes.
+    ///
+    /// * Something like `com.company.package.Main`.
+    /// {n}* Should contain `public static void main(String[] args)`.
+    /// {n}* Class must be inside selected module, which may be controlled by --affected.
+    /// {n}* Must be in selected profile, if any, and mvn exec plugin must be available.
+    #[structopt(short = 'm', long = "exec-main")]
+    pub execs: Vec<String>,
 
     /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed). Default.
     #[structopt(long = "test-files", group = "test")]
