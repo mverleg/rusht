@@ -5,49 +5,73 @@ use ::std::sync::atomic::AtomicBool;
 use ::std::sync::atomic::Ordering;
 use ::std::task::Context;
 use ::std::task::Poll;
+use ::std::task::Waker;
+use std::sync::Mutex;
+
+use ::smallvec::smallvec;
+use ::smallvec::SmallVec;
 
 /// The AsyncGate is initially created as closed. Any number of async functions can
 /// awaits its opening. Once it is opened, the operations will wake up and proceed.
 /// It can not be closed again. Opening more than once is safe but does nothing.
 #[derive(Debug, Clone)]
 pub struct AsyncGate {
-    is_open: Arc<AtomicBool>
+    content: Arc<AsyncGateContent>,
+}
+
+#[derive(Debug)]
+pub struct AsyncGateContent {
+    is_open: AtomicBool,
+    wakers: Mutex<SmallVec<[Waker; 2]>>,
 }
 
 impl AsyncGate {
     /// Create a new, closed, gate.
     pub fn new() -> Self {
         AsyncGate {
-            is_open: Arc::new(AtomicBool::new(false))
+            content: Arc::new(AsyncGateContent {
+                is_open: AtomicBool::new(false),
+                wakers: Mutex::new(smallvec![]),
+            })
         }
     }
 
     /// Open the gate, waking up anyone waiting for it.
     pub fn open(&self) {
-        let was_open = self.is_open.swap(true, Ordering::Release);
+        let was_open = self.content.is_open.swap(true, Ordering::Release);
         if ! was_open {
-            //TODO @mverleg: wake others
-            unimplemented!()
+            for waker in &self.content.wakers.lock().drain() {
+                waker.wake();
+            }
         }
+    }
+
+    /// Has `open()` been called by anyone?
+    pub fn is_open(&self) -> bool {
+        self.content.is_open.load(Ordering::Acquire)
     }
 
     /// Wait for the gate until someone else opens it.
     pub async fn wait(&self) {
-        if self.is_open.load(Ordering::Acquire) {
+        //pub fn wait(&self) -> AsyncGateFuture {
+        if self.content.is_open.load(Ordering::Acquire) {
             return
         }
         unimplemented!()
     }
 }
 
+// pub struct AsyncGateFuture(AsyncGate);
+
 impl Future for AsyncGate {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let is_open = self.is_open.load(Ordering::Acquire);
+        let is_open = self.content.is_open.load(Ordering::Acquire);
         if is_open {
             Poll::Ready(())
         } else {
+            self.content.wakers.push(cx.waker());
             Poll::Pending
         }
     }
