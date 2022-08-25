@@ -12,7 +12,7 @@ pub async fn get_matches(
     dbg!(&pattern);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     let mut any_matches = false;
     // Iterate over all the times the complete pattern matches
-    for captures in pattern.captures(text) {
+    for captures in pattern.captures_iter(text) {
         any_matches = true;
         dbg!(&captures);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let mut caps = captures.iter();

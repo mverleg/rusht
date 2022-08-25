@@ -1,45 +1,8 @@
-use ::clap::StructOpt;
 use ::log::debug;
 use ::regex::Regex;
 
 use crate::common::{get_matches, LineReader, LineWriter};
-
-#[derive(StructOpt, Debug)]
-#[structopt(
-    name = "grab",
-    about = "Filter lines by regular expression, keeping only the matching capture group."
-)]
-pub struct GrabArgs {
-    #[structopt()]
-    /// Regular expression to match. Returns the capture group if any, or the whole match otherwise.
-    pub pattern: Regex,
-    #[structopt(short = '1', long)]
-    /// Only print the first capture group, even if there are multiple
-    pub first_only: bool,
-    #[structopt(short = 'k', long)]
-    /// Keep the full line if it does not match the pattern
-    pub keep_unmatched: bool,
-    #[structopt(short = 'n', long)]
-    /// Maximum number of matching lines
-    pub max_lines: Option<u32>,
-}
-
-impl Default for GrabArgs {
-    fn default() -> Self {
-        GrabArgs {
-            pattern: Regex::new(".*").unwrap(),
-            first_only: false,
-            keep_unmatched: false,
-            max_lines: None,
-        }
-    }
-}
-
-#[async_std::test]
-async fn test_cli_args() {
-    use clap::IntoApp;
-    GrabArgs::into_app().debug_assert()
-}
+use crate::filter::GrabArgs;
 
 pub async fn grab(
     args: GrabArgs,
@@ -189,11 +152,11 @@ mod tests {
 
     #[async_std::test]
     async fn multiple_matches_with_multiple_groups() {
-        let input = vec!["aabccdabbcca"];
+        let input = vec!["aabccdabbca"];
         let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned(), "a".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b(c{2}?)").unwrap(),
+                pattern: Regex::new("(a+)b+(c{2})?").unwrap(),
                 ..GrabArgs::default()
             },
             input,
