@@ -4,17 +4,17 @@ use ::std::rc::Rc;
 use ::futures::future::join_all;
 use ::log::debug;
 use ::smallvec::SmallVec;
-use ::wait_for_me::CountDownLatch;
 
 use crate::common::{StdWriter, Task};
+use crate::common::async_gate::AsyncGate;
 
 pub struct Dependency {
     name: Rc<String>,
-    gate: Rc<CountDownLatch>,
+    gate: AsyncGate,
 }
 
 impl Dependency {
-    pub fn new_with_gate(name: Rc<String>, gate: Rc<CountDownLatch>) -> Self {
+    pub fn new_with_gate(name: Rc<String>, gate: AsyncGate) -> Self {
         Dependency {
             name,
             gate,
@@ -25,19 +25,23 @@ impl Dependency {
 pub struct Dependent {
     task: Task,
     name: Rc<String>,
-    current: Rc<CountDownLatch>,
+    current: AsyncGate,
     dependencies: SmallVec<[Dependency; 1]>,
 }
 
 impl Dependent {
-    pub fn new(task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
-        let name = Rc::new(task.as_str());
+    pub fn new_named(name: impl Into<String>, task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
         Dependent {
             task,
-            name,
-            current: Rc::new(CountDownLatch::new(1)),
+            name: Rc::new(name.into()),
+            current: AsyncGate::new(),
             dependencies: dependencies.into(),
         }
+    }
+
+    pub fn new(task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
+        let name = task.as_str();
+        Dependent::new_named(name, task, dependencies)
     }
 
     pub fn depends_on(&mut self, other: &Dependent) {
@@ -48,10 +52,9 @@ impl Dependent {
     }
 
     pub async fn await_and_exec(&self) -> ProcStatus {
-        eprintln!(">> {} depends on {}", &self.name, self.dependencies.len());  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
-            if dependency.gate.count().await == 0 {
+            if dependency.gate.is_open() {
                 debug!("{} needs {} [{}/{}] which is immediately available", self.name, dependency.name, nr + 1, count);
             } else {
                 debug!("{} needs {} [{}/{}] which needs to be awaited", self.name, dependency.name, nr + 1, count);
@@ -60,7 +63,7 @@ impl Dependent {
             }
         };
         let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
-        self.current.count_down().await;
+        self.current.open();
         status
     }
 }
@@ -88,12 +91,12 @@ mod tests {
 
     #[async_std::test]
     async fn dependency_tree() {
-        let top = Dependent::new(Task::noop(), smallvec![]);
-        let mut mid1 = Dependent::new(Task::noop(), smallvec![]);
+        let top = Dependent::new_named("top", Task::noop(), smallvec![]);
+        let mut mid1 = Dependent::new_named("mid1", Task::noop(), smallvec![]);
         mid1.depends_on(&top);
-        let mut mid2 = Dependent::new(Task::noop(), smallvec![]);
+        let mut mid2 = Dependent::new_named("mid2", Task::noop(), smallvec![]);
         mid2.depends_on(&top);
-        let mut botm = Dependent::new(Task::noop(), smallvec![]);
+        let mut botm = Dependent::new_named("bottom", Task::noop(), smallvec![]);
         botm.depends_on(&mid1);
         botm.depends_on(&mid2);
         let deps = vec![botm, mid1, top, mid2];
@@ -104,20 +107,5 @@ mod tests {
             Either::Left(status) => panic!("timeout"),
             Either::Right(status) => {}
         }
-    }
-
-    #[async_std::test]
-    async fn countdown_mwe() {
-        let cdl = CountDownLatch::new(2);
-        select(
-            select(
-                Box::pin(cdl.wait()),
-                Box::pin(cdl.count_down()),
-            ),
-            select(
-                Box::pin(cdl.wait()),
-                Box::pin(cdl.count_down()),
-            ),
-        ).await;
     }
 }
