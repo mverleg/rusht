@@ -76,10 +76,12 @@ pub async fn mvnw(
         }
         let status = cmd.execute(false);
         if !status.success() {
-            if is_offline && cmd.cmd == "mvn" {
-                eprintln!("note: failed in offline mode, use -U for online")
+            if let Some(task) = cmd.task() {
+                if is_offline && cmd.cmd == "mvn" {
+                    eprintln!("note: failed in offline mode, use -U for online")
+                }
             }
-            return Err((ExitStatus::of_code(status.code()), "".to_owned()));
+            return Err((status.code(), "".to_owned()));
         }
     }
 

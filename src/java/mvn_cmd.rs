@@ -314,14 +314,20 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
 impl MvnTasks {
     fn flatten(self) -> Vec<Dependent> {
         let MvnTasks { version, clean, install_lint, lint, build, test, exes } = self;
-        let version = Dependent::new_optional("version", version);
-        let clean = Dependent::new_optional("clean", clean);
-        let install_lint = Dependent::new_optional("install_lint", install_lint);
-        let lint = Dependent::new_optional("lint", lint);
-        let build = Dependent::new_named("build", build.expect("build task must always exist"));
-        let test = Dependent::new_optional("test", test);
+        let mut version = Dependent::new_optional("version", version);
+        let mut clean = Dependent::new_optional("clean", clean);
+        clean.depends_on(&version);
+        let mut install_lint = Dependent::new_optional("install_lint", install_lint);
+        install_lint.depends_on(&version);
+        let mut lint = Dependent::new_optional("lint", lint);
+        lint.depends_on(&install_lint);
+        let mut build = Dependent::new_named("build", build.expect("build task must always exist"));
+        build.depends_on(&clean);
+        let mut test = Dependent::new_optional("test", test);
+        test.depends_on(&build);
         let exes = exes.into_iter()
             .map(|ex| Dependent::new_named("version", ex))
+            .inspect(|ex| ex.depends_on(&build))
             .collect::<Vec<_>>();
         let mut tasks = vec![
             version,
