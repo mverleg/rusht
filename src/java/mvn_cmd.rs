@@ -210,30 +210,34 @@ impl MvnCmdConfig {
             }
         }
 
-        // Exec
+        // Execute a class.
         for exec in &self.execs {
             let mut exe_args = vec![
                 "exec:java".to_owned(),
                 format!("-Dexec.mainClass=\"{}\"", exec),
             ];
             self.add_opt_args(&mut exe_args);
-            tasks.exes.push(self.make_mvn_task(exe_args));
+            tasks.exes.push(self.make_mvn_task_with_mem(exe_args, self.max_exec_memory_mb));
         }
 
         tasks
     }
 
-    fn make_mvn_task(&self, args: Vec<String>) -> Task {
+    fn make_mvn_task_with_mem(&self, args: Vec<String>, memory_mb: u32) -> Task {
         let mut extra_env = HashMap::new();
         extra_env.insert(
             "MAVEN_OPTS".to_owned(),
             format!(
                 "-XX:+UseG1GC -Xms{}m -Xmx{}m",
-                min(256, self.max_memory_mb),
-                self.max_memory_mb
+                min(256, memory_mb),
+                memory_mb
             ),
         );
         self.make_task(self.mvn_exe.to_str().unwrap(), args, extra_env)
+    }
+
+    fn make_mvn_task(&self, args: Vec<String>) -> Task {
+        self.make_mvn_task_with_mem(args, self.max_memory_mb)
     }
 
     fn make_task(

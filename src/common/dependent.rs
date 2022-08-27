@@ -57,6 +57,7 @@ impl Dependent {
     }
 
     pub fn depends_on(&mut self, other: &Dependent) {
+        //TODO @mverleg: might skip non-task deps, but only if the tree is always build ascending...
         self.dependencies.push(Dependency {
             name: other.name.clone(),
             gate: other.current.clone(),
@@ -82,6 +83,10 @@ impl Dependent {
         self.current.open();
         status
     }
+
+    pub fn task(&self) -> Option<&Task> {
+        self.task.as_ref()
+    }
 }
 
 #[derive(Debug)]
@@ -91,6 +96,7 @@ pub struct NoopDependent {
 }
 
 pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
+    eprintln!("should this use threads? maybe async isn't enough");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     join_all(dependents.iter()
         .map(|dep| dep.await_and_exec())
         .collect::<Vec<_>>())

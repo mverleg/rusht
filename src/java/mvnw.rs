@@ -5,7 +5,7 @@ use ::std::path::PathBuf;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{git_affected_files_head, LineWriter};
+use crate::common::{git_affected_files_head, LineWriter, run_all};
 use crate::java::mvnw_args::AffectedPolicy;
 use crate::java::MvnCmdConfig;
 use crate::java::MvnwArgs;
@@ -62,28 +62,39 @@ pub async fn mvnw(
 
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
-    for (nr, cmd) in cmds.iter().enumerate() {
-        writer
-            .write_line(format!(
-                "going to run [{}/{}]: {}",
-                nr + 1,
-                cmds.len(),
-                cmd.as_str()
-            ))
-            .await;
-        if show_cmds_only {
-            continue;
-        }
-        let status = cmd.execute(false);
-        if !status.success() {
-            if let Some(task) = cmd.task() {
-                if is_offline && cmd.cmd == "mvn" {
-                    eprintln!("note: failed in offline mode, use -U for online")
-                }
+    //TODO @mverleg: threads
+    //TODO @mverleg: stop after first error?
+    let status = run_all(cmds).await;
+    if !status.success() {
+        if let Some(task) = cmd.task() {
+            if is_offline && task.cmd == "mvn" {
+                eprintln!("note: failed in offline mode, use -U for online")
             }
-            return Err((status.code(), "".to_owned()));
         }
+        return Err((status.code(), "".to_owned()));
     }
+    // for (nr, cmd) in cmds.iter().enumerate() {
+    //     // writer
+    //     //     .write_line(format!(
+    //     //         "going to run [{}/{}]: {}",
+    //     //         nr + 1,
+    //     //         cmds.len(),
+    //     //         cmd.as_str()
+    //     //     ))
+    //     //     .await;
+    //     if show_cmds_only {
+    //         continue;
+    //     }
+    //     let status = cmd.execute(false);
+    //     if !status.success() {
+    //         if let Some(task) = cmd.task() {
+    //             if is_offline && task.cmd == "mvn" {
+    //                 eprintln!("note: failed in offline mode, use -U for online")
+    //             }
+    //         }
+    //         return Err((status.code(), "".to_owned()));
+    //     }
+    // }
 
     Ok(())
 }
