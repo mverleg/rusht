@@ -72,62 +72,6 @@ impl Dependent {
     }
 }
 
-#[derive(Debug)]
-pub struct NoopDependent {
-    name: Rc<String>,
-    dependencies: SmallVec<[Dependency; 1]>,
-}
-
-impl NoopDependent {
-    pub fn new_named(name: impl Into<String>) -> Self {
-        NoopDependent {
-            name: Rc::new(name.into()),
-            dependencies: smallvec![],
-        }
-    }
-
-    pub fn depends_on(&mut self, other: &MaybeDependent) {
-        self.dependencies.push(Dependency {
-            name: other.name.clone(),
-            gate: other.current.clone(),
-        })
-    }
-
-    pub async fn await_and_exec(&self) -> ProcStatus {
-        let count = self.dependencies.len();
-        for (nr, dependency) in self.dependencies.iter().enumerate() {
-            if dependency.gate.is_open() {
-                debug!("{} needs {} [{}/{}] which is immediately available", self.name, dependency.name, nr + 1, count);
-            } else {
-                debug!("{} needs {} [{}/{}] which needs to be awaited", self.name, dependency.name, nr + 1, count);
-                let _: () = dependency.gate.wait().await;
-                debug!("{} was waiting for {} [{}/{}] which just became available", self.name, dependency.name, nr + 1, count);
-            }
-        };
-        let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
-        self.current.open();
-        status
-    }
-}
-
-#[derive(Debug)]
-pub enum MaybeDependent {
-    /// A task to run that may have dependencies and may be depended upon.
-    Task(Dependency),
-    /// Just links other dependencies together, does not perform any task anything.
-    Link(NoopDependent),
-}
-
-pub async fn run_all(dependents: Vec<Dependent>) -> ProcStatus {
-    join_all(dependents.iter()
-        .map(|dep| dep.await_and_exec())
-        .collect::<Vec<_>>())
-        .await
-        .into_iter()
-        .max_by_key(|status: &ProcStatus| status.code())
-        .expect("no tasks to run")
-}
-
 #[cfg(test)]
 mod tests {
     use ::std::time::Duration;
