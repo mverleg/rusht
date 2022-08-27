@@ -6,7 +6,7 @@ use ::clap::StructOpt;
 use ::clap::ValueEnum;
 use ::regex::Regex;
 
-use crate::java::newtype::Profile;
+use crate::java::newtype::{FullyQualifiedName, Profile};
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -36,7 +36,7 @@ pub struct MvnwArgs {
     /// {n}* Must be in selected profile, if any, and mvn exec plugin must be available.
     /// {n}* This does not automatically disable running unit tests.
     #[structopt(short = 'm', long = "exec-main")]
-    pub execs: Vec<String>,
+    pub execs: Vec<FullyQualifiedName>,
 
     /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed). Default.
     #[structopt(long = "test-files", group = "test")]

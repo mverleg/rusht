@@ -10,7 +10,7 @@ use ::smallvec::SmallVec;
 
 use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
-use crate::java::newtype::Profile;
+use crate::java::newtype::{FullyQualifiedName, Profile};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct MvnCmdConfig {
@@ -25,6 +25,7 @@ pub struct MvnCmdConfig {
     pub update: bool,
     pub clean: bool,
     pub install: bool,
+    pub execs: Vec<FullyQualifiedName>,
     pub profiles: Vec<Profile>,
     pub threads: u32,
     pub max_memory_mb: u32,
@@ -42,6 +43,7 @@ struct MvnTasks {
     lint: Option<Task>,
     build: Option<Task>,
     test: Option<Task>,
+    exes: SmallVec<[Task; 1]>,
 }
 
 impl MvnCmdConfig {
@@ -168,6 +170,7 @@ impl MvnCmdConfig {
                 );
             }
         }
+        tasks.build = Some(self.make_mvn_task(args.clone()));
 
         // Tests
         match self.tests {
@@ -192,7 +195,6 @@ impl MvnCmdConfig {
                 args.push("-DskipTests".to_owned());
             }
         }
-        let mut test_task = None;
         if self.tests.run_any() && self.tests == TestMode::All {
             if single_cmd {
                 debug!("build and test in same command (all modules are built)");
@@ -202,13 +204,13 @@ impl MvnCmdConfig {
                 let mut test_args = vec!["test".to_owned()];
                 self.add_opt_args(&mut test_args);
                 self.add_test_args(&mut test_args);
-                test_task = Some(self.make_mvn_task(test_args));
+                tasks.test = Some(self.make_mvn_task(test_args));
             }
         }
 
-        tasks.build = Some(self.make_mvn_task(args));
-        if let Some(test_tsk) = test_task {
-            tasks.test = Some(test_tsk);
+        // Exec
+        for exec in &self.execs {
+            exec;
         }
 
         tasks
@@ -304,7 +306,7 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
 
 impl MvnTasks {
     fn flatten(self) -> SmallVec<[Task; 1]> {
-        let MvnTasks { version, clean, install_lint, lint, build, test } = self;
+        let MvnTasks { version, clean, install_lint, lint, build, test, exes } = self;
         unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
 }
