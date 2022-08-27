@@ -4,16 +4,19 @@ use ::std::rc::Rc;
 use ::futures::future::join_all;
 use ::log::debug;
 use ::smallvec::SmallVec;
+use smallvec::smallvec;
 
 use crate::common::{StdWriter, Task};
 use crate::common::async_gate::AsyncGate;
 
+#[derive(Debug)]
 pub struct Dependency {
     name: Rc<String>,
     gate: AsyncGate,
 }
 
 impl Dependency {
+    #[allow(dead_code)]
     pub fn new_with_gate(name: Rc<String>, gate: AsyncGate) -> Self {
         Dependency {
             name,
@@ -22,6 +25,7 @@ impl Dependency {
     }
 }
 
+#[derive(Debug)]
 pub struct Dependent {
     task: Task,
     name: Rc<String>,
@@ -30,18 +34,18 @@ pub struct Dependent {
 }
 
 impl Dependent {
-    pub fn new_named(name: impl Into<String>, task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
+    pub fn new_named(name: impl Into<String>, task: Task) -> Self {
         Dependent {
             task,
             name: Rc::new(name.into()),
             current: AsyncGate::new(),
-            dependencies: dependencies.into(),
+            dependencies: smallvec![],
         }
     }
 
-    pub fn new(task: Task, dependencies: impl Into<SmallVec<[Dependency; 1]>>) -> Self {
+    pub fn new(task: Task) -> Self {
         let name = task.as_str();
-        Dependent::new_named(name, task, dependencies)
+        Dependent::new_named(name, task)
     }
 
     pub fn depends_on(&mut self, other: &Dependent) {
@@ -68,6 +72,52 @@ impl Dependent {
     }
 }
 
+#[derive(Debug)]
+pub struct NoopDependent {
+    name: Rc<String>,
+    dependencies: SmallVec<[Dependency; 1]>,
+}
+
+impl NoopDependent {
+    pub fn new_named(name: impl Into<String>) -> Self {
+        NoopDependent {
+            name: Rc::new(name.into()),
+            dependencies: smallvec![],
+        }
+    }
+
+    pub fn depends_on(&mut self, other: &MaybeDependent) {
+        self.dependencies.push(Dependency {
+            name: other.name.clone(),
+            gate: other.current.clone(),
+        })
+    }
+
+    pub async fn await_and_exec(&self) -> ProcStatus {
+        let count = self.dependencies.len();
+        for (nr, dependency) in self.dependencies.iter().enumerate() {
+            if dependency.gate.is_open() {
+                debug!("{} needs {} [{}/{}] which is immediately available", self.name, dependency.name, nr + 1, count);
+            } else {
+                debug!("{} needs {} [{}/{}] which needs to be awaited", self.name, dependency.name, nr + 1, count);
+                let _: () = dependency.gate.wait().await;
+                debug!("{} was waiting for {} [{}/{}] which just became available", self.name, dependency.name, nr + 1, count);
+            }
+        };
+        let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
+        self.current.open();
+        status
+    }
+}
+
+#[derive(Debug)]
+pub enum MaybeDependent {
+    /// A task to run that may have dependencies and may be depended upon.
+    Task(Dependency),
+    /// Just links other dependencies together, does not perform any task anything.
+    Link(NoopDependent),
+}
+
 pub async fn run_all(dependents: Vec<Dependent>) -> ProcStatus {
     join_all(dependents.iter()
         .map(|dep| dep.await_and_exec())
@@ -85,18 +135,17 @@ mod tests {
     use ::async_std::task::sleep;
     use ::futures::future::Either;
     use ::futures::future::select;
-    use ::smallvec::smallvec;
 
     use super::*;
 
     #[async_std::test]
     async fn dependency_tree() {
-        let top = Dependent::new_named("top", Task::noop(), smallvec![]);
-        let mut mid1 = Dependent::new_named("mid1", Task::noop(), smallvec![]);
+        let top = Dependent::new_named("top", Task::noop());
+        let mut mid1 = Dependent::new_named("mid1", Task::noop());
         mid1.depends_on(&top);
-        let mut mid2 = Dependent::new_named("mid2", Task::noop(), smallvec![]);
+        let mut mid2 = Dependent::new_named("mid2", Task::noop());
         mid2.depends_on(&top);
-        let mut botm = Dependent::new_named("bottom", Task::noop(), smallvec![]);
+        let mut botm = Dependent::new_named("bottom", Task::noop());
         botm.depends_on(&mid1);
         botm.depends_on(&mid2);
         let deps = vec![botm, mid1, top, mid2];
@@ -104,8 +153,8 @@ mod tests {
                 Box::pin(sleep(Duration::from_secs(3))),
                 Box::pin(run_all(deps))
         ).await {
-            Either::Left(status) => panic!("timeout"),
-            Either::Right(status) => {}
+            Either::Left(_) => panic!("timeout"),
+            Either::Right(_) => {}
         }
     }
 }

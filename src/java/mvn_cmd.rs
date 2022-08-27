@@ -8,7 +8,7 @@ use ::log::debug;
 use ::log::warn;
 use ::smallvec::SmallVec;
 
-use crate::common::Task;
+use crate::common::{Dependent, Task};
 use crate::java::mvnw_args::TestMode;
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
@@ -211,7 +211,12 @@ impl MvnCmdConfig {
 
         // Exec
         for exec in &self.execs {
-            tasks.exes.push(self.make_mvn_task());
+            let mut exe_args = vec![
+                "exec:java".to_owned(),
+                format!("-Dexec.mainClass=\"{}\"", exec),
+            ];
+            self.add_opt_args(&mut exe_args);
+            tasks.exes.push(self.make_mvn_task(exe_args));
         }
 
         tasks
@@ -308,6 +313,23 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
 impl MvnTasks {
     fn flatten(self) -> SmallVec<[Task; 1]> {
         let MvnTasks { version, clean, install_lint, lint, build, test, exes } = self;
+        let version = MaybeDependent::new_named("version", version);
+        let mut deps = vec![];
+        if let Some(version) = version {
+            deps.push(Dependent::new_named("version", clean))
+        }
+        if let Some(clean) = clean {
+            deps.push(Dependent::new_named("clean", clean))
+        }
+        if let Some(lint) = lint {
+            if let Some(install) = install_lint {
+
+            } else {
+
+            }
+        }
+
+
         unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
 }

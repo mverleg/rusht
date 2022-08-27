@@ -10,9 +10,7 @@ lazy_static! {
     static ref FQN_RE: Regex = Regex::new(r"^([a-zA-Z][a-zA-Z0-9_]*\.)*([a-zA-Z][a-zA-Z0-9_]*)(\.\$[a-zA-Z][a-zA-Z0-9_]*)*$").unwrap();
 }
 
-#[derive(
-    Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
-)]
+#[derive(Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, )]
 #[serde(try_from = "String", into = "String")]
 pub struct FullyQualifiedName {
     value: String,
