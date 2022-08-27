@@ -85,6 +85,9 @@ pub struct MvnwArgs {
     /// Maximum memory to build, in MB.
     #[structopt(long = "max-memory", validator = strictly_positive, default_value = "8192", hide_short_help = true)]
     pub max_memory_mb: u32,
+    /// Maximum memory to execute, in MB. Default to same as build.
+    #[structopt(long = "max-exec-memory", validator = strictly_positive, hide_short_help = true)]
+    pub max_exec_memory_mb: Option<u32>,
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     #[structopt(long, default_value = "mvn", hide_short_help = true)]
     pub mvn_exe: PathBuf,

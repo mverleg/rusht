@@ -128,6 +128,7 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         profiles: args.profiles.into_iter().sorted().unique().collect(),
         threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
         max_memory_mb: args.max_memory_mb,
+        max_exec_memory_mb: args.max_exec_memory_mb.unwrap_or(args.max_memory_mb),
         mvn_exe: args.mvn_exe,
         mvn_arg: args.mvn_args.into_iter().sorted().collect(),
         java_home,

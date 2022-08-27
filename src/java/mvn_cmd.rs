@@ -29,6 +29,7 @@ pub struct MvnCmdConfig {
     pub profiles: Vec<Profile>,
     pub threads: u32,
     pub max_memory_mb: u32,
+    pub max_exec_memory_mb: u32,
     pub mvn_exe: PathBuf,
     pub mvn_arg: Vec<String>,
     pub java_home: PathBuf,
@@ -210,7 +211,7 @@ impl MvnCmdConfig {
 
         // Exec
         for exec in &self.execs {
-            exec;
+            tasks.exes.push(self.make_mvn_task());
         }
 
         tasks
