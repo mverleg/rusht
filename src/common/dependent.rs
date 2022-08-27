@@ -1,4 +1,3 @@
-use ::std::process::ExitStatus as ProcStatus;
 use ::std::rc::Rc;
 
 use ::futures::future::join_all;
@@ -8,6 +7,7 @@ use smallvec::smallvec;
 
 use crate::common::{StdWriter, Task};
 use crate::common::async_gate::AsyncGate;
+use crate::ExitStatus;
 
 #[derive(Debug)]
 pub struct Dependency {
@@ -27,20 +27,28 @@ impl Dependency {
 
 #[derive(Debug)]
 pub struct Dependent {
-    task: Task,
+    task: Option<Task>,
     name: Rc<String>,
     current: AsyncGate,
     dependencies: SmallVec<[Dependency; 1]>,
 }
 
 impl Dependent {
-    pub fn new_named(name: impl Into<String>, task: Task) -> Self {
+    pub fn new_optional(name: impl Into<String>, task: Option<Task>) -> Self {
         Dependent {
-            task,
+            task: task,
             name: Rc::new(name.into()),
             current: AsyncGate::new(),
             dependencies: smallvec![],
         }
+    }
+
+    pub fn new_named(name: impl Into<String>, task: Task) -> Self {
+        Dependent::new_optional(name, Some(task))
+    }
+
+    pub fn new_noop(name: impl Into<String>, task: Task) -> Self {
+        Dependent::new_optional(name, None)
     }
 
     pub fn new(task: Task) -> Self {
@@ -55,7 +63,7 @@ impl Dependent {
         })
     }
 
-    pub async fn await_and_exec(&self) -> ProcStatus {
+    pub async fn await_and_exec(&self) -> ExitStatus {
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.is_open() {
@@ -66,10 +74,30 @@ impl Dependent {
                 debug!("{} was waiting for {} [{}/{}] which just became available", self.name, dependency.name, nr + 1, count);
             }
         };
-        let status = self.task.execute_with_stdout(false, &mut StdWriter::stdout()).await;
+        let status = if let Some(task) = &self.task {
+            ExitStatus::of_code(task.execute_with_stdout(false, &mut StdWriter::stdout()).await.code())
+        } else {
+            ExitStatus::ok()
+        };
         self.current.open();
         status
     }
+}
+
+#[derive(Debug)]
+pub struct NoopDependent {
+    name: Rc<String>,
+    dependencies: SmallVec<[Dependency; 1]>,
+}
+
+pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
+    join_all(dependents.iter()
+        .map(|dep| dep.await_and_exec())
+        .collect::<Vec<_>>())
+        .await
+        .into_iter()
+        .max_by_key(|status| status.code)
+        .expect("no tasks to run")
 }
 
 #[cfg(test)]

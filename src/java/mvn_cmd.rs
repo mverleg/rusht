@@ -50,7 +50,7 @@ struct MvnTasks {
 
 impl MvnCmdConfig {
     /// Return commands that can be started concurrently and will wait for eachother.
-    pub fn build_cmds(&self) -> SmallVec<[Task; 1]> {
+    pub fn build_cmds(&self) -> Vec<Dependent> {
         self.collect_tasks().flatten()
     }
 
@@ -312,25 +312,26 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
 }
 
 impl MvnTasks {
-    fn flatten(self) -> SmallVec<[Task; 1]> {
+    fn flatten(self) -> Vec<Dependent> {
         let MvnTasks { version, clean, install_lint, lint, build, test, exes } = self;
-        let version = MaybeDependent::new_named("version", version);
-        let mut deps = vec![];
-        if let Some(version) = version {
-            deps.push(Dependent::new_named("version", clean))
-        }
-        if let Some(clean) = clean {
-            deps.push(Dependent::new_named("clean", clean))
-        }
-        if let Some(lint) = lint {
-            if let Some(install) = install_lint {
-
-            } else {
-
-            }
-        }
-
-
-        unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        let version = Dependent::new_optional("version", version);
+        let clean = Dependent::new_optional("clean", clean);
+        let install_lint = Dependent::new_optional("install_lint", install_lint);
+        let lint = Dependent::new_optional("lint", lint);
+        let build = Dependent::new_named("build", build.expect("build task must always exist"));
+        let test = Dependent::new_optional("test", test);
+        let exes = exes.into_iter()
+            .map(|ex| Dependent::new_named("version", ex))
+            .collect::<Vec<_>>();
+        let mut tasks = vec![
+            version,
+            clean,
+            install_lint,
+            lint,
+            build,
+            test,
+        ];
+        tasks.extend(exes);
+        tasks
     }
 }
