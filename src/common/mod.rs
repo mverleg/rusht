@@ -22,8 +22,6 @@ pub use self::write::TeeWriter;
 pub use self::write::VecWriter;
 pub use self::dependent::run_all;
 pub use self::dependent::Dependent;
-pub use self::dependent::MaybeDependent;
-pub use self::dependent::NoopDependent;
 
 mod err;
 mod git;

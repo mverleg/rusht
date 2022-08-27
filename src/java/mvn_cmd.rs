@@ -8,7 +8,8 @@ use ::log::debug;
 use ::log::warn;
 use ::smallvec::SmallVec;
 
-use crate::common::{Dependent, Task};
+use crate::common::Dependent;
+use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
