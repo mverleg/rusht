@@ -71,17 +71,23 @@ impl Dependent {
                 debug!("{} needs {} [{}/{}] which is immediately available", self.name, dependency.name, nr + 1, count);
             } else {
                 debug!("{} needs {} [{}/{}] which needs to be awaited", self.name, dependency.name, nr + 1, count);
-                let _: () = dependency.gate.wait().await;
-                debug!("{} was waiting for {} [{}/{}] which just became available", self.name, dependency.name, nr + 1, count);
+                let dep_ok = dependency.gate.wait().await;
+                if dep_ok {
+                    debug!("{} was waiting for {} [{}/{}] which just completed", self.name, dependency.name, nr + 1, count);
+                } else {
+                    debug!("{} was waiting for {} [{}/{}] which just failed! skipping execution", self.name, dependency.name, nr + 1, count);
+                    self.current.open(false);
+                    return ExitStatus::err()
+                }
             }
         };
-        let status = if let Some(task) = &self.task {
+        if let Some(task) = &self.task {
+            self.current.open(false);
             ExitStatus::of_code(task.execute_with_stdout(false, &mut StdWriter::stdout()).await.code())
         } else {
+            self.current.open(true);
             ExitStatus::ok()
-        };
-        self.current.open();
-        status
+        }
     }
 
     pub fn task(&self) -> Option<&Task> {
