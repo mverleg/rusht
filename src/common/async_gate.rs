@@ -85,8 +85,11 @@ impl <'a> Future for AsyncGateFuture<'a> {
     type Output = bool;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        if self.0.is_open() {
-            Poll::Ready(())
+        let status = self.0.peek();
+        if AsyncGateState::Ok == status {
+            Poll::Ready(true)
+        } else if AsyncGateState::Fail == status {
+            Poll::Ready(false)
         } else {
             self.0.content.wakers.lock().expect("AsyncGate lock poisoned").push(cx.waker().clone());
             Poll::Pending
@@ -109,7 +112,7 @@ mod tests {
     async fn already_open() {
         let gate = AsyncGate::new();
         assert!(!gate.is_open());
-        gate.open();
+        gate.open(true);
         gate.wait().await;
         assert!(gate.is_open());
     }
@@ -130,7 +133,7 @@ mod tests {
         let gate_clone = gate.clone();
         thread::scope(|_| {
             sleep(Duration::from_millis(20));
-            gate_clone.open()
+            gate_clone.open(true)
         });
         assert!(gate.is_open());
         gate.wait().await;

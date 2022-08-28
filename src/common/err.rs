@@ -49,6 +49,10 @@ impl ExitStatus {
     pub fn err() -> ExitStatus {
         ExitStatus::of(1)
     }
+
+    pub fn is_ok(&self) -> bool {
+        0 == self.code
+    }
 }
 
 impl Termination for ExitStatus {

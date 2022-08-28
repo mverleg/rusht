@@ -64,14 +64,22 @@ pub async fn mvnw(
     let cmds = cmd_config.build_cmds();
     //TODO @mverleg: stop after first error?
     let status = run_all(cmds).await;
-    if !status.success() {
-        if let Some(task) = cmd.task() {
-            if is_offline && task.cmd == "mvn" {
-                eprintln!("note: failed in offline mode, use -U for online")
-            }
-        }
-        return Err((status.code(), "".to_owned()));
+    if status.is_ok() {
+        Ok(())
+    } else {
+        Err((status, "".to_owned()))
     }
+
+    //TODO @mverleg: special warning if fails because of offline mode
+
+//    if !status.success() {
+//         if let Some(task) = cmd.task() {
+//             if is_offline && task.cmd == "mvn" {
+//                 eprintln!("note: failed in offline mode, use -U for online")
+//             }
+//         }
+//         return Err((status.code(), "".to_owned()));
+//     }
     // for (nr, cmd) in cmds.iter().enumerate() {
     //     // writer
     //     //     .write_line(format!(
@@ -94,8 +102,6 @@ pub async fn mvnw(
     //         return Err((status.code(), "".to_owned()));
     //     }
     // }
-
-    Ok(())
 }
 
 fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {

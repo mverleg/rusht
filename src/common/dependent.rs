@@ -47,7 +47,7 @@ impl Dependent {
         Dependent::new_optional(name, Some(task))
     }
 
-    pub fn new_noop(name: impl Into<String>, task: Task) -> Self {
+    pub fn new_noop(name: impl Into<String>) -> Self {
         Dependent::new_optional(name, None)
     }
 
@@ -93,12 +93,6 @@ impl Dependent {
     pub fn task(&self) -> Option<&Task> {
         self.task.as_ref()
     }
-}
-
-#[derive(Debug)]
-pub struct NoopDependent {
-    name: Rc<String>,
-    dependencies: SmallVec<[Dependency; 1]>,
 }
 
 pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
