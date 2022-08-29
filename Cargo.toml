@@ -69,6 +69,10 @@ name = "mon"
 path = "src/observe/main_mon.rs"
 
 [[bin]]
+name = "rusht_debug"
+path = "src/main_debug.rs"
+
+[[bin]]
 name = "rusht"
 path = "src/main_all.rs"
 

@@ -4,6 +4,7 @@ use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::Stdio;
+use std::time::Instant;
 
 use ::async_std::task::block_on;
 use ::clap::StructOpt;
@@ -184,6 +185,7 @@ impl Task {
 }
 
 fn resolve_executable(base_cmd: String) -> String {
+    let t0 = Instant::now();
     if base_cmd.contains('/') {
         debug!(
             "command {} appears to already be a path, not resolving further",
@@ -242,5 +244,11 @@ fn resolve_executable(base_cmd: String) -> String {
     };
     debug!("caching executable {} for {}", &full_cmd, &base_cmd);
     EXE_CACHE.insert(base_cmd, full_cmd.clone());
+    let duration = t0.elapsed().as_millis();
+    if duration > 200 {
+        warn!("resolve_executable slow, took {} ms", duration);
+    } else {
+        debug!("resolve_executable took {} ms", duration);
+    }
     full_cmd
 }

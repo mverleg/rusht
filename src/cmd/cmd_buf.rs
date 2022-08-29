@@ -1,5 +1,4 @@
 use ::clap::StructOpt;
-use ::log::debug;
 
 use crate::cmd::cmd_add::create_tasks;
 use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks};
