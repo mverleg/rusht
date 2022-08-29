@@ -5,9 +5,8 @@ use ::log::debug;
 use ::smallvec::SmallVec;
 use smallvec::smallvec;
 
-use crate::common::{LineWriter, StdWriter, Task};
+use crate::common::{StdWriter, Task};
 use crate::common::async_gate::AsyncGate;
-use crate::common::write::SyncWriter;
 use crate::ExitStatus;
 
 #[derive(Debug)]
@@ -65,7 +64,7 @@ impl Dependent {
         })
     }
 
-    pub async fn await_and_exec(&self, writer: &mut impl LineWriter) -> ExitStatus {
+    pub async fn await_and_exec(&self) -> ExitStatus {
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.is_open() {
@@ -84,7 +83,7 @@ impl Dependent {
         };
         if let Some(task) = &self.task {
             self.current.open(false);
-            ExitStatus::of_code(task.execute_with_stdout(false, writer).await.code())
+            ExitStatus::of_code(task.execute_with_stdout(false, &mut StdWriter::stdout()).await.code())
         } else {
             self.current.open(true);
             ExitStatus::ok()
@@ -96,10 +95,10 @@ impl Dependent {
     }
 }
 
-pub async fn run_all<W: LineWriter>(dependents: Vec<Dependent>, writer: &mut W) -> ExitStatus {
-    let mut sync_writer = SyncWriter::new(writer);
+pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
+    eprintln!("should this use threads? maybe async isn't enough");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     join_all(dependents.iter()
-        .map(|dep| dep.await_and_exec(&mut sync_writer))
+        .map(|dep| dep.await_and_exec())
         .collect::<Vec<_>>())
         .await
         .into_iter()
@@ -130,7 +129,7 @@ mod tests {
         let deps = vec![botm, mid1, top, mid2];
         match select(
                 Box::pin(sleep(Duration::from_secs(3))),
-                Box::pin(run_all(deps, &mut StdWriter::stdout()))
+                Box::pin(run_all(deps))
         ).await {
             Either::Left(_) => panic!("timeout"),
             Either::Right(_) => {}

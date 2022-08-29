@@ -63,7 +63,7 @@ pub async fn mvnw(
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
     //TODO @mverleg: stop after first error?
-    let status = run_all(cmds, writer).await;
+    let status = run_all(cmds).await;
     if status.is_ok() {
         Ok(())
     } else {
