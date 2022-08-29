@@ -1,4 +1,5 @@
 use ::clap::StructOpt;
+use crate::ExitStatus;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -10,7 +11,7 @@ pub struct BufArgs {
     // #[structopt(short = 'e', long)]
     // /// Add command at the end (last) instead of as the next.
     // pub end: bool,
-    #[structopt(short = 'L', long, conflicts_with = "lines")]
+    #[structopt(short = 'L', long)]
     /// Give a replacement placeholder for each line, instead of '{}'.
     pub lines_with: Option<String>,
     #[structopt(short = 'u', long)]
@@ -27,7 +28,7 @@ pub struct BufArgs {
     /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
     #[structopt(short = 'f', long = "continue-on-error")]
-    /// Keep running tasks even if one fails (it stays on stack unless -r).
+    /// Keep running tasks even if one fails.
     pub continue_on_error: bool,
     #[structopt(short = 'q', long)]
     /// Do not log command and timing.
@@ -42,7 +43,18 @@ fn test_cli_args() {
     use clap::IntoApp;
     BufArgs::into_app().debug_assert()
 }
-//
+
+pub fn buf_cmd(args: BufArgs) -> ExitStatus {
+    //TODO @mverleg: lines_with
+    //TODO @mverleg: unique
+    //TODO @mverleg: working_dir
+    //TODO @mverleg: count
+    //TODO @mverleg: parallel
+    //TODO @mverleg: continue_on_error
+    //TODO @mverleg: quiet
+    unimplemented!()  //TODO @mverleg:
+}
+
 // pub fn do_cmd(args: DoArgs) -> bool {
 //     let args = verify_args(args);
 //     let ts_s = current_time_s();

@@ -1,3 +1,4 @@
+use crate::cmd::cmd_buf::{buf_cmd, BufArgs};
 use crate::common::stdin_lines;
 use crate::common::EmptyLineHandling;
 use crate::ExitStatus;
@@ -40,4 +41,8 @@ pub fn handle_list(args: ListArgs) -> ExitStatus {
         }
         Err(ListErr::Empty) => ExitStatus::err(),
     }
+}
+
+pub fn handle_buf(args: BufArgs) -> ExitStatus {
+    buf_cmd(args)
 }
