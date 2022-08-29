@@ -172,6 +172,7 @@ impl Task {
             )),
         };
         if !quiet {
+            //TODO @mverleg: this is also in mon, use that
             let duration = t0.elapsed().as_millis();
             if status.success() {
                 if cmd_str.len() > 256 {  // approximate for non-ascii
