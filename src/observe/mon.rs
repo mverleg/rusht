@@ -37,6 +37,9 @@ pub async fn mon_task(
     }
     let t0 = Instant::now();
     let status = if output_on_success {
+        task.execute_with_stdout_nomonitor(writer).await
+    } else {
+        debug!("mon buffering output, will show on error");
         let mut out_buffer = VecWriter::new();
         let status = task.execute_with_stdout_nomonitor(&mut out_buffer).await;
         if status.is_err() {
@@ -44,8 +47,6 @@ pub async fn mon_task(
             writer.write_all_lines(out_buffer.get().iter()).await;
         }
         status
-    } else {
-        task.execute_with_stdout_nomonitor(writer).await
     };
     let duration = t0.elapsed().as_millis();
     if timing {
