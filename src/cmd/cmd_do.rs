@@ -1,6 +1,6 @@
+use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicUsize;
 use ::std::sync::atomic::Ordering;
-use ::std::sync::Arc;
 
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
@@ -75,59 +75,10 @@ pub fn do_cmd(args: DoArgs) -> bool {
         return false;
     }
 
-    let to_run = mark_tasks_to_run(&args, &mut tasks, ts_s);
+    let to_run = mark_tasks_to_run(args.restart_running, args.all, args.count, &mut tasks, ts_s);
     write(args.namespace.clone(), &tasks);
 
-    let statuses = Arc::new(DashMap::new());
-    to_run
-        .iter()
-        .map(|task| task.run_id)
-        .map(|run_id| (run_id, Status::Skipped))
-        .for_each(|(id, status)| {
-            statuses.insert(id, status);
-        });
-    let total_count = to_run.len();
-    let current_nr = AtomicUsize::new(1);
-
-    if args.continue_on_error {
-        ThreadPoolBuilder::new()
-            .num_threads(args.parallel as usize)
-            .build()
-            .expect("failed to create thread pool")
-            .install(|| {
-                to_run
-                    .into_par_iter()
-                    .map(|task| {
-                        let (id, status) = exec(
-                            &args,
-                            task,
-                            current_nr.fetch_add(1, Ordering::AcqRel),
-                            total_count,
-                        );
-                        statuses.insert(id, status);
-                    })
-                    .for_each(|_| {});
-            });
-    } else {
-        assert!(
-            args.parallel <= 1,
-            "cannot use parallel mode when continue-on-error is true"
-        );
-        to_run
-            .into_iter()
-            .map(|task| {
-                let (id, status) = exec(
-                    &args,
-                    task,
-                    current_nr.fetch_add(1, Ordering::AcqRel),
-                    total_count,
-                );
-                statuses.insert(id, status);
-                status
-            })
-            .take_while(|status| status == &Status::Success)
-            .for_each(|_| {});
-    }
+    let statuses = run_tasks(to_run, args.continue_on_error, args.parallel, args.quiet);
 
     let tasks = read(args.namespace.clone());
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
@@ -144,6 +95,60 @@ pub fn do_cmd(args: DoArgs) -> bool {
         .iter()
         .all(|entry| *entry.value() == Status::Success);
     all_ok
+}
+
+pub fn run_tasks(to_run: Vec<RunningTask>, continue_on_error: bool, parallel: u32, quiet: bool) -> Arc<DashMap<RunId, Status>> {
+    let statuses = Arc::new(DashMap::new());
+    to_run
+        .iter()
+        .map(|task| task.run_id)
+        .map(|run_id| (run_id, Status::Skipped))
+        .for_each(|(id, status)| {
+            statuses.insert(id, status);
+        });
+    let total_count = to_run.len();
+    let current_nr = AtomicUsize::new(1);
+
+    if continue_on_error {
+        ThreadPoolBuilder::new()
+            .num_threads(parallel as usize)
+            .build()
+            .expect("failed to create thread pool")
+            .install(|| {
+                to_run
+                    .into_par_iter()
+                    .map(|task| {
+                        let (id, status) = exec(
+                            task,
+                            current_nr.fetch_add(1, Ordering::AcqRel),
+                            total_count,
+                            quiet
+                        );
+                        statuses.insert(id, status);
+                    })
+                    .for_each(|_| {});
+            });
+    } else {
+        assert!(
+            parallel <= 1,
+            "cannot use parallel mode when continue-on-error is true"
+        );
+        to_run
+            .into_iter()
+            .map(|task| {
+                let (id, status) = exec(
+                    task,
+                    current_nr.fetch_add(1, Ordering::AcqRel),
+                    total_count,
+                    quiet
+                );
+                statuses.insert(id, status);
+                status
+            })
+            .take_while(|status| status == &Status::Success)
+            .for_each(|_| {});
+    }
+    statuses
 }
 
 fn verify_args(mut args: DoArgs) -> DoArgs {
@@ -164,12 +169,12 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
 }
 
 fn exec(
-    args: &DoArgs,
     task: RunningTask,
     current_nr: usize,
     total_count: usize,
+    quiet: bool,
 ) -> (RunId, Status) {
-    if !args.quiet {
+    if !quiet {
         if total_count > 1 {
             println!("run {}/{}: {}", current_nr, total_count, task.as_str());
         } else {
@@ -177,15 +182,25 @@ fn exec(
         }
     }
     let id = task.run_id;
-    let status = Status::from(task.task.execute_sync(!args.quiet));
+    let status = Status::from(task.task.execute_sync(!quiet));
     (id, status)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Status {
+pub enum Status {
     Success,
-    Failed,
+    Failed(ExitStatus),
     Skipped,
+}
+
+impl Status {
+    pub fn exit_status(&self) -> ExitStatus {
+        match self {
+            Status::Success => ExitStatus::ok(),
+            Status::Skipped => ExitStatus::ok(),
+            Status::Failed(code) => ExitStatus::of(code.code),
+        }
+    }
 }
 
 impl From<ExitStatus> for Status {
@@ -193,12 +208,12 @@ impl From<ExitStatus> for Status {
         if exit.is_ok() {
             Status::Success
         } else {
-            Status::Failed
+            Status::Failed(exit)
         }
     }
 }
 
-fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<RunningTask> {
+pub fn mark_tasks_to_run(restart_running: bool, all: bool, count: u32, tasks: &mut TaskStack, ts_s: u32) -> Vec<RunningTask> {
     let rand_id = rand::thread_rng().gen::<u32>();
     let mut run_nr = 0;
     let mut to_run = vec![];
@@ -210,7 +225,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
                     running.run_id,
                     running.as_str()
                 );
-                if args.restart_running {
+                if restart_running {
                     running.task.clone()
                 } else {
                     eprintln!("skipping command because it is already running or has failed without contact: {}",
@@ -234,7 +249,7 @@ fn mark_tasks_to_run(args: &DoArgs, tasks: &mut TaskStack, ts_s: u32) -> Vec<Run
         to_run.push(run_task.clone());
         *task = TaskType::Running(run_task);
         run_nr += 1;
-        if !args.all && run_nr >= args.count {
+        if !all && run_nr >= count {
             break;
         }
     }
@@ -275,15 +290,15 @@ fn should_keep_completed_task(
                         None
                     }
                 }
-                Status::Failed => {
+                Status::Failed(code) => {
                     if args.drop_failed {
                         debug!(
-                            "removing failed command (as requested with --drop-failed): {}",
-                            &cmd
+                            "removing failed command (as requested with --drop-failed): {} (code {})",
+                            &cmd, code
                         );
                         None
                     } else {
-                        debug!("keep failed command to be retried: {}", &cmd);
+                        debug!("keep failed command to be retried: {} (code {})", &cmd, code);
                         Some(TaskType::Running(running.clone()))
                     }
                 }
