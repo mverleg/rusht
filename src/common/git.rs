@@ -74,7 +74,7 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
         }
     }
     let duration = t0.elapsed().as_millis();
-    if duration > 500 {
+    if duration > 200 {
         warn!("git_affected_files_head slow, took {} ms", duration);
     } else {
         debug!("git_affected_files_head took {} ms", duration);
