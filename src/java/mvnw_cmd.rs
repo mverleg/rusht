@@ -81,6 +81,52 @@ impl MvnCmdConfig {
             debug!("not cleaning, incremental build");
         }
 
+        // Lint
+        if !self.lint {
+            debug!("no lint requested, skipping checkstyle");
+        } else if self.changed_files.is_empty() {
+            debug!("no affected files, checkstyle lint was requested but will be skipped");
+        } else {
+            let mut checkstyle_conf_pth = self.cwd.clone();
+            checkstyle_conf_pth.push("sputnik-rules");
+            checkstyle_conf_pth.push("checkstyle.xml");
+            if checkstyle_conf_pth.is_file() {
+                debug!(
+                    "linting enabled, found checkstyle config at: {}",
+                    checkstyle_conf_pth.to_string_lossy()
+                );
+                let (task, checkstyle_jar_pth) =
+                    ensure_checkstyle_jar_exists(&self.checkstyle_version);
+                if let Some(task) = task {
+                    tasks.install_lint = Some(task);
+                }
+                let mut lint_args = vec![
+                    format!("-Xmx{}m", self.max_memory_mb),
+                    "-jar".to_owned(),
+                    checkstyle_jar_pth.to_str().unwrap().to_owned(),
+                    "-c".to_owned(),
+                    checkstyle_conf_pth.to_str().unwrap().to_owned(),
+                ];
+                lint_args.extend_from_slice(
+                    &self
+                        .changed_files
+                        .iter()
+                        .map(|af| {
+                            af.to_str()
+                                .expect("changed file path not unicode")
+                                .to_owned()
+                        })
+                        .collect::<Vec<_>>(),
+                );
+                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
+            } else {
+                warn!(
+                    "skipping checkstyle because config was not found at '{}'",
+                    checkstyle_conf_pth.to_string_lossy()
+                );
+            }
+        }
+
         // Determine maven stage
         let stage = if self.install {
             debug!("maven install requested");
@@ -127,51 +173,6 @@ impl MvnCmdConfig {
         // Default optimization flags
         self.add_opt_args(&mut args);
 
-        // Lint
-        if !self.lint {
-            debug!("no lint requested, skipping checkstyle");
-        } else if self.changed_files.is_empty() {
-            debug!("no affected files, checkstyle lint was requested but will be skipped");
-        } else {
-            let mut checkstyle_conf_pth = self.cwd.clone();
-            checkstyle_conf_pth.push("sputnik-rules");
-            checkstyle_conf_pth.push("checkstyle.xml");
-            if checkstyle_conf_pth.is_file() {
-                debug!(
-                    "linting enabled, found checkstyle config at: {}",
-                    checkstyle_conf_pth.to_string_lossy()
-                );
-                let (task, checkstyle_jar_pth) =
-                    ensure_checkstyle_jar_exists(&self.checkstyle_version);
-                if let Some(task) = task {
-                    tasks.install_lint = Some(task);
-                }
-                let mut lint_args = vec![
-                    format!("-Xmx{}m", self.max_memory_mb),
-                    "-jar".to_owned(),
-                    checkstyle_jar_pth.to_str().unwrap().to_owned(),
-                    "-c".to_owned(),
-                    checkstyle_conf_pth.to_str().unwrap().to_owned(),
-                ];
-                lint_args.extend_from_slice(
-                    &self
-                        .changed_files
-                        .iter()
-                        .map(|af| {
-                            af.to_str()
-                                .expect("changed file path not unicode")
-                                .to_owned()
-                        })
-                        .collect::<Vec<_>>(),
-                );
-                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
-            } else {
-                warn!(
-                    "skipping checkstyle because config was not found at '{}'",
-                    checkstyle_conf_pth.to_string_lossy()
-                );
-            }
-        }
         tasks.build = Some(self.make_mvn_task(args.clone()));
 
         // Tests
@@ -189,15 +190,22 @@ impl MvnCmdConfig {
             }
             TestMode::NoRun => {
                 debug!("building tests but not running them");
-                args.push("-DskipTests".to_owned());
+                if single_cmd {
+                    args.push("-DskipTests".to_owned());
+                }
             }
             TestMode::NoBuild => {
                 debug!("not building or running tests");
-                args.push("-Dmaven.test.skip=true".to_owned());
-                args.push("-DskipTests".to_owned());
+                if single_cmd {
+                    args.push("-Dmaven.test.skip=true".to_owned());
+                    args.push("-DskipTests".to_owned());
+                }
             }
         }
-        if self.tests.run_any() && self.tests == TestMode::All {
+        if ! single_cmd {
+            args.push("-DskipTests".to_owned());
+        }
+        if self.tests.run_any() {
             if single_cmd {
                 debug!("build and test in same command (all modules are built)");
                 self.add_test_args(&mut args);

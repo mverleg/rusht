@@ -13,12 +13,12 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
         let mut task = base_task.clone();
         task.push_arg(arg);
         let status = task.execute_sync(false);
-        if expect_success == status.success() {
+        if expect_success == status.is_ok() {
             debug!(
                 "keep line {} after task {} (code: {})",
                 line,
                 task.as_cmd_str(),
-                status.code().unwrap_or(-1)
+                status.code()
             );
             writer.write_line(line).await;
         } else {
@@ -26,7 +26,7 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
                 "discard line {} after task {} (code: {})",
                 line,
                 task.as_cmd_str(),
-                status.code().unwrap_or(-1)
+                status.code()
             );
         }
     }

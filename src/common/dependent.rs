@@ -83,7 +83,7 @@ impl Dependent {
         };
         if let Some(task) = &self.task {
             self.current.open(false);
-            ExitStatus::of_code(task.execute_with_stdout(true, &mut StdWriter::stdout()).await.code())
+            task.execute_with_stdout(true, &mut StdWriter::stdout()).await
         } else {
             self.current.open(true);
             ExitStatus::ok()

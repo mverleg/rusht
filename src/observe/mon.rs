@@ -59,13 +59,13 @@ pub async fn mon_task(
                 "command {} FAILED in {} ms (code {})",
                 cmd_str,
                 duration,
-                status.code().unwrap_or(-1)
+                status.code()
             );
         }
     }
-    if let Err(err) = sound_notification(sound_success, sound_failure, status.success()) {
+    if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()) {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
     }
-    ExitStatus::of_code(status.code())
+    status
 }
