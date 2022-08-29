@@ -1,4 +1,6 @@
 use ::clap::StructOpt;
+use crate::cmd::cmd_add::create_tasks;
+use crate::common::{CommandArgs, EmptyLineHandling, stdin_lines};
 use crate::ExitStatus;
 
 #[derive(StructOpt, Debug)]
@@ -36,6 +38,9 @@ pub struct BufArgs {
     // #[structopt(short = '0', long = "allow-empty")]
     // /// Silently do nothing if there are no commands.
     // pub allow_empty: bool,
+
+    #[structopt(subcommand)]
+    pub cmd: CommandArgs,
 }
 
 #[test]
@@ -52,6 +57,11 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
     //TODO @mverleg: parallel
     //TODO @mverleg: continue_on_error
     //TODO @mverleg: quiet
+    create_tasks(|| stdin_lines(EmptyLineHandling::Drop),
+                 args.cmd,
+                 args.working_dir,
+                 args.lines_with,
+                 args.unique);
     unimplemented!()  //TODO @mverleg:
 }
 

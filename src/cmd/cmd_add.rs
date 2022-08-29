@@ -54,39 +54,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         !args.unique || args.lines_with.is_some(),
         "--unique can only be used with --lines or --lines-with"
     );
-    let cmd = args.cmd.unpack();
-    let new_tasks = if let Some(templ) = args.lines_with {
-        assert!(!templ.is_empty());
-        let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
-        if !has_placeholder
-            && (args.working_dir.is_some() && args.working_dir.as_ref().unwrap().contains(&templ))
-        {
-            has_placeholder = true
-        }
-        if !has_placeholder {
-            fail(format!(
-                "did not filter template string '{}' in task or working dir: {}, {:?}",
-                templ,
-                cmd.join(" "),
-                &args.working_dir,
-            ))
-        }
-        debug!("going to read stdin lines");
-        let mut seen: HashSet<&String> = HashSet::new();
-        line_reader()
-            .iter()
-            .filter(|line| !args.unique || seen.insert(line))
-            .map(|input| task_from_template(&cmd, input, &templ, &args.working_dir))
-            .collect()
-    } else {
-        spawn(stdin_ignored_warning);
-        let working_dir = args
-            .working_dir
-            .map(PathBuf::from)
-            .unwrap_or_else(|| current_dir().unwrap());
-        vec![Task::new_split(cmd, working_dir)]
-    };
-    debug!("finished constructing {} new tasks", new_tasks.len());
+    let new_tasks = create_tasks(line_reader, args.cmd, args.working_dir, args.lines_with, args.unique);
     if new_tasks.is_empty() {
         if !args.quiet {
             eprintln!("no tasks found, was stdin empty?");
@@ -108,6 +76,47 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         println!("{} command(s) pending", stored_tasks.len());
     }
     write(args.namespace, &stored_tasks);
+}
+
+pub fn create_tasks(line_reader: impl FnOnce() -> Vec<String>,
+        base_cmd: CommandArgs,
+        working_dir: Option<String>,
+        lines_with: Option<String>,
+        unique: bool
+) -> Vec<Task> {
+    let cmd = base_cmd.unpack();
+    let new_tasks = if let Some(templ) = lines_with {
+        assert!(!templ.is_empty());
+        let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
+        if !has_placeholder
+            && (working_dir.is_some() && working_dir.as_ref().unwrap().contains(&templ))
+        {
+            has_placeholder = true
+        }
+        if !has_placeholder {
+            fail(format!(
+                "did not filter template string '{}' in task or working dir: {}, {:?}",
+                templ,
+                cmd.join(" "),
+                &working_dir,
+            ))
+        }
+        debug!("going to read stdin lines");
+        let mut seen: HashSet<&String> = HashSet::new();
+        line_reader()
+            .iter()
+            .filter(|line| !unique || seen.insert(line))
+            .map(|input| task_from_template(&cmd, input, &templ, &working_dir))
+            .collect()
+    } else {
+        spawn(stdin_ignored_warning);
+        let working_dir = working_dir
+            .map(PathBuf::from)
+            .unwrap_or_else(|| current_dir().unwrap());
+        vec![Task::new_split(cmd, working_dir)]
+    };
+    debug!("finished constructing {} new tasks", new_tasks.len());
+    new_tasks
 }
 
 fn task_from_template(
