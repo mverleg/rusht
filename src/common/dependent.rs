@@ -96,7 +96,6 @@ impl Dependent {
 }
 
 pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
-    eprintln!("should this use threads? maybe async isn't enough");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     join_all(dependents.iter()
         .map(|dep| dep.await_and_exec())
         .collect::<Vec<_>>())

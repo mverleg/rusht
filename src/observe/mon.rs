@@ -5,6 +5,8 @@ use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
 
+use ::log::debug;
+
 pub async fn mon(
     args: MonArgs,
     writer: &mut impl LineWriter,
@@ -28,9 +30,10 @@ pub async fn mon_task(
     sound_success: bool,
     sound_failure: bool,
 ) -> ExitStatus {
+    debug!("print_cmd={print_cmd} output_on_success={output_on_success} timing={timing} sound_success={sound_success} sound_failure={sound_failure} for task {}", task.as_str());
     let cmd_str = task.as_str();
-    if ! print_cmd {
-        println!("going to run {}", cmd_str);
+    if print_cmd {
+        writer.write_line(format!("going to run {}", cmd_str)).await;
     }
     let t0 = Instant::now();
     let status = if output_on_success {
@@ -45,13 +48,13 @@ pub async fn mon_task(
         task.execute_with_stdout_nomonitor(writer).await
     };
     let duration = t0.elapsed().as_millis();
-    if ! timing {
+    if timing {
         if status.is_ok() {
             if cmd_str.len() > 256 {  // approximate for non-ascii
-                println!("took {} ms to run {}...", duration,
-                         cmd_str.chars().take(256).collect::<String>());
+                writer.write_line(format!("took {} ms to run {}...", duration,
+                         cmd_str.chars().take(256).collect::<String>())).await;
             } else {
-                println!("took {} ms to run {}", duration, cmd_str);
+                writer.write_line(format!("took {} ms to run {}", duration, cmd_str)).await;
             }
         } else {
             eprintln!(
