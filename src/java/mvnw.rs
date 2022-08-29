@@ -14,6 +14,7 @@ use crate::ExitStatus;
 pub async fn mvnw(
     args: MvnwArgs,
     writer: &mut impl LineWriter,
+    //TODO @mverleg: ^use LineWriter (has some lifetime issues with run_all)
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
@@ -57,12 +58,19 @@ pub async fn mvnw(
     }
 
     let show_cmds_only = args.show_cmds_only;
-    let is_offline = !args.update;
+    //let is_offline = !args.update;
     let cmd_config = build_config(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
     debug!("command config: {:?}", cmd_config);
     let cmds = cmd_config.build_cmds();
-    //TODO @mverleg: stop after first error?
+    if show_cmds_only {
+        for cmd in cmds {
+            if let Some(task) = cmd.task() {
+                writer.write_line(task.as_str()).await;
+            }
+        }
+        return Ok(())
+    }
     let status = run_all(cmds).await;
     if status.is_ok() {
         Ok(())

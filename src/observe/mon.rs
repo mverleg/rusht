@@ -28,7 +28,6 @@ pub async fn mon_task(
     sound_success: bool,
     sound_failure: bool,
 ) -> ExitStatus {
-    let t0 = Instant::now();
     let cmd_str = task.as_str();
     if ! print_cmd {
         println!("going to run {}", cmd_str);
