@@ -11,7 +11,7 @@ pub fn locked(args: LockedArgs) -> Result<(), String> {
         return Ok(());
     }
     let task = args.cmd.into_task();
-    let status = task.execute(false);
+    let status = task.execute_sync(true);
     if !status.success() {
         return Err(format!("failed with status {}", status.code().unwrap_or(0)));
     }

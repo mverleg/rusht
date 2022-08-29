@@ -119,20 +119,29 @@ impl Task {
         format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
     }
 
-    pub fn execute(&self, quiet: bool) -> ProcStatus {
-        block_on(self.execute_with_stdout(quiet, &mut StdWriter::stdout()))
-        //TODO @mverleg: block on for now since it does not have suspend points anyway
+    pub fn execute_sync(&self, monitor: bool) -> ProcStatus {
+        let writer = &mut StdWriter::stdout();
+        block_on(execute_with_stdout(monitor, writer))
     }
 
     pub async fn execute_with_stdout(
         &self,
-        quiet: bool,
+        monitor: bool,
+        writer: &mut impl LineWriter,
+    ) -> ProcStatus {
+        if monitor {
+            task.execute_with_stdout_nomonitor(writer)
+        } else {
+            task.execute_with_stdout_nomonitor(writer)
+        }
+    }
+
+    async fn execute_with_stdout_nomonitor(
+        &self,
         writer: &mut impl LineWriter,
     ) -> ProcStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
-        let t0 = Instant::now();
-        let cmd_str = self.as_str();
         let mut child = match Command::new(&self.cmd)
             .args(&self.args)
             .current_dir(&self.working_dir)
@@ -171,25 +180,6 @@ impl Task {
                 cmd_str, err
             )),
         };
-        if !quiet {
-            //TODO @mverleg: this is also in mon, use that
-            let duration = t0.elapsed().as_millis();
-            if status.success() {
-                if cmd_str.len() > 256 {  // approximate for non-ascii
-                    println!("took {} ms to run {}...", duration,
-                             cmd_str.chars().take(256).collect::<String>());
-                } else {
-                    println!("took {} ms to run {}", duration, cmd_str);
-                }
-            } else {
-                eprintln!(
-                    "command {} FAILED in {} ms (code {})",
-                    cmd_str,
-                    duration,
-                    status.code().unwrap_or(-1)
-                );
-            }
-        }
         status
     }
 }

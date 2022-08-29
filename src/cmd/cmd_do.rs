@@ -177,7 +177,7 @@ fn exec(
         }
     }
     let id = task.run_id;
-    let status = Status::from(task.task.execute(args.quiet));
+    let status = Status::from(task.task.execute_sync(!args.quiet));
     (id, status)
 }
 
