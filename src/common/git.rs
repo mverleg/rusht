@@ -1,10 +1,13 @@
 #![allow(unused)] //TODO @mverleg: TEMPORARY! REMOVE THIS!
 
+use ::std::collections::HashSet;
 use ::std::path::Path;
-use std::collections::HashSet;
-use std::path::PathBuf;
+use ::std::path::PathBuf;
+use ::std::time::Instant;
 
 use ::git2::Repository;
+use ::log::debug;
+use ::log::warn;
 
 pub fn git_head_ref(dir: &Path) -> Result<String, String> {
     let repo = Repository::open(dir).map_err(|err| {
@@ -24,6 +27,7 @@ pub fn git_master_base() {
 
 /// Returns changed and deleted files (separately) in head
 pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<PathBuf>), String> {
+    let t0 = Instant::now();
     let repo = Repository::open(dir).map_err(|err| {
         format!(
             "failed to read git repository at {}, err {}",
@@ -69,6 +73,12 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
             }
         }
     }
+    let duration = t0.elapsed().as_millis();
+    if duration > 500 {
+        warn!("git_affected_files_head slow, took {} ms", duration);
+    } else {
+        debug!("git_affected_files_head took {} ms", duration);
+    }
     //TODO @mverleg: ^ this (hopefully) works for the specific commit, but when combining multiple commits, the files don't necessarily exist anymore at the end
     Ok((changed_files, deleted_files))
 }
@@ -84,9 +94,10 @@ pub fn git_affected_files_branch() {
 
 #[cfg(test)]
 mod tests {
-    //TODO @mverleg: TEMPORARY! REMOVE THIS!
-    use super::*;
     use std::path::PathBuf;
+
+    //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        use super::*;
 
     #[test]
     fn test_add() {
