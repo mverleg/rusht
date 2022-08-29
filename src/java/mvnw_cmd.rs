@@ -265,7 +265,7 @@ impl MvnCmdConfig {
         if !self.profiles.is_empty() {
             debug!("(de)activating {} maven profiles", self.profiles.len());
             args.push(format!(
-                "--activate-profiles='{}'",
+                "--activate-profiles=\"{}\"",
                 self.profiles.iter().join(",")
             ));
         }

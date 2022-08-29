@@ -1,25 +1,26 @@
 use ::std::collections::HashMap;
 use ::std::env;
 use ::std::io::{BufRead, BufReader};
+use ::std::iter;
 use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::Stdio;
-use std::time::Instant;
+use ::std::time::Instant;
 
 use ::async_std::task::block_on;
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
 use ::itertools::Itertools;
 use ::lazy_static::lazy_static;
-use ::log::info;
 use ::log::{debug, warn};
+use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdWriter};
-use crate::observe::mon_task;
 use crate::ExitStatus;
+use crate::observe::mon_task;
 
 lazy_static! {
     static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
@@ -142,9 +143,10 @@ impl Task {
         if env::var(use_shell_env).is_ok() {
             debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
             let mut cmd = Command::new("sh");
-            let joined_cmd = self.args.iter().
-                map(|arg| format!("'{}'", arg.replace("'", "\\'")))
-                .join(" ");
+            let joined_cmd = iter::once(format!("'{}'", self.cmd))
+                .chain(self.args.iter()
+                    .map(|arg| format!("'{}'", arg.replace("'", "\\'")))
+                ).join(" ");
             cmd.args(&["-c".to_owned(), joined_cmd]);
             self.execute_cmd_with_stdout(cmd, writer).await
         } else {
@@ -158,6 +160,8 @@ impl Task {
     async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
+        debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
+            base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
         let mut child = match base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
