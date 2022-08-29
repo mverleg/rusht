@@ -1,24 +1,24 @@
 use ::std::time::Instant;
 
 use crate::common::{LineWriter, Task, VecWriter};
-use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
+use crate::ExitStatus;
 
 use ::log::debug;
 
-pub async fn mon(
-    args: MonArgs,
-    writer: &mut impl LineWriter,
-) -> ExitStatus {
+pub async fn mon(args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
     let task = args.cmd.clone().into_task();
-    mon_task(&task,
-             writer,
-             !args.no_print_cmd,
-             !args.no_output_on_success,
-             !args.no_timing,
-             args.sound_success,
-             args.sound_failure).await
+    mon_task(
+        &task,
+        writer,
+        !args.no_print_cmd,
+        !args.no_output_on_success,
+        !args.no_timing,
+        args.sound_success,
+        args.sound_failure,
+    )
+    .await
 }
 
 pub async fn mon_task(
@@ -51,11 +51,19 @@ pub async fn mon_task(
     let duration = t0.elapsed().as_millis();
     if timing {
         if status.is_ok() {
-            if cmd_str.len() > 256 {  // approximate for non-ascii
-                writer.write_line(format!("took {} ms to run {}...", duration,
-                         cmd_str.chars().take(256).collect::<String>())).await;
+            if cmd_str.len() > 256 {
+                // approximate for non-ascii
+                writer
+                    .write_line(format!(
+                        "took {} ms to run {}...",
+                        duration,
+                        cmd_str.chars().take(256).collect::<String>()
+                    ))
+                    .await;
             } else {
-                writer.write_line(format!("took {} ms to run {}", duration, cmd_str)).await;
+                writer
+                    .write_line(format!("took {} ms to run {}", duration, cmd_str))
+                    .await;
             }
         } else {
             eprintln!(
@@ -68,7 +76,7 @@ pub async fn mon_task(
     }
     if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()) {
         eprintln!("notification sound problem: {}", err);
-        return ExitStatus::err()
+        return ExitStatus::err();
     }
     status
 }

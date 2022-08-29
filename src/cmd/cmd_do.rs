@@ -1,6 +1,6 @@
-use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicUsize;
 use ::std::sync::atomic::Ordering;
+use ::std::sync::Arc;
 
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
@@ -97,7 +97,12 @@ pub fn do_cmd(args: DoArgs) -> bool {
     all_ok
 }
 
-pub fn run_tasks(to_run: Vec<RunningTask>, continue_on_error: bool, parallel: u32, quiet: bool) -> Arc<DashMap<RunId, Status>> {
+pub fn run_tasks(
+    to_run: Vec<RunningTask>,
+    continue_on_error: bool,
+    parallel: u32,
+    quiet: bool,
+) -> Arc<DashMap<RunId, Status>> {
     let statuses = Arc::new(DashMap::new());
     to_run
         .iter()
@@ -122,7 +127,7 @@ pub fn run_tasks(to_run: Vec<RunningTask>, continue_on_error: bool, parallel: u3
                             task,
                             current_nr.fetch_add(1, Ordering::AcqRel),
                             total_count,
-                            quiet
+                            quiet,
                         );
                         statuses.insert(id, status);
                     })
@@ -140,7 +145,7 @@ pub fn run_tasks(to_run: Vec<RunningTask>, continue_on_error: bool, parallel: u3
                     task,
                     current_nr.fetch_add(1, Ordering::AcqRel),
                     total_count,
-                    quiet
+                    quiet,
                 );
                 statuses.insert(id, status);
                 status
@@ -168,12 +173,7 @@ fn verify_args(mut args: DoArgs) -> DoArgs {
     args
 }
 
-fn exec(
-    task: RunningTask,
-    current_nr: usize,
-    total_count: usize,
-    quiet: bool,
-) -> (RunId, Status) {
+fn exec(task: RunningTask, current_nr: usize, total_count: usize, quiet: bool) -> (RunId, Status) {
     if !quiet {
         if total_count > 1 {
             println!("run {}/{}: {}", current_nr, total_count, task.as_str());
@@ -213,7 +213,13 @@ impl From<ExitStatus> for Status {
     }
 }
 
-pub fn mark_tasks_to_run(restart_running: bool, all: bool, count: u32, tasks: &mut TaskStack, ts_s: u32) -> Vec<RunningTask> {
+pub fn mark_tasks_to_run(
+    restart_running: bool,
+    all: bool,
+    count: u32,
+    tasks: &mut TaskStack,
+    ts_s: u32,
+) -> Vec<RunningTask> {
     let rand_id = rand::thread_rng().gen::<u32>();
     let mut run_nr = 0;
     let mut to_run = vec![];
@@ -298,7 +304,10 @@ fn should_keep_completed_task(
                         );
                         None
                     } else {
-                        debug!("keep failed command to be retried: {} (code {})", &cmd, code);
+                        debug!(
+                            "keep failed command to be retried: {} (code {})",
+                            &cmd, code
+                        );
                         Some(TaskType::Running(running.clone()))
                     }
                 }

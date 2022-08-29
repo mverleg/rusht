@@ -202,7 +202,7 @@ impl MvnCmdConfig {
                 }
             }
         }
-        if ! single_cmd {
+        if !single_cmd {
             args.push("-DskipTests".to_owned());
         }
         if self.tests.run_any() {
@@ -225,7 +225,9 @@ impl MvnCmdConfig {
                 format!("-Dexec.mainClass=\"{}\"", exec),
             ];
             self.add_opt_args(&mut exe_args);
-            tasks.exes.push(self.make_mvn_task_with_mem(exe_args, self.max_exec_memory_mb));
+            tasks
+                .exes
+                .push(self.make_mvn_task_with_mem(exe_args, self.max_exec_memory_mb));
         }
 
         tasks
@@ -325,7 +327,15 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
 
 impl MvnTasks {
     fn flatten(self) -> Vec<Dependent> {
-        let MvnTasks { version, clean, install_lint, lint, build, test, exes } = self;
+        let MvnTasks {
+            version,
+            clean,
+            install_lint,
+            lint,
+            build,
+            test,
+            exes,
+        } = self;
         let version = Dependent::new_optional("version", version);
         let mut clean = Dependent::new_optional("clean", clean);
         clean.depends_on(&version);
@@ -334,25 +344,19 @@ impl MvnTasks {
         let mut lint = Dependent::new_optional("lint", lint);
         lint.depends_on(&install_lint);
         let mut build = Dependent::new_named("build", build.expect("build task must always exist"));
-        build.depends_on(&lint);  // linter sometimes fails on @Immutables if build is running
+        build.depends_on(&lint); // linter sometimes fails on @Immutables if build is running
         build.depends_on(&clean);
         let mut test = Dependent::new_optional("test", test);
         test.depends_on(&build);
-        let exes = exes.into_iter()
+        let exes = exes
+            .into_iter()
             .map(|ex| {
                 let mut dep = Dependent::new_named("version", ex);
                 dep.depends_on(&build);
                 dep
             })
             .collect::<Vec<_>>();
-        let mut tasks = vec![
-            version,
-            clean,
-            install_lint,
-            lint,
-            build,
-            test,
-        ];
+        let mut tasks = vec![version, clean, install_lint, lint, build, test];
         tasks.extend(exes);
         tasks
     }

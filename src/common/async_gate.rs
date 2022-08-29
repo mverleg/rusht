@@ -1,8 +1,8 @@
 use ::std::future::Future;
 use ::std::pin::Pin;
-use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicU8;
 use ::std::sync::atomic::Ordering;
+use ::std::sync::Arc;
 use ::std::sync::Mutex;
 use ::std::task::Context;
 use ::std::task::Poll;
@@ -16,7 +16,11 @@ const OK: u8 = 1;
 const FAIL: u8 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AsyncGateState { Pending, Ok, Fail, }
+pub enum AsyncGateState {
+    Pending,
+    Ok,
+    Fail,
+}
 
 /// AsyncGate is a way for async operations to wait for each other.
 /// The AsyncGate is initially created as closed. Any number of async functions can
@@ -41,7 +45,7 @@ impl AsyncGate {
             content: Arc::new(AsyncGateContent {
                 is_open: AtomicU8::new(PENDING),
                 wakers: Mutex::new(smallvec![]),
-            })
+            }),
         }
     }
 
@@ -49,9 +53,19 @@ impl AsyncGate {
     pub fn open(&self, is_ok: bool) {
         let new_state = if is_ok { OK } else { FAIL };
         let prev_state = self.content.is_open.compare_exchange(
-            PENDING, new_state, Ordering::Release, Ordering::Acquire);
+            PENDING,
+            new_state,
+            Ordering::Release,
+            Ordering::Acquire,
+        );
         if prev_state == Ok(PENDING) {
-            for waker in self.content.wakers.lock().expect("AsyncGate lock poisoned").drain(..) {
+            for waker in self
+                .content
+                .wakers
+                .lock()
+                .expect("AsyncGate lock poisoned")
+                .drain(..)
+            {
                 waker.wake();
             }
         }
@@ -75,13 +89,13 @@ impl AsyncGate {
     /// Wait for the gate until someone else opens it, then return
     /// whether it was successful (true) or failed (false).
     pub fn wait(&self) -> AsyncGateFuture {
-        return AsyncGateFuture(&self)
+        AsyncGateFuture(self)
     }
 }
 
 pub struct AsyncGateFuture<'a>(&'a AsyncGate);
 
-impl <'a> Future for AsyncGateFuture<'a> {
+impl<'a> Future for AsyncGateFuture<'a> {
     type Output = bool;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -91,7 +105,12 @@ impl <'a> Future for AsyncGateFuture<'a> {
         } else if AsyncGateState::Fail == status {
             Poll::Ready(false)
         } else {
-            self.0.content.wakers.lock().expect("AsyncGate lock poisoned").push(cx.waker().clone());
+            self.0
+                .content
+                .wakers
+                .lock()
+                .expect("AsyncGate lock poisoned")
+                .push(cx.waker().clone());
             Poll::Pending
         }
     }
@@ -153,7 +172,8 @@ mod tests {
                 join(gate.wait(), (async || gate.open(true))()),
                 join(gate.wait(), gate_clone.wait()),
             ),
-        ).await;
+        )
+        .await;
         assert!(gate.is_open());
     }
 }

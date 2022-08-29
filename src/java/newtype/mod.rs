@@ -1,5 +1,5 @@
-pub use self::profile::Profile;
 pub use self::fqn::FullyQualifiedName;
+pub use self::profile::Profile;
 
-mod profile;
 mod fqn;
+mod profile;

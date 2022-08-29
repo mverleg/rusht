@@ -32,7 +32,7 @@ pub async fn get_matches(
             writer.write_line(full_match).await;
         }
         if first_match_only {
-            break
+            break;
         }
     }
     if !any_matches && keep_unmatched {

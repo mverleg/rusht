@@ -28,7 +28,7 @@ pub struct StdWriter<W: Write + Unpin + Send> {
     writer: W,
 }
 
-impl <W: Write + Unpin + Send> StdWriter<W> {
+impl<W: Write + Unpin + Send> StdWriter<W> {
     pub fn of(writer: W) -> Self {
         StdWriter { writer }
     }
@@ -47,7 +47,7 @@ impl StdWriter<io::Stderr> {
 }
 
 #[async_trait]
-impl <W: Write + Unpin + Send> LineWriter for StdWriter<W> {
+impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();

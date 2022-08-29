@@ -55,7 +55,9 @@ fn test_cli_args() {
 
 #[async_std::main]
 async fn main() -> ExitStatus {
-    env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"));
+    env_logger::init_from_env(
+        env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
+    );
     let args = RushtArgs::from_args();
     match args.subcommand {
         SubCmd::Cached(sub_args) => handle_cached(sub_args).await,

@@ -5,7 +5,7 @@ use ::std::path::PathBuf;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{git_affected_files_head, LineWriter, run_all};
+use crate::common::{git_affected_files_head, run_all, LineWriter};
 use crate::java::mvnw_args::AffectedPolicy;
 use crate::java::MvnCmdConfig;
 use crate::java::MvnwArgs;
@@ -19,7 +19,10 @@ pub async fn mvnw(
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
     assert!(args.execs.is_empty(), "execs not supported yet");
-    assert!(args.rebuild_if_match.is_empty(), "rebuild_if_match not supported yet");
+    assert!(
+        args.rebuild_if_match.is_empty(),
+        "rebuild_if_match not supported yet"
+    );
     debug!("arguments: {:?}", &args);
     if !args.all {
         return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
@@ -69,7 +72,7 @@ pub async fn mvnw(
                 writer.write_line(task.as_str()).await;
             }
         }
-        return Ok(())
+        return Ok(());
     }
     let status = run_all(cmds).await;
     if status.is_ok() {
@@ -80,14 +83,14 @@ pub async fn mvnw(
 
     //TODO @mverleg: special warning if fails because of offline mode
 
-//    if !status.success() {
-//         if let Some(task) = cmd.task() {
-//             if is_offline && task.cmd == "mvn" {
-//                 eprintln!("note: failed in offline mode, use -U for online")
-//             }
-//         }
-//         return Err((status.code(), "".to_owned()));
-//     }
+    //    if !status.success() {
+    //         if let Some(task) = cmd.task() {
+    //             if is_offline && task.cmd == "mvn" {
+    //                 eprintln!("note: failed in offline mode, use -U for online")
+    //             }
+    //         }
+    //         return Err((status.code(), "".to_owned()));
+    //     }
     // for (nr, cmd) in cmds.iter().enumerate() {
     //     // writer
     //     //     .write_line(format!(

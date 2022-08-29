@@ -1,8 +1,10 @@
 use ::clap::StructOpt;
+use ::log::debug;
+
 use crate::cmd::cmd_add::create_tasks;
 use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks};
 use crate::cmd::cmd_type::{TaskStack, TaskType};
-use crate::common::{CommandArgs, EmptyLineHandling, stdin_lines};
+use crate::common::{stdin_lines, CommandArgs, EmptyLineHandling};
 use crate::ExitStatus;
 
 #[derive(StructOpt, Debug)]
@@ -11,7 +13,6 @@ use crate::ExitStatus;
     about = "Read input, build commands and buffer them, then run them all. Somewhat xargs."
 )]
 pub struct BufArgs {
-
     // #[structopt(short = 'e', long)]
     // /// Add command at the end (last) instead of as the next.
     // pub end: bool,
@@ -40,7 +41,6 @@ pub struct BufArgs {
     // #[structopt(short = '0', long = "allow-empty")]
     // /// Silently do nothing if there are no commands.
     // pub allow_empty: bool,
-
     #[structopt(subcommand)]
     pub cmd: CommandArgs,
 }
@@ -52,18 +52,32 @@ fn test_cli_args() {
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {
-    let tasks = create_tasks(|| stdin_lines(EmptyLineHandling::Drop),
-             args.cmd,
-             args.working_dir,
-             args.lines_with.or_else(|| Some("{}".to_owned())),
-             args.unique);
-    let mut task_stack = TaskStack::from(tasks.into_iter().map(|t| TaskType::Pending(t)).collect());
-    let to_run = mark_tasks_to_run(false, args.count.is_none(),
-        args.count.unwrap_or(u32::MAX), &mut task_stack, 0);
-    let statuses = run_tasks(to_run, args.continue_on_error, args.parallel, args.quiet);
-    let exit_code = statuses.iter()
+    let tasks = create_tasks(
+        || stdin_lines(EmptyLineHandling::Drop),
+        args.cmd,
+        args.working_dir,
+        args.lines_with.or_else(|| Some("{}".to_owned())),
+        args.unique,
+    );
+    let mut task_stack = TaskStack::from(tasks.into_iter().map(TaskType::Pending).collect());
+    let to_run = mark_tasks_to_run(
+        false,
+        args.count.is_none(),
+        args.count.unwrap_or(u32::MAX),
+        &mut task_stack,
+        0,
+    );
+    debug!("collected {} commands to run", to_run.len());
+    let statuses = run_tasks(
+        to_run,
+        args.continue_on_error || args.parallel > 1,
+        args.parallel,
+        args.quiet,
+    );
+    let exit_code = statuses
+        .iter()
         .map(|entry| entry.value().exit_status())
         .max_by_key(|es| es.code)
-        .unwrap_or_else(|| ExitStatus::ok());
+        .unwrap_or_else(ExitStatus::ok);
     exit_code
 }

@@ -5,8 +5,8 @@ use ::log::debug;
 use ::smallvec::SmallVec;
 use smallvec::smallvec;
 
-use crate::common::{StdWriter, Task};
 use crate::common::async_gate::AsyncGate;
+use crate::common::{StdWriter, Task};
 use crate::ExitStatus;
 
 #[derive(Debug)]
@@ -18,10 +18,7 @@ pub struct Dependency {
 impl Dependency {
     #[allow(dead_code)]
     pub fn new_with_gate(name: Rc<String>, gate: AsyncGate) -> Self {
-        Dependency {
-            name,
-            gate,
-        }
+        Dependency { name, gate }
     }
 }
 
@@ -36,7 +33,7 @@ pub struct Dependent {
 impl Dependent {
     pub fn new_optional(name: impl Into<String>, task: Option<Task>) -> Self {
         Dependent {
-            task: task,
+            task,
             name: Rc::new(name.into()),
             current: AsyncGate::new(),
             dependencies: smallvec![],
@@ -68,22 +65,47 @@ impl Dependent {
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.is_open() {
-                debug!("{} needs {} [{}/{}] which is immediately available", self.name, dependency.name, nr + 1, count);
+                debug!(
+                    "{} needs {} [{}/{}] which is immediately available",
+                    self.name,
+                    dependency.name,
+                    nr + 1,
+                    count
+                );
             } else {
-                debug!("{} needs {} [{}/{}] which needs to be awaited", self.name, dependency.name, nr + 1, count);
+                debug!(
+                    "{} needs {} [{}/{}] which needs to be awaited",
+                    self.name,
+                    dependency.name,
+                    nr + 1,
+                    count
+                );
                 let dep_ok = dependency.gate.wait().await;
                 if dep_ok {
-                    debug!("{} was waiting for {} [{}/{}] which just completed", self.name, dependency.name, nr + 1, count);
+                    debug!(
+                        "{} was waiting for {} [{}/{}] which just completed",
+                        self.name,
+                        dependency.name,
+                        nr + 1,
+                        count
+                    );
                 } else {
-                    debug!("{} was waiting for {} [{}/{}] which just failed! skipping execution", self.name, dependency.name, nr + 1, count);
+                    debug!(
+                        "{} was waiting for {} [{}/{}] which just failed! skipping execution",
+                        self.name,
+                        dependency.name,
+                        nr + 1,
+                        count
+                    );
                     self.current.open(false);
-                    return ExitStatus::err()
+                    return ExitStatus::err();
                 }
             }
-        };
+        }
         if let Some(task) = &self.task {
             self.current.open(false);
-            task.execute_with_stdout(true, &mut StdWriter::stdout()).await
+            task.execute_with_stdout(true, &mut StdWriter::stdout())
+                .await
         } else {
             self.current.open(true);
             ExitStatus::ok()
@@ -96,13 +118,16 @@ impl Dependent {
 }
 
 pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
-    join_all(dependents.iter()
-        .map(|dep| dep.await_and_exec())
-        .collect::<Vec<_>>())
-        .await
-        .into_iter()
-        .max_by_key(|status| status.code)
-        .expect("no tasks to run")
+    join_all(
+        dependents
+            .iter()
+            .map(|dep| dep.await_and_exec())
+            .collect::<Vec<_>>(),
+    )
+    .await
+    .into_iter()
+    .max_by_key(|status| status.code)
+    .expect("no tasks to run")
 }
 
 #[cfg(test)]
@@ -110,8 +135,8 @@ mod tests {
     use ::std::time::Duration;
 
     use ::async_std::task::sleep;
-    use ::futures::future::Either;
     use ::futures::future::select;
+    use ::futures::future::Either;
 
     use super::*;
 
@@ -127,9 +152,11 @@ mod tests {
         botm.depends_on(&mid2);
         let deps = vec![botm, mid1, top, mid2];
         match select(
-                Box::pin(sleep(Duration::from_secs(3))),
-                Box::pin(run_all(deps))
-        ).await {
+            Box::pin(sleep(Duration::from_secs(3))),
+            Box::pin(run_all(deps)),
+        )
+        .await
+        {
             Either::Left(_) => panic!("timeout"),
             Either::Right(_) => {}
         }

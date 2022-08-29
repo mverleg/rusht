@@ -1,6 +1,8 @@
 use crate::escape::NamesafeArgs;
 use crate::escape::{namesafe_line, Charset, HashPolicy};
 
+pub use self::dependent::run_all;
+pub use self::dependent::Dependent;
 pub use self::err::fail;
 pub use self::err::ExitStatus;
 pub use self::git::git_affected_files_head;
@@ -20,17 +22,15 @@ pub use self::write::LineWriter;
 pub use self::write::StdWriter;
 pub use self::write::TeeWriter;
 pub use self::write::VecWriter;
-pub use self::dependent::run_all;
-pub use self::dependent::Dependent;
 
+mod async_gate;
+mod dependent;
 mod err;
 mod git;
 mod re;
 mod read;
 mod stdin;
 mod task;
-mod async_gate;
-mod dependent;
 mod write;
 
 pub fn unique_filename(text: &str) -> String {

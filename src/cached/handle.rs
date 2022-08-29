@@ -2,8 +2,8 @@ use crate::common::{LineWriter, StdWriter};
 use crate::ExitStatus;
 
 use super::cached;
-use super::CachedArgs;
 use super::CacheStatus;
+use super::CachedArgs;
 
 pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
     let verbose = args.verbose;

@@ -12,7 +12,9 @@ static INIT: Once = Once::new();
 
 fn init_test() -> String {
     INIT.call_once(|| {
-        env_logger::init_from_env(env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"));
+        env_logger::init_from_env(
+            env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
+        );
     });
     let mut rng = thread_rng();
     let namespace = format!("unit_test_{}", rng.gen::<u32>());

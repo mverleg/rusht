@@ -54,7 +54,13 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         !args.unique || args.lines_with.is_some(),
         "--unique can only be used with --lines or --lines-with"
     );
-    let new_tasks = create_tasks(line_reader, args.cmd, args.working_dir, args.lines_with, args.unique);
+    let new_tasks = create_tasks(
+        line_reader,
+        args.cmd,
+        args.working_dir,
+        args.lines_with,
+        args.unique,
+    );
     if new_tasks.is_empty() {
         if !args.quiet {
             eprintln!("no tasks found, was stdin empty?");
@@ -78,11 +84,12 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
     write(args.namespace, &stored_tasks);
 }
 
-pub fn create_tasks(line_reader: impl FnOnce() -> Vec<String>,
-        base_cmd: CommandArgs,
-        working_dir: Option<String>,
-        lines_with: Option<String>,
-        unique: bool
+pub fn create_tasks(
+    line_reader: impl FnOnce() -> Vec<String>,
+    base_cmd: CommandArgs,
+    working_dir: Option<String>,
+    lines_with: Option<String>,
+    unique: bool,
 ) -> Vec<Task> {
     let cmd = base_cmd.unpack();
     let new_tasks = if let Some(templ) = lines_with {

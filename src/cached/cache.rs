@@ -43,7 +43,7 @@ pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter) -> Result<Ca
     let exit_code = task
         .execute_with_stdout(args.verbose, &mut tee_writer)
         .await;
-    if !exit_code.is_ok() {
+    if exit_code.is_err() {
         return Ok(CacheStatus::Failed(exit_code));
     }
     let output = vec_writer.get().join("");

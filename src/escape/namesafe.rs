@@ -71,7 +71,10 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
 fn shorten(filtered: &str, actual_len: usize, goal_len: usize, keep_tail: bool) -> String {
     // use iterator because string slice can break up characters
     if keep_tail {
-        filtered.chars().skip(actual_len - goal_len).collect::<String>()
+        filtered
+            .chars()
+            .skip(actual_len - goal_len)
+            .collect::<String>()
     } else {
         filtered.chars().take(goal_len).collect::<String>()
     }

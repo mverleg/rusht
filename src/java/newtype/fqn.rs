@@ -7,10 +7,15 @@ use ::serde::Deserialize;
 use ::serde::Serialize;
 
 lazy_static! {
-    static ref FQN_RE: Regex = Regex::new(r"^([a-zA-Z][a-zA-Z0-9_]*\.)*([a-zA-Z][a-zA-Z0-9_]*)(\.\$[a-zA-Z][a-zA-Z0-9_]*)*$").unwrap();
+    static ref FQN_RE: Regex = Regex::new(
+        r"^([a-zA-Z][a-zA-Z0-9_]*\.)*([a-zA-Z][a-zA-Z0-9_]*)(\.\$[a-zA-Z][a-zA-Z0-9_]*)*$"
+    )
+    .unwrap();
 }
 
-#[derive(Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, )]
+#[derive(
+    Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+)]
 #[serde(try_from = "String", into = "String")]
 pub struct FullyQualifiedName {
     value: String,
@@ -20,7 +25,10 @@ impl FullyQualifiedName {
     pub fn new(value: impl Into<String>) -> Result<Self, String> {
         let value = value.into();
         if !FQN_RE.is_match(&value) {
-            return Err("fuilly qualified class identifier should be e.g. 'com.company.path.ClassNaMe'".to_string());
+            return Err(
+                "fuilly qualified class identifier should be e.g. 'com.company.path.ClassNaMe'"
+                    .to_string(),
+            );
         }
         Ok(FullyQualifiedName { value })
     }

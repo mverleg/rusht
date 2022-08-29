@@ -10,15 +10,15 @@ use ::clap::StructOpt;
 use ::dashmap::DashMap;
 use ::itertools::Itertools;
 use ::lazy_static::lazy_static;
-use ::log::{debug, warn};
 use ::log::info;
+use ::log::{debug, warn};
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdWriter};
-use crate::ExitStatus;
 use crate::observe::mon_task;
+use crate::ExitStatus;
 
 lazy_static! {
     static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
@@ -93,7 +93,7 @@ impl Task {
 
     pub fn as_cmd_str(&self) -> String {
         if self.args.is_empty() {
-            format!("{}", self.cmd)
+            self.cmd.to_string()
         } else {
             format!("{} {}", self.cmd, self.args.join(" "))
         }
@@ -136,10 +136,7 @@ impl Task {
         }
     }
 
-    pub async fn execute_with_stdout_nomonitor(
-        &self,
-        writer: &mut impl LineWriter,
-    ) -> ExitStatus {
+    pub async fn execute_with_stdout_nomonitor(&self, writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         let mut child = match Command::new(&self.cmd)
@@ -153,7 +150,8 @@ impl Task {
             Ok(child) => child,
             Err(err) => fail(format!(
                 "failed to start command '{}', error {}",
-                self.as_cmd_str(), err
+                self.as_cmd_str(),
+                err
             )),
         };
         let mut out = BufReader::new(child.stdout.take().unwrap());
@@ -177,7 +175,8 @@ impl Task {
             Ok(status) => status,
             Err(err) => fail(format!(
                 "failed to finish command '{}', error {}",
-                self.as_cmd_str(), err
+                self.as_cmd_str(),
+                err
             )),
         };
         ExitStatus::of_code(status.code())
@@ -185,30 +184,57 @@ impl Task {
 }
 
 fn resolve_executable(base_cmd: String) -> String {
-    if base_cmd.contains("/") {
-        debug!("command {} appears to already be a path, not resolving further", base_cmd);
-        return base_cmd
+    if base_cmd.contains('/') {
+        debug!(
+            "command {} appears to already be a path, not resolving further",
+            base_cmd
+        );
+        return base_cmd;
     }
     if let Some(cached_exe) = EXE_CACHE.get(&base_cmd) {
-        debug!("using cached executable {} for {}", cached_exe.value(), base_cmd);
-        return cached_exe.value().clone()
+        debug!(
+            "using cached executable {} for {}",
+            cached_exe.value(),
+            base_cmd
+        );
+        return cached_exe.value().clone();
     }
-    let do_warn = !env::var("RUSHT_SUPPRESS_EXE_RESOLVE").is_ok();
+    let do_warn = env::var("RUSHT_SUPPRESS_EXE_RESOLVE").is_err();
     let full_cmd: String = {
-        let mut full_cmds = which_all(&base_cmd)
-            .unwrap_or_else(|err| panic!("error while trying to find command '{}' on path, err: {}", base_cmd, err));
+        let mut full_cmds = which_all(&base_cmd).unwrap_or_else(|err| {
+            panic!(
+                "error while trying to find command '{}' on path, err: {}",
+                base_cmd, err
+            )
+        });
         match full_cmds.next() {
             Some(cmd) => {
                 if let Some(more_cmd) = full_cmds.next() {
                     if do_warn {
-                        info!("more than one command found for {}: {} and {} (choosing the first)", base_cmd, cmd.to_string_lossy(), more_cmd.to_string_lossy())
+                        info!(
+                            "more than one command found for {}: {} and {} (choosing the first)",
+                            base_cmd,
+                            cmd.to_string_lossy(),
+                            more_cmd.to_string_lossy()
+                        )
                     }
                 }
-                cmd.to_str().unwrap_or_else(|| panic!("command {} executable {} not unicode", base_cmd, cmd.to_string_lossy())).to_owned()
-            },
+                cmd.to_str()
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "command {} executable {} not unicode",
+                            base_cmd,
+                            cmd.to_string_lossy()
+                        )
+                    })
+                    .to_owned()
+            }
             None => {
                 if do_warn {
-                    warn!("could not find executable for {}, will try to run anyway", base_cmd);
+                    warn!(
+                        "could not find executable for {}, will try to run anyway",
+                        base_cmd
+                    );
                 }
                 base_cmd.clone()
             }

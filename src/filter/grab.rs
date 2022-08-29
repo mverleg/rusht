@@ -164,7 +164,7 @@ mod tests {
             input,
             expected,
         )
-            .await;
+        .await;
     }
 
     #[async_std::test]
