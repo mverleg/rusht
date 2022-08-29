@@ -138,10 +138,24 @@ impl Task {
     }
 
     pub async fn execute_with_stdout_nomonitor(&self, writer: &mut impl LineWriter) -> ExitStatus {
+        let use_shell_env = "RUSHT_SHELL_EXEC";
+        if env::var(use_shell_env).is_ok() {
+            debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
+            let mut cmd = Command::new("sh");
+            cmd.args(&["-c".to_owned(), self.args.join(" ")]);
+            self.execute_cmd_with_stdout(cmd, writer).await
+        } else {
+            debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
+            let mut cmd = Command::new(&self.cmd);
+            cmd.args(&self.args);
+            self.execute_cmd_with_stdout(cmd, writer).await
+        }
+    }
+
+    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
-        let mut child = match Command::new(&self.cmd)
-            .args(&self.args)
+        let mut child = match base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
             .stdout(Stdio::piped())
