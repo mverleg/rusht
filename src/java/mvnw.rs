@@ -1,15 +1,16 @@
 use ::std::env;
 use ::std::env::current_dir;
+use ::std::env::set_current_dir;
 use ::std::path::PathBuf;
 
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{git_affected_files_head, run_all, LineWriter};
-use crate::java::mvnw_args::AffectedPolicy;
-use crate::java::MvnCmdConfig;
-use crate::java::MvnwArgs;
+use crate::common::{git_affected_files_head, LineWriter, run_all};
 use crate::ExitStatus;
+use crate::java::MvnCmdConfig;
+use crate::java::mvnw_args::AffectedPolicy;
+use crate::java::MvnwArgs;
 
 pub async fn mvnw(
     args: MvnwArgs,
@@ -18,7 +19,6 @@ pub async fn mvnw(
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
-    assert!(args.execs.is_empty(), "execs not supported yet");
     assert!(
         args.rebuild_if_match.is_empty(),
         "rebuild_if_match not supported yet"
@@ -27,6 +27,26 @@ pub async fn mvnw(
     if !args.all {
         return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
     }
+
+    if !args.proj_roots.is_empty() {
+        debug!("using multi-dir mode for {} roots", args.proj_roots.len());
+        for dir in args.proj_roots.iter(){
+            debug!("running for maven root {}", dir.to_string_lossy());
+            set_current_dir(dir).map_err(|err| (ExitStatus::err(), format!(
+                "failed to switch working directory to {}, err {}", dir.to_string_lossy(), err)))?;
+            mvnw_dir(args.clone(), writer).await?;
+        }
+        Ok(())
+    } else {
+        debug!("using current working dir mode (no --proj-root)");
+        mvnw_dir(args, writer).await
+    }
+}
+
+async fn mvnw_dir(
+        args: MvnwArgs,
+        writer: &mut impl LineWriter,
+) -> Result<(), (ExitStatus, String)> {
     let cwd = current_dir().expect("could not determine working directory");
     if !PathBuf::from("pom.xml").is_file() {
         return Err((
@@ -34,7 +54,6 @@ pub async fn mvnw(
             "must be run from a maven project directory (containing pom.xml)".to_owned(),
         ));
     }
-    let args = args;
     // //TODO @mverleg: affected_policy
 
     debug!("JAVA_HOME = {:?}", env::var("JAVA_HOME"));

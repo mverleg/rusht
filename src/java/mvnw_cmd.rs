@@ -55,7 +55,7 @@ impl MvnCmdConfig {
     }
 
     fn collect_tasks(&self) -> MvnTasks {
-        let single_cmd = self.modules.is_empty();
+        let single_cmd = self.modules.is_empty() && self.profiles.is_empty();
 
         let mut tasks = MvnTasks::default();
         let mut args = vec![];
@@ -66,7 +66,7 @@ impl MvnCmdConfig {
 
         // Clean
         if self.clean {
-            if !single_cmd || !self.profiles.is_empty() {
+            if !single_cmd {
                 debug!("clean and build in separate commands, to clean everything while only building a subset (either because no --all or because of profiles)");
                 let mut clean_args = vec!["clean".to_owned()];
                 if !self.verbose {
@@ -173,8 +173,6 @@ impl MvnCmdConfig {
         // Default optimization flags
         self.add_opt_args(&mut args);
 
-        tasks.build = Some(self.make_mvn_task(args.clone()));
-
         // Tests
         match self.tests {
             TestMode::Files => {
@@ -202,8 +200,9 @@ impl MvnCmdConfig {
                 }
             }
         }
-        if !single_cmd {
-            args.push("-DskipTests".to_owned());
+        if !single_cmd || !self.tests.run_any() {
+            debug!("skipping tests in build command, since tests are run in a separate command, or not at all");
+            args.push("-DskipTests=true".to_owned());
         }
         if self.tests.run_any() {
             if single_cmd {
@@ -217,6 +216,8 @@ impl MvnCmdConfig {
                 tasks.test = Some(self.make_mvn_task(test_args));
             }
         }
+
+        tasks.build = Some(self.make_mvn_task(args));
 
         // Execute a class.
         for exec in &self.execs {

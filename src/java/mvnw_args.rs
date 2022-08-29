@@ -8,7 +8,7 @@ use ::regex::Regex;
 
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, Clone)]
 #[structopt(
     name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
@@ -58,7 +58,7 @@ pub struct MvnwArgs {
     #[structopt(short = 'L', long = "no-lint")]
     pub no_lint: bool,
 
-    /// Show the maven commands being run, and the build output.
+    /// Show the maven version, and the output of commands.
     #[structopt(short = 'v', long)]
     pub verbose: bool,
     /// Only show the maven commands to be ran, do not actually run them.
@@ -97,6 +97,9 @@ pub struct MvnwArgs {
     /// Maven profiles to activate. Prefix '!' to deactivate.
     #[structopt(short = 'P', long = "profile")]
     pub profiles: Vec<Profile>,
+    /// Maven projects to build. Defaults to current working directory.
+    #[structopt(long = "proj-root", hide_short_help = true)]
+    pub proj_roots: Vec<PathBuf>,
 
     /// Re-run the commands with --clean --update if the output matches this pattern
     #[structopt(short = 'C', long, hide_short_help = true)]
