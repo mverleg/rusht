@@ -142,7 +142,10 @@ impl Task {
         if env::var(use_shell_env).is_ok() {
             debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
             let mut cmd = Command::new("sh");
-            cmd.args(&["-c".to_owned(), self.args.join(" ")]);
+            let joined_cmd = self.args.iter().
+                map(|arg| format!("'{}'", arg.replace("'", "\\'")))
+                .join(" ");
+            cmd.args(&["-c".to_owned(), joined_cmd]);
             self.execute_cmd_with_stdout(cmd, writer).await
         } else {
             debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
