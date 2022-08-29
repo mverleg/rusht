@@ -3,7 +3,6 @@ use ::std::env;
 use ::std::io::{BufRead, BufReader};
 use ::std::path::PathBuf;
 use ::std::process::Command;
-use ::std::process::ExitStatus as ProcStatus;
 use ::std::process::Stdio;
 
 use ::async_std::task::block_on;
@@ -133,14 +132,14 @@ impl Task {
         if monitor {
             mon_task(self, writer, true, false, true, false, true).await
         } else {
-            ExitStatus::of_code(self.execute_with_stdout_nomonitor(writer).await.code())
+            self.execute_with_stdout_nomonitor(writer).await
         }
     }
 
-    async fn execute_with_stdout_nomonitor(
+    pub async fn execute_with_stdout_nomonitor(
         &self,
         writer: &mut impl LineWriter,
-    ) -> ProcStatus {
+    ) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         let mut child = match Command::new(&self.cmd)
@@ -181,7 +180,7 @@ impl Task {
                 self.as_cmd_str(), err
             )),
         };
-        status
+        ExitStatus::of_code(status.code())
     }
 }
 

@@ -36,14 +36,14 @@ pub async fn mon_task(
     let t0 = Instant::now();
     let status = if output_on_success {
         let mut out_buffer = VecWriter::new();
-        let status = task.execute_with_stdout(false, &mut out_buffer).await;
+        let status = task.execute_with_stdout_nomonitor(&mut out_buffer).await;
         if status.is_err() {
             eprintln!("printing all output because process failed");
             writer.write_all_lines(out_buffer.get().iter()).await;
         }
         status
     } else {
-        task.execute_with_stdout(false, writer).await
+        task.execute_with_stdout_nomonitor(writer).await
     };
     let duration = t0.elapsed().as_millis();
     if ! timing {

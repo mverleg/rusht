@@ -12,8 +12,8 @@ pub fn locked(args: LockedArgs) -> Result<(), String> {
     }
     let task = args.cmd.into_task();
     let status = task.execute_sync(true);
-    if !status.success() {
-        return Err(format!("failed with status {}", status.code().unwrap_or(0)));
+    if status.is_err() {
+        return Err(format!("failed with status {}", status.code()));
     }
     //TODO @mverleg:
     Ok(())

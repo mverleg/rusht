@@ -1,4 +1,3 @@
-use ::std::process::ExitStatus;
 use ::std::sync::atomic::AtomicUsize;
 use ::std::sync::atomic::Ordering;
 use ::std::sync::Arc;
@@ -18,6 +17,7 @@ use crate::cmd::cmd_type::RunId;
 use crate::cmd::cmd_type::RunningTask;
 use crate::cmd::cmd_type::TaskStack;
 use crate::cmd::cmd_type::TaskType;
+use crate::ExitStatus;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -190,7 +190,7 @@ enum Status {
 
 impl From<ExitStatus> for Status {
     fn from(exit: ExitStatus) -> Self {
-        if exit.success() {
+        if exit.is_ok() {
             Status::Success
         } else {
             Status::Failed
