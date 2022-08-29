@@ -1,24 +1,6 @@
 use ::std::collections::HashMap;
-use ::std::env;
-use ::std::io::{BufRead, BufReader};
-use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::Stdio;
-
-use ::async_std::task::block_on;
-use ::clap::StructOpt;
-use ::dashmap::DashMap;
-use ::itertools::Itertools;
-use ::lazy_static::lazy_static;
-use ::log::info;
-use ::log::{debug, warn};
-use ::serde::Deserialize;
-use ::serde::Serialize;
-use ::which::which_all;
-
-use crate::common::{fail, LineWriter, StdWriter};
-use crate::observe::mon_task;
-use crate::ExitStatus;
 
 #[async_std::main]
 async fn main() {
@@ -32,4 +14,5 @@ async fn main() {
         .stderr(Stdio::inherit())
         .spawn()
         .unwrap();
+    child.wait().unwrap();
 }
