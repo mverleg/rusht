@@ -176,6 +176,27 @@ impl<'a, W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<'a, W1, W2> {
     }
 }
 
+#[derive(Debug)]
+pub struct SyncWriter<'a, W: LineWriter> {
+    delegate: Arc<Mutex<&'a mut W>>,
+}
+
+impl <'a, W: LineWriter> SyncWriter<'a, W> {
+    pub fn new(delegate: &'a mut W) -> Self {
+        SyncWriter {
+            delegate: Arc::new(Mutex::new(delegate))
+        }
+    }
+}
+
+#[async_trait]
+impl <'a, W: LineWriter> LineWriter for SyncWriter<'a, W> {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let mut dw = self.delegate.lock().await;
+        (*dw).write_line(line).await;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
