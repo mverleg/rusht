@@ -12,7 +12,7 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
         let arg = get_first_match_or_all(&args.by, line);
         let mut task = base_task.clone();
         task.push_arg(arg);
-        let status = task.execute(false);
+        let status = task.execute_sync(false);
         if expect_success == status.success() {
             debug!(
                 "keep line {} after task {} (code: {})",
@@ -31,5 +31,3 @@ pub async fn filter(args: FilterArgs, reader: &mut impl LineReader, writer: &mut
         }
     }
 }
-
-//TODO @mverleg: tests

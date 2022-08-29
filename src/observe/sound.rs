@@ -1,19 +1,14 @@
 use ::std::env;
 use ::std::io::Cursor;
-use ::std::time::Instant;
 
 use ::log::debug;
 use ::log::warn;
 use ::rodio::{Decoder, OutputStream, PlayError, Source};
 
-use crate::common::{LineReader, LineWriter, StdWriter, VecWriter};
-use crate::ExitStatus;
-use crate::observe::mon_args::MonArgs;
-
-fn sound_notification(args: &MonArgs, is_success: bool) -> Result<(), String> {
-    let cursor = if is_success && args.sound_success {
+pub fn sound_notification(sound_success:bool, sound_failure: bool, is_success: bool) -> Result<(), String> {
+    let cursor = if is_success && sound_success {
         Cursor::new(include_bytes!("../../resource/success-sound.mp3").as_ref())
-    } else if !is_success && args.sound_failure {
+    } else if !is_success && sound_failure {
         Cursor::new(include_bytes!("../../resource/error-sound.mp3").as_ref())
     } else {
         debug!("not playing sound because not requested for success={}", is_success);

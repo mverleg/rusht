@@ -1,41 +1,52 @@
-use ::std::env;
-use ::std::io::Cursor;
 use ::std::time::Instant;
 
-use ::log::debug;
-use ::log::warn;
-use ::rodio::{Decoder, OutputStream, PlayError, Source};
-
-use crate::common::{LineReader, LineWriter, StdWriter, VecWriter};
+use crate::common::{LineWriter, Task, VecWriter};
 use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
+use crate::observe::sound_notification;
 
 pub async fn mon(
     args: MonArgs,
-    _reader: &mut impl LineReader,
-    _writer: &mut impl LineWriter,
+    writer: &mut impl LineWriter,
 ) -> ExitStatus {
     let task = args.cmd.clone().into_task();
-    let mut out_writer = StdWriter::stdout();
+    mon_task(task,
+             writer,
+             !args.no_print_cmd,
+             !args.no_output_on_success,
+             !args.no_timing,
+             args.sound_success,
+             args.sound_failure).await
+}
+
+pub async fn mon_task(
+    task: Task,
+    writer: &mut impl LineWriter,
+    print_cmd: bool,
+    output_on_success: bool,
+    timing: bool,
+    sound_success: bool,
+    sound_failure: bool,
+) -> ExitStatus {
     let t0 = Instant::now();
     let cmd_str = task.as_str();
-    if ! args.no_print_cmd {
+    if ! print_cmd {
         println!("going to run {}", cmd_str);
     }
     let t0 = Instant::now();
-    let status = if args.no_output_on_success {
+    let status = if output_on_success {
         let mut out_buffer = VecWriter::new();
         let status = task.execute_with_stdout(false, &mut out_buffer).await;
         if !status.success() {
             eprintln!("printing all output because process failed");
-            out_writer.write_all_lines(out_buffer.get().iter()).await;
+            writer.write_all_lines(out_buffer.get().iter()).await;
         }
         status
     } else {
-        task.execute_with_stdout(true, &mut out_writer).await
+        task.execute_with_stdout(true, writer).await
     };
     let duration = t0.elapsed().as_millis();
-    if ! args.no_timing {
+    if ! timing {
         if status.success() {
             if cmd_str.len() > 256 {  // approximate for non-ascii
                 println!("took {} ms to run {}...", duration,
@@ -52,10 +63,9 @@ pub async fn mon(
             );
         }
     }
-    if let Err(err) = sound_notification(&args, status.success()) {
+    if let Err(err) = sound_notification(sound_success, sound_failure, status.success()) {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
     }
     ExitStatus::of_code(status.code())
-    //TODO @mverleg:
 }

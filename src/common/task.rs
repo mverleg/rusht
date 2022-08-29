@@ -5,7 +5,6 @@ use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::ExitStatus as ProcStatus;
 use ::std::process::Stdio;
-use ::std::time::Instant;
 
 use ::async_std::task::block_on;
 use ::clap::StructOpt;
@@ -121,7 +120,7 @@ impl Task {
 
     pub fn execute_sync(&self, monitor: bool) -> ProcStatus {
         let writer = &mut StdWriter::stdout();
-        block_on(execute_with_stdout(monitor, writer))
+        block_on(self.execute_with_stdout(monitor, writer))
     }
 
     pub async fn execute_with_stdout(
@@ -130,9 +129,10 @@ impl Task {
         writer: &mut impl LineWriter,
     ) -> ProcStatus {
         if monitor {
-            task.execute_with_stdout_nomonitor(writer)
+            unimplemented!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+            self.execute_with_stdout_nomonitor(writer).await
         } else {
-            task.execute_with_stdout_nomonitor(writer)
+            self.execute_with_stdout_nomonitor(writer).await
         }
     }
 
@@ -153,7 +153,7 @@ impl Task {
             Ok(child) => child,
             Err(err) => fail(format!(
                 "failed to start command '{}', error {}",
-                cmd_str, err
+                self.as_cmd_str(), err
             )),
         };
         let mut out = BufReader::new(child.stdout.take().unwrap());
@@ -177,7 +177,7 @@ impl Task {
             Ok(status) => status,
             Err(err) => fail(format!(
                 "failed to finish command '{}', error {}",
-                cmd_str, err
+                self.as_cmd_str(), err
             )),
         };
         status
