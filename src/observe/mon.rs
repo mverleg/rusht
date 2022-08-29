@@ -4,30 +4,32 @@ use crate::common::{LineWriter, Task, VecWriter};
 use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
+use ::std::process::ExitStatus as ProcStatus;
 
 pub async fn mon(
     args: MonArgs,
     writer: &mut impl LineWriter,
 ) -> ExitStatus {
     let task = args.cmd.clone().into_task();
-    mon_task(task,
+    let status = mon_task(&task,
              writer,
              !args.no_print_cmd,
              !args.no_output_on_success,
              !args.no_timing,
              args.sound_success,
-             args.sound_failure).await
+             args.sound_failure).await;
+    ExitStatus::of_code(status.code())
 }
 
 pub async fn mon_task(
-    task: Task,
+    task: &Task,
     writer: &mut impl LineWriter,
     print_cmd: bool,
     output_on_success: bool,
     timing: bool,
     sound_success: bool,
     sound_failure: bool,
-) -> ExitStatus {
+) -> ProcStatus {
     let t0 = Instant::now();
     let cmd_str = task.as_str();
     if ! print_cmd {
@@ -43,7 +45,7 @@ pub async fn mon_task(
         }
         status
     } else {
-        task.execute_with_stdout(true, writer).await
+        task.execute_with_stdout(false, writer).await
     };
     let duration = t0.elapsed().as_millis();
     if ! timing {
@@ -67,5 +69,5 @@ pub async fn mon_task(
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
     }
-    ExitStatus::of_code(status.code())
+    status
 }

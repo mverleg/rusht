@@ -18,6 +18,7 @@ use ::serde::Serialize;
 use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdWriter};
+use crate::observe::mon_task;
 
 lazy_static! {
     static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
@@ -129,8 +130,7 @@ impl Task {
         writer: &mut impl LineWriter,
     ) -> ProcStatus {
         if monitor {
-            unimplemented!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
-            self.execute_with_stdout_nomonitor(writer).await
+            mon_task(self, writer, true, false, true, false, true).await
         } else {
             self.execute_with_stdout_nomonitor(writer).await
         }
