@@ -326,6 +326,7 @@ impl MvnTasks {
         let mut lint = Dependent::new_optional("lint", lint);
         lint.depends_on(&install_lint);
         let mut build = Dependent::new_named("build", build.expect("build task must always exist"));
+        build.depends_on(&lint);  // linter sometimes fails on @Immutables if build is running
         build.depends_on(&clean);
         let mut test = Dependent::new_optional("test", test);
         test.depends_on(&build);

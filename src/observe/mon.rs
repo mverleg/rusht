@@ -4,21 +4,19 @@ use crate::common::{LineWriter, Task, VecWriter};
 use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
-use ::std::process::ExitStatus as ProcStatus;
 
 pub async fn mon(
     args: MonArgs,
     writer: &mut impl LineWriter,
 ) -> ExitStatus {
     let task = args.cmd.clone().into_task();
-    let status = mon_task(&task,
+    mon_task(&task,
              writer,
              !args.no_print_cmd,
              !args.no_output_on_success,
              !args.no_timing,
              args.sound_success,
-             args.sound_failure).await;
-    ExitStatus::of_code(status.code())
+             args.sound_failure).await
 }
 
 pub async fn mon_task(
@@ -29,7 +27,7 @@ pub async fn mon_task(
     timing: bool,
     sound_success: bool,
     sound_failure: bool,
-) -> ProcStatus {
+) -> ExitStatus {
     let t0 = Instant::now();
     let cmd_str = task.as_str();
     if ! print_cmd {
@@ -39,7 +37,7 @@ pub async fn mon_task(
     let status = if output_on_success {
         let mut out_buffer = VecWriter::new();
         let status = task.execute_with_stdout(false, &mut out_buffer).await;
-        if !status.success() {
+        if status.is_err() {
             eprintln!("printing all output because process failed");
             writer.write_all_lines(out_buffer.get().iter()).await;
         }
@@ -49,7 +47,7 @@ pub async fn mon_task(
     };
     let duration = t0.elapsed().as_millis();
     if ! timing {
-        if status.success() {
+        if status.is_ok() {
             if cmd_str.len() > 256 {  // approximate for non-ascii
                 println!("took {} ms to run {}...", duration,
                          cmd_str.chars().take(256).collect::<String>());
@@ -69,5 +67,5 @@ pub async fn mon_task(
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err()
     }
-    status
+    ExitStatus::of_code(status.code())
 }

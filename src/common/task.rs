@@ -18,6 +18,7 @@ use ::serde::Serialize;
 use ::which::which_all;
 
 use crate::common::{fail, LineWriter, StdWriter};
+use crate::ExitStatus;
 use crate::observe::mon_task;
 
 lazy_static! {
@@ -119,7 +120,7 @@ impl Task {
         format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
     }
 
-    pub fn execute_sync(&self, monitor: bool) -> ProcStatus {
+    pub fn execute_sync(&self, monitor: bool) -> ExitStatus {
         let writer = &mut StdWriter::stdout();
         block_on(self.execute_with_stdout(monitor, writer))
     }
@@ -128,11 +129,11 @@ impl Task {
         &self,
         monitor: bool,
         writer: &mut impl LineWriter,
-    ) -> ProcStatus {
+    ) -> ExitStatus {
         if monitor {
             mon_task(self, writer, true, false, true, false, true).await
         } else {
-            self.execute_with_stdout_nomonitor(writer).await
+            ExitStatus::of_code(self.execute_with_stdout_nomonitor(writer).await.code())
         }
     }
 

@@ -50,8 +50,16 @@ impl ExitStatus {
         ExitStatus::of(1)
     }
 
+    pub fn code(&self) -> u8 {
+        self.code
+    }
+
     pub fn is_ok(&self) -> bool {
         0 == self.code
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
     }
 }
 
