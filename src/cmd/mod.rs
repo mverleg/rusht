@@ -17,6 +17,7 @@ mod cmd_do;
 mod cmd_drop;
 mod cmd_io;
 mod cmd_list;
+mod cmd_buf;
 mod cmd_type;
 mod handle;
 #[cfg(test)]
