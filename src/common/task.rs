@@ -20,6 +20,7 @@ use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
+use futures::future::select;
 
 use crate::common::{fail, LineWriter, StdWriter};
 use crate::ExitStatus;
@@ -180,7 +181,10 @@ impl Task {
             .spawn()
             .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
             .unwrap();  //TODO @mverleg: change to return Result
-        let out = async_spawn(forward_out(child.stdout.take().unwrap(), writer));
+        let s = select(
+            forward_out(child.stdout.take().unwrap(), writer),
+            forward_out(child.stdout.take().unwrap(), writer),
+        );
         //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
         let status = match child.status().await {
             Ok(status) => status,
@@ -190,7 +194,8 @@ impl Task {
                 err
             )),
         };
-        out.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
+        // out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
+        // err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
         Ok(ExitStatus::of_code(status.code()))
     }
 }
@@ -203,7 +208,9 @@ async fn forward_out(stdout: ChildStdout, writer: &mut impl LineWriter) -> Resul
         match out.read_line(&mut line).await {
             Ok(0) => break,
             Ok(_) => {
-                line.pop(); // strip newline  //TODO @mverleg: cross-platform?
+                while line.ends_with('\n') || line.ends_with('\r') {
+                    line.pop();
+                }
                 writer.write_line(&line).await
             }
             Err(err) => return Err(format!(

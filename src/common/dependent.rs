@@ -3,10 +3,10 @@ use ::std::rc::Rc;
 use ::futures::future::join_all;
 use ::log::debug;
 use ::smallvec::SmallVec;
-use smallvec::smallvec;
+use ::smallvec::smallvec;
 
-use crate::common::async_gate::AsyncGate;
 use crate::common::{LineWriter, Task};
+use crate::common::async_gate::AsyncGate;
 use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
 
@@ -138,8 +138,9 @@ mod tests {
     use ::std::time::Duration;
 
     use ::async_std::task::sleep;
-    use ::futures::future::select;
     use ::futures::future::Either;
+    use ::futures::future::select;
+
     use crate::common::StdWriter;
 
     use super::*;
