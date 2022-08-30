@@ -70,7 +70,7 @@ pub struct MvnwArgs {
     /// {n}[h]ead: changes from the head commit
     /// {n}[b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
     /// {n}[a]ny-change: uncommitted + branch
-    /// {n}[r]ecent: head + branch
+    /// {n}[r]ecent: uncommitted + head
     #[structopt(
         value_enum,
         short = 'x',
@@ -102,8 +102,13 @@ pub struct MvnwArgs {
     pub proj_roots: Vec<PathBuf>,
 
     /// Re-run the commands with --clean --update if the output matches this pattern
-    #[structopt(short = 'C', long, hide_short_help = true)]
+    #[structopt(short = 'C', long = "rebuild-if-match", hide_short_help = true)]
     pub rebuild_if_match: Vec<Regex>,
+    //TODO @mverleg: ^
+    /// Fail the command if the newly added code matches the regex.
+    #[structopt(short='T', long = "fail-if-added", hide_short_help = true)]
+    pub fail_if_added: Vec<Regex>,
+    //TODO @mverleg: ^
 }
 
 fn strictly_positive(val: &str) -> Result<u32, String> {

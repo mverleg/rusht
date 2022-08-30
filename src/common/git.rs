@@ -67,6 +67,7 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
     let mut deleted_files = HashSet::new();
     for delta in diff.deltas() {
         // Only add the new files, because old ones are either the same or don't exist anymore
+        let q = delta.new_file();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         if let Some(pth) = delta.old_file().path() {
             if !changed_files.contains(pth) {
                 deleted_files.insert(pth.to_path_buf());

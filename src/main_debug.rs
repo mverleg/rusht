@@ -2,6 +2,12 @@ use ::std::env;
 use ::std::process::Command;
 use ::std::path::PathBuf;
 
+// The conclusion here is that running Command mvn is slow, compared to running `sh -c "mvn ..."`
+// * Copying all the end does not help.
+// * There appears more logging, perhaps mvn is doing unnecessary work.
+// * It seems faster than clean build, so some cache is picked up.
+//TODO @mverleg: ^
+
 #[async_std::main]
 async fn main() {
     // JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.arm64.jdk/Contents/Home MAVEN_OPTS='-XX:+UseG1GC -Xms256m -Xmx8192m' time /opt/homebrew/bin/mvn test-compile --threads=10 --offline --quiet -Djava.net.preferIPv4Stack=true -Dmanagedversions.skip=true -Dmanagedversions.failOnError=false -Denforcer.skip=true -Ddatabase.skip=true -Dmaven.javadoc.skip=true -DskipTests=true --activate-profiles='!modules/all,!system,modules/viper'

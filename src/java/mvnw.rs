@@ -5,6 +5,7 @@ use ::std::path::PathBuf;
 
 use ::itertools::Itertools;
 use ::log::debug;
+use ::log::warn;
 
 use crate::common::{git_affected_files_head, LineWriter, run_all};
 use crate::ExitStatus;
@@ -19,10 +20,12 @@ pub async fn mvnw(
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
-    assert!(
-        args.rebuild_if_match.is_empty(),
-        "rebuild_if_match not supported yet"
-    );
+    if !args.rebuild_if_match.is_empty() {
+        warn!("--rebuild-if-match not implemented");
+    }
+    if !args.fail_if_added.is_empty() {
+        warn!("--fail-if-added not implemented");
+    }
     debug!("arguments: {:?}", &args);
     if !args.all {
         return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
