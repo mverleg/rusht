@@ -164,9 +164,10 @@ impl Task {
     async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
+
+        // note: cannot log with async_std because it does not expose getters on Command
         // debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
         //     base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
-        //TODO @mverleg: re-enable
         let mut child = base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
@@ -192,7 +193,8 @@ impl Task {
                 ),
             }
         }
-        let status = match child.await {
+        //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
+        let status = match child.status().await {
             Ok(status) => status,
             Err(err) => fail(format!(
                 "failed to finish command '{}', error {}",
