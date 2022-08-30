@@ -145,7 +145,10 @@ impl Task {
             let mut cmd = Command::new("sh");
             let joined_cmd = iter::once(format!("'{}'", self.cmd))
                 .chain(self.args.iter()
-                    .map(|arg| format!("'{}'", arg.replace("'", "\\'")))
+                    .inspect(|arg| if arg.contains("'") {
+                        panic!("argument {} should not contain single quote in shell mode ({})", arg, use_shell_env)
+                    })
+                    .map(|arg| format!("'{}'", arg))
                 ).join(" ");
             cmd.args(&["-c".to_owned(), joined_cmd]);
             self.execute_cmd_with_stdout(cmd, writer).await
