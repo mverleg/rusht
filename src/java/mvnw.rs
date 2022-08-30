@@ -2,12 +2,15 @@ use ::std::env;
 use ::std::env::current_dir;
 use ::std::env::set_current_dir;
 use ::std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use ::itertools::Itertools;
 use ::log::debug;
 use ::log::warn;
+use regex::Regex;
+use smallvec::SmallVec;
 
-use crate::common::{git_affected_files_head, LineWriter, run_all};
+use crate::common::{git_affected_files_head, LineWriter, RegexWatcherWriter, run_all, TeeWriter};
 use crate::ExitStatus;
 use crate::java::MvnCmdConfig;
 use crate::java::mvnw_args::AffectedPolicy;
@@ -20,9 +23,6 @@ pub async fn mvnw(
 ) -> Result<(), (ExitStatus, String)> {
     assert!(args.threads.unwrap_or(1) >= 1);
     assert!(args.max_memory_mb >= 1);
-    if !args.rebuild_if_match.is_empty() {
-        warn!("--rebuild-if-match not implemented");
-    }
     if !args.fail_if_added.is_empty() {
         warn!("--fail-if-added not implemented");
     }
@@ -57,7 +57,7 @@ async fn mvnw_dir(
             "must be run from a maven project directory (containing pom.xml)".to_owned(),
         ));
     }
-    // //TODO @mverleg: affected_policy
+    //TODO @mverleg: affected_policy
 
     debug!("JAVA_HOME = {:?}", env::var("JAVA_HOME"));
     let java_home = PathBuf::try_from(env::var("JAVA_HOME").map_err(|err| {
@@ -83,6 +83,7 @@ async fn mvnw_dir(
     }
 
     let show_cmds_only = args.show_cmds_only;
+    let rebuild_if_match = args.rebuild_if_match.iter().cloned().collect::<SmallVec<[Regex; 1]>>();
     //let is_offline = !args.update;
     let cmd_config = build_config(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
@@ -96,7 +97,17 @@ async fn mvnw_dir(
         }
         return Ok(());
     }
-    let status = run_all(cmds, writer).await;
+    let has_pattern = AtomicBool::new(false);
+    let mut watcher = RegexWatcherWriter::new(
+        rebuild_if_match, |_| has_pattern.store(true, Ordering::Release));
+    let mut tee_writer = TeeWriter::new(writer, &mut watcher);
+    let mut status = run_all(cmds, &mut tee_writer).await;
+    if has_pattern.load(Ordering::Acquire) {
+        eprintln!("going to clean rebuild because a --rebuild-if-match was matched");
+        let mut clean_config = cmd_config;
+        clean_config.clean = true;
+        status = run_all(clean_config.build_cmds(), writer).await;
+    }
     if status.is_ok() {
         Ok(())
     } else {

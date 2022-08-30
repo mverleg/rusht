@@ -22,6 +22,7 @@ pub use self::write::LineWriter;
 pub use self::write::StdWriter;
 pub use self::write::TeeWriter;
 pub use self::write::VecWriter;
+pub use self::write::RegexWatcherWriter;
 
 mod async_gate;
 mod dependent;
