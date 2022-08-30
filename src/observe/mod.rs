@@ -8,3 +8,6 @@ mod handle_mon;
 mod mon;
 mod mon_args;
 mod sound;
+mod piped;
+mod handle_piped;
+mod piped_args;
