@@ -7,6 +7,7 @@ use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
+use regex::Regex;
 
 #[async_trait]
 pub trait LineWriter: Send {
@@ -208,6 +209,32 @@ impl<'a, W: LineWriter> LineWriter for FunnelWriter<'a, W> {
         let line = line.as_ref();
         let mut dw = self.delegate.lock().await;
         dw.write_line(format!("[{}] {}", self.name, line)).await;
+    }
+}
+
+/// For every line written, send it to two other writers.
+#[derive(Debug)]
+pub struct RegexWatcherWriter<F: Fn(&str) + Send> {
+    pattern: Regex,
+    action: F,
+}
+
+impl<F: Fn(&str) + Send> RegexWatcherWriter<F> {
+    pub fn new(pattern: Regex, action: F) -> Self {
+        RegexWatcherWriter {
+            pattern,
+            action,
+        }
+    }
+}
+
+#[async_trait]
+impl<F: Fn(&str) + Send> LineWriter for RegexWatcherWriter<F> {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let line = line.as_ref();
+        if self.pattern.is_match(line) {
+            (self.action)(line)
+        }
     }
 }
 
