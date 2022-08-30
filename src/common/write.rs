@@ -156,6 +156,7 @@ impl LineWriter for FirstItemWriter {
     }
 }
 
+/// For every line written, send it to two other writers.
 #[derive(Debug)]
 pub struct TeeWriter<'a, W1: LineWriter, W2: LineWriter> {
     first: &'a mut W1,
@@ -173,6 +174,40 @@ impl<'a, W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<'a, W1, W2> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let line = line.as_ref();
         let _: ((), ()) = join!(self.first.write_line(line), self.second.write_line(line),).await;
+    }
+}
+
+/// Several handles can send to the same writer asynchronously.
+#[derive(Debug)]
+pub struct FunnelWriter<'a, W: LineWriter> {
+    name: &'a str,
+    delegate: Arc<Mutex<&'a mut W>>,
+}
+
+#[derive(Debug)]
+pub struct FunnelFactory<'a, W: LineWriter> {
+    delegate: Arc<Mutex<&'a mut W>>,
+}
+
+impl<'a, W: LineWriter> FunnelFactory<'a, W> {
+    pub fn new(delegate: &'a mut W) -> Self {
+        FunnelFactory { delegate: Arc::new(Mutex::new(delegate)) }
+    }
+
+    pub fn writer(&self, name: &'a str) -> FunnelWriter<'a, W> {
+        FunnelWriter {
+            name,
+            delegate: self.delegate.clone()
+        }
+    }
+}
+
+#[async_trait]
+impl<'a, W: LineWriter> LineWriter for FunnelWriter<'a, W> {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let line = line.as_ref();
+        let mut dw = self.delegate.lock().await;
+        dw.write_line(format!("[{}] {}", self.name, line)).await;
     }
 }
 

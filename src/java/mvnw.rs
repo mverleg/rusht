@@ -96,7 +96,7 @@ async fn mvnw_dir(
         }
         return Ok(());
     }
-    let status = run_all(cmds).await;
+    let status = run_all(cmds, writer).await;
     if status.is_ok() {
         Ok(())
     } else {

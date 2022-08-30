@@ -6,7 +6,8 @@ use ::smallvec::SmallVec;
 use smallvec::smallvec;
 
 use crate::common::async_gate::AsyncGate;
-use crate::common::{StdWriter, Task};
+use crate::common::{LineWriter, Task};
+use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
 
 #[derive(Debug)]
@@ -61,7 +62,8 @@ impl Dependent {
         })
     }
 
-    pub async fn await_and_exec(&self) -> ExitStatus {
+    // Note this takes owned LineWriter instead of &mut because of run_all. Try using e.g. `FunnelWriter`.
+    pub async fn await_and_exec(&self, mut writer: impl LineWriter) -> ExitStatus {
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.is_open() {
@@ -104,7 +106,7 @@ impl Dependent {
         }
         if let Some(task) = &self.task {
             self.current.open(false);
-            task.execute_with_stdout(true, &mut StdWriter::stdout())
+            task.execute_with_stdout(true, &mut writer)
                 .await
         } else {
             self.current.open(true);
@@ -117,11 +119,12 @@ impl Dependent {
     }
 }
 
-pub async fn run_all(dependents: Vec<Dependent>) -> ExitStatus {
+pub async fn run_all(dependents: Vec<Dependent>, writer: &mut impl LineWriter) -> ExitStatus {
+    let fac = FunnelFactory::new(writer);
     join_all(
         dependents
             .iter()
-            .map(|dep| dep.await_and_exec())
+            .map(|dep| dep.await_and_exec(fac.writer(dep.name.as_ref())))
             .collect::<Vec<_>>(),
     )
     .await
