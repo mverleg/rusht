@@ -2,15 +2,14 @@ use ::std::collections::HashMap;
 use ::std::env;
 use ::std::iter;
 use ::std::path::PathBuf;
+use ::std::thread;
 use ::std::time::Instant;
 
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
-use ::async_std::process::ChildStdout;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
-use ::async_std::task::spawn as async_spawn;
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
 use ::itertools::Itertools;
@@ -20,6 +19,7 @@ use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
+use async_std::io::Read;
 
 use crate::common::{fail, LineWriter, StdWriter};
 use crate::common::write::FunnelFactory;
@@ -182,9 +182,18 @@ impl Task {
             .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
             .unwrap();  //TODO @mverleg: change to return Result
 
-        let funnel = FunnelFactory::new(writer);
-        let out_task = async_spawn(forward_out(child.stdout.take().unwrap(), funnel.writer("out")));
-        let err_task = async_spawn(forward_out(child.stdout.take().unwrap(), funnel.writer("err")));
+        thread::scope(move |scope| {
+            let proc_out = child.stdout.take().unwrap();
+            let proc_err = child.stderr.take().unwrap();
+            let funnel = FunnelFactory::new(writer);
+            let out_writer = funnel.writer("out");
+            let err_writer = funnel.writer("err");
+            let out_task = scope.spawn(move || block_on(forward_out(proc_out, out_writer)));
+            let err_task = scope.spawn(move || block_on(forward_out(proc_err, err_writer)));
+            out_task.join().expect("thread panic").unwrap();
+            err_task.join().expect("thread panic").unwrap();
+            //TODO @mverleg: get rid of unwrap (but keep expect)
+        });
         //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
         let status = match child.status().await {
             Ok(status) => status,
@@ -194,18 +203,18 @@ impl Task {
                 err
             )),
         };
-        out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
-        err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
+        // out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
+        // err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
         Ok(ExitStatus::of_code(status.code()))
     }
 }
 
-async fn forward_out(stdout: ChildStdout, mut writer: impl LineWriter) -> Result<(), String> {
-    let mut out = BufReader::new(stdout);
+async fn forward_out(stdout: impl Read, mut writer: impl LineWriter) -> Result<(), String> {
+    let mut out_buf = BufReader::new(stdout);
     let mut line = String::new();
     loop {
         line.clear();
-        match out.read_line(&mut line).await {
+        match out_buf.read_line(&mut line).await {
             Ok(0) => break,
             Ok(_) => {
                 while line.ends_with('\n') || line.ends_with('\r') {
