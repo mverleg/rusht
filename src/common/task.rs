@@ -6,9 +6,11 @@ use ::std::time::Instant;
 
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
+use ::async_std::process::ChildStdout;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
+use ::async_std::task::spawn as async_spawn;
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
 use ::itertools::Itertools;
@@ -152,16 +154,18 @@ impl Task {
                     .map(|arg| format!("'{}'", arg))
                 ).join(" ");
             cmd.args(&["-c".to_owned(), joined_cmd]);
-            self.execute_cmd_with_stdout(cmd, writer).await
+            self.execute_cmd_with_stdout(cmd, writer).await.unwrap()
+            //TODO @mverleg: get rid of unwrap
         } else {
             debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
             let mut cmd = Command::new(&self.cmd);
             cmd.args(&self.args);
-            self.execute_cmd_with_stdout(cmd, writer).await
+            self.execute_cmd_with_stdout(cmd, writer).await.unwrap()
+            //TODO @mverleg: get rid of unwrap
         }
     }
 
-    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
+    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> Result<ExitStatus, String> {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
 
@@ -176,23 +180,7 @@ impl Task {
             .spawn()
             .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
             .unwrap();  //TODO @mverleg: change to return Result
-        let mut out = BufReader::new(child.stdout.take().unwrap());
-        let mut line = String::new();
-        loop {
-            line.clear();
-            match out.read_line(&mut line).await {
-                Ok(0) => break,
-                Ok(_) => {
-                    line.pop(); // strip newline  //TODO @mverleg: cross-platform?
-                    writer.write_line(&line).await
-                }
-                Err(err) => panic!(
-                    "failed to read output of the task, task: {}, err: {}",
-                    self.as_str(),
-                    err
-                ),
-            }
-        }
+        let out = async_spawn(forward_out(child.stdout.take().unwrap(), writer));
         //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
         let status = match child.status().await {
             Ok(status) => status,
@@ -202,8 +190,29 @@ impl Task {
                 err
             )),
         };
-        ExitStatus::of_code(status.code())
+        out.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
+        Ok(ExitStatus::of_code(status.code()))
     }
+}
+
+async fn forward_out(stdout: ChildStdout, writer: &mut impl LineWriter) -> Result<(), String> {
+    let mut out = BufReader::new(stdout);
+    let mut line = String::new();
+    loop {
+        line.clear();
+        match out.read_line(&mut line).await {
+            Ok(0) => break,
+            Ok(_) => {
+                line.pop(); // strip newline  //TODO @mverleg: cross-platform?
+                writer.write_line(&line).await
+            }
+            Err(err) => return Err(format!(
+                "failed to read, err: {}",
+                err
+            )),
+        }
+    }
+    Ok(())
 }
 
 fn resolve_executable(base_cmd: String) -> String {
