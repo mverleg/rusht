@@ -5,7 +5,10 @@ use ::std::iter;
 use ::std::path::PathBuf;
 use ::std::process::Command;
 use ::std::process::Stdio;
+use ::std::thread;
 use ::std::time::Instant;
+use std::io::Read;
+use std::process::ChildStdout;
 
 use ::async_std::task::block_on;
 use ::clap::StructOpt;
@@ -160,7 +163,7 @@ impl Task {
         }
     }
 
-    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
+    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, out_writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
         debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
@@ -168,6 +171,7 @@ impl Task {
         let mut child = match base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
+            //.stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
@@ -179,23 +183,12 @@ impl Task {
                 err
             )),
         };
-        let mut out = BufReader::new(child.stdout.take().unwrap());
-        let mut line = String::new();
-        loop {
-            line.clear();
-            match out.read_line(&mut line) {
-                Ok(0) => break,
-                Ok(_) => {
-                    line.pop(); // strip newline  //TODO @mverleg: cross-platform?
-                    writer.write_line(&line).await
-                }
-                Err(err) => panic!(
-                    "failed to read output of the task, task: {}, err: {}",
-                    self.as_str(),
-                    err
-                ),
-            }
-        }
+        //let mut inp = BufReader::new(child.stdin.take().unwrap());
+        let q: impl async_std::io::Read = child.stdout.take().unwrap();
+        let mut out: BufReader<ChildStdout> = BufReader::new(child.stdout.take().unwrap());
+        let cmd_str = self.as_str();
+        let cmd2writer = CommandToWriter::new();
+        thread::scope(move |_scope| cmd2writer.run());
         let status = match child.wait() {
             Ok(status) => status,
             Err(err) => fail(format!(
@@ -205,6 +198,40 @@ impl Task {
             )),
         };
         ExitStatus::of_code(status.code())
+    }
+}
+
+struct CommandToWriter<R: Read> {
+    proc_out: BufReader<R>,
+}
+
+impl <R: Read> CommandToWriter<R> {
+    pub fn new(reader: R) -> Self {
+        CommandToWriter {
+            proc_out: BufReader::new(reader)
+        }
+    }
+
+    pub fn run(&mut self) {
+        //TODO @mverleg: ideally this should use some natively async Process, instead of threads
+        let mut line = String::new();
+        loop {
+            line.clear();
+            match self.proc_out.read_line(&mut line) {
+                Ok(0) => break,
+                Ok(_) => {
+                    while line.ends_with('\n') || line.ends_with('\r') {
+                        line.pop();
+                    }
+                    block_on(out_writer.write_line(&line))
+                }
+                Err(err) => panic!(
+                    "failed to read output of the task, task: {}, err: {}",
+                    cmd_str,
+                    err
+                ),
+            }
+        }
     }
 }
 
