@@ -21,7 +21,7 @@ use ::serde::Serialize;
 use ::which::which_all;
 use async_std::io::Read;
 
-use crate::common::{fail, LineWriter, StdWriter};
+use crate::common::{LineWriter, StdWriter};
 use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
 use crate::observe::mon_task;
@@ -166,7 +166,7 @@ impl Task {
         }
     }
 
-    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> Result<ExitStatus, String> {
+    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, out_writer: &mut impl LineWriter) -> Result<ExitStatus, String> {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
 
@@ -177,39 +177,31 @@ impl Task {
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
             .unwrap();  //TODO @mverleg: change to return Result
 
+        // This uses threads because async_std spawn did not have scoped tasks, so writer needs to be 'static which it is not
         thread::scope(move |scope| {
             let proc_out = child.stdout.take().unwrap();
             let proc_err = child.stderr.take().unwrap();
-            let funnel = FunnelFactory::new(writer);
+            let funnel = FunnelFactory::new(out_writer);
             let out_writer = funnel.writer("out");
             let err_writer = funnel.writer("err");
             let out_task = scope.spawn(move || block_on(forward_out(proc_out, out_writer)));
             let err_task = scope.spawn(move || block_on(forward_out(proc_err, err_writer)));
-            out_task.join().expect("thread panic").unwrap();
-            err_task.join().expect("thread panic").unwrap();
-            //TODO @mverleg: get rid of unwrap (but keep expect)
-        });
-        //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
-        let status = match child.status().await {
-            Ok(status) => status,
-            Err(err) => fail(format!(
-                "failed to finish command '{}', error {}",
-                self.as_cmd_str(),
-                err
-            )),
-        };
-        // out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
-        // err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
-        Ok(ExitStatus::of_code(status.code()))
+            //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
+            let status = block_on(child.status())
+                .map_err(|err| format!("failed to finish command '{}', error {}", self.as_cmd_str(), err))?;
+            out_task.join().expect("thread panic")?;
+            err_task.join().expect("thread panic")?;
+            Ok(ExitStatus::of_code(status.code()))
+        })
     }
 }
 
-async fn forward_out(stdout: impl Read, mut writer: impl LineWriter) -> Result<(), String> {
+async fn forward_out(stdout: impl Read + Unpin, mut writer: impl LineWriter) -> Result<(), String> {
     let mut out_buf = BufReader::new(stdout);
     let mut line = String::new();
     loop {
