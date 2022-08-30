@@ -140,6 +140,7 @@ mod tests {
     use ::async_std::task::sleep;
     use ::futures::future::select;
     use ::futures::future::Either;
+    use crate::common::StdWriter;
 
     use super::*;
 
@@ -156,7 +157,7 @@ mod tests {
         let deps = vec![botm, mid1, top, mid2];
         match select(
             Box::pin(sleep(Duration::from_secs(3))),
-            Box::pin(run_all(deps)),
+            Box::pin(run_all(deps, &mut StdWriter::stdout())),
         )
         .await
         {
