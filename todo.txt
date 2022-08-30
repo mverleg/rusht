@@ -1,0 +1,9 @@
+
+Command to pipe without using pipe symbol, i.e.
+piped cat hello world -- grab '(h\w*)'
+
+Command to expect a number of lines, specifically
+1) fail if no lines
+2) fail if more than one line
+
+
