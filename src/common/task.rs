@@ -20,9 +20,9 @@ use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
-use futures::future::select;
 
 use crate::common::{fail, LineWriter, StdWriter};
+use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
 use crate::observe::mon_task;
 
@@ -181,10 +181,10 @@ impl Task {
             .spawn()
             .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
             .unwrap();  //TODO @mverleg: change to return Result
-        let s = select(
-            forward_out(child.stdout.take().unwrap(), writer),
-            forward_out(child.stdout.take().unwrap(), writer),
-        );
+
+        let funnel = FunnelFactory::new(writer);
+        let out_task = async_spawn(forward_out(child.stdout.take().unwrap(), funnel.writer("out")));
+        let err_task = async_spawn(forward_out(child.stdout.take().unwrap(), funnel.writer("err")));
         //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
         let status = match child.status().await {
             Ok(status) => status,
@@ -194,13 +194,13 @@ impl Task {
                 err
             )),
         };
-        // out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
-        // err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
+        out_task.await.map_err(|err| format!("stdout of task {}: {}", self.as_cmd_str(), err))?;
+        err_task.await.map_err(|err| format!("stderr of task {}: {}", self.as_cmd_str(), err))?;
         Ok(ExitStatus::of_code(status.code()))
     }
 }
 
-async fn forward_out(stdout: ChildStdout, writer: &mut impl LineWriter) -> Result<(), String> {
+async fn forward_out(stdout: ChildStdout, mut writer: impl LineWriter) -> Result<(), String> {
     let mut out = BufReader::new(stdout);
     let mut line = String::new();
     loop {
