@@ -132,7 +132,7 @@ impl Task {
         writer: &mut impl LineWriter,
     ) -> ExitStatus {
         if monitor {
-            mon_task(self, writer, true, false, true, false, true).await
+            mon_task(self, writer, true, true, true, false, true).await
         } else {
             self.execute_with_stdout_nomonitor(writer).await
         }
