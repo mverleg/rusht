@@ -1,12 +1,13 @@
 use ::std::collections::HashMap;
 use ::std::env;
-use ::std::io::{BufRead, BufReader};
 use ::std::iter;
 use ::std::path::PathBuf;
-use ::std::process::Command;
-use ::std::process::Stdio;
 use ::std::time::Instant;
 
+use ::async_std::io::BufReader;
+use ::async_std::io::prelude::BufReadExt;
+use ::async_std::process::Command;
+use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
 use ::clap::StructOpt;
 use ::dashmap::DashMap;
@@ -163,27 +164,22 @@ impl Task {
     async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, writer: &mut impl LineWriter) -> ExitStatus {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
-        debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
-            base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
-        let mut child = match base_cmd
+        // debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
+        //     base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
+        //TODO @mverleg: re-enable
+        let mut child = base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-        {
-            Ok(child) => child,
-            Err(err) => fail(format!(
-                "failed to start command '{}', error {}",
-                self.as_cmd_str(),
-                err
-            )),
-        };
+            .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
+            .unwrap();  //TODO @mverleg: change to return Result
         let mut out = BufReader::new(child.stdout.take().unwrap());
         let mut line = String::new();
         loop {
             line.clear();
-            match out.read_line(&mut line) {
+            match out.read_line(&mut line).await {
                 Ok(0) => break,
                 Ok(_) => {
                     line.pop(); // strip newline  //TODO @mverleg: cross-platform?
@@ -196,7 +192,7 @@ impl Task {
                 ),
             }
         }
-        let status = match child.wait() {
+        let status = match child.await {
             Ok(status) => status,
             Err(err) => fail(format!(
                 "failed to finish command '{}', error {}",
