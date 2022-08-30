@@ -22,7 +22,6 @@ use ::which::which_all;
 use async_std::io::Read;
 
 use crate::common::{LineWriter, StdWriter};
-use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
 use crate::observe::mon_task;
 
@@ -170,6 +169,9 @@ impl Task {
         // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
         // even with threading so for now do only the stdout.
 
+        let mut err_writer = StdWriter::stderr();
+        //TODO @mverleg: accept as input
+
         // note: cannot log with async_std because it does not expose getters on Command
         // debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
         //     base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
@@ -186,11 +188,8 @@ impl Task {
         thread::scope(move |scope| {
             let proc_out = child.stdout.take().unwrap();
             let proc_err = child.stderr.take().unwrap();
-            let funnel = FunnelFactory::new(out_writer);
-            let out_writer = funnel.writer("out");
-            let err_writer = funnel.writer("err");
             let out_task = scope.spawn(move || block_on(forward_out(proc_out, out_writer)));
-            let err_task = scope.spawn(move || block_on(forward_out(proc_err, err_writer)));
+            let err_task = scope.spawn(move || block_on(forward_out(proc_err, &mut err_writer)));
             //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
             let status = block_on(child.status())
                 .map_err(|err| format!("failed to finish command '{}', error {}", self.as_cmd_str(), err))?;
@@ -201,7 +200,7 @@ impl Task {
     }
 }
 
-async fn forward_out(stdout: impl Read + Unpin, mut writer: impl LineWriter) -> Result<(), String> {
+async fn forward_out(stdout: impl Read + Unpin, writer: &mut impl LineWriter) -> Result<(), String> {
     let mut out_buf = BufReader::new(stdout);
     let mut line = String::new();
     loop {
