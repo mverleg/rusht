@@ -42,6 +42,14 @@ impl ExitStatus {
         })
     }
 
+    pub fn max(first: ExitStatus, second: ExitStatus) -> ExitStatus {
+        if first.code > second.code {
+            first
+        } else {
+            second
+        }
+    }
+
     pub fn ok() -> ExitStatus {
         ExitStatus::of(0)
     }

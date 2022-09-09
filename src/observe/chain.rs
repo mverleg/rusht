@@ -11,6 +11,8 @@ use ::async_trait::async_trait;
 
 use crate::common::{LineReader, LineWriter};
 
+//TODO @mverleg: maybe could be more efficient using single-line buffer and custom wakers, like AsyncGate
+
 #[derive(Debug, PartialEq, Eq)]
 enum PipeItem {
     Line(String),
