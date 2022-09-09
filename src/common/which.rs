@@ -11,7 +11,8 @@ lazy_static! {
     static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
 }
 
-pub fn resolve_executable(base_cmd: String) -> String {
+pub fn resolve_executable(base_cmd: impl Into<String>) -> String {
+    let base_cmd = base_cmd.into();
     let t0 = Instant::now();
     if base_cmd.contains('/') {
         debug!(
@@ -78,4 +79,15 @@ pub fn resolve_executable(base_cmd: String) -> String {
         debug!("resolve_executable took {} ms", duration);
     }
     full_cmd
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Panics if not found. Should be safe to assume Cargo exists when running tests.
+    #[test]
+    fn resolve_cargo() {
+        let _exe = resolve_executable("cargo");
+    }
 }
