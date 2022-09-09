@@ -67,7 +67,7 @@ impl FromStr for HashPolicy {
             "always" | "a" => HashPolicy::Always,
             "changed" | "c" => HashPolicy::Changed,
             "too-long" | "long" | "l" => HashPolicy::TooLong,
-            "never" | "n" => HashPolicy::TooLong,
+            "never" | "n" => HashPolicy::Never,
             other => return Err(format!("unknown hash policy: {}", other)),
         })
     }

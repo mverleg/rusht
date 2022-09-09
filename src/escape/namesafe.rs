@@ -51,6 +51,8 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
     let do_hash = filtered.len() < 2 || args.hash_policy.should_hash(was_changed, was_too_long);
+    debug!("for line {original}: was_changed={was_changed}, was_too_long={was_too_long}, \
+            count={count}, max_length={max_length}, do_hash={do_hash}, hash_policy={0:?}", args.hash_policy);
     while filtered.ends_with('_') || filtered.ends_with('-') {
         filtered.pop();
     }
