@@ -51,13 +51,43 @@ impl CommandArgs {
         let mut first = vec![];
         let mut second = vec![];
         let mut current = &mut first;
+        let mut is_first = true;
         for part in self.unpack().drain(..) {
-            if part == separator {
-                current = &mut second
+            if is_first && part == separator {
+                current = &mut second;
+                is_first = false
+            } else {
+                current.push(part)
             }
-            current.push(part)
         }
         (CommandArgs::Cmd(first), CommandArgs::Cmd(second))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn split_in_middle() {
+        let orig = CommandArgs::Cmd(vec![
+            "aaa".to_owned(),
+            "----".to_owned(),
+            "--".to_owned(),
+            "bbb".to_owned(),
+            "--".to_owned(),
+            "ccc".to_owned(),
+        ]);
+        let (left, right) = orig.split_once_at("--");
+        assert_eq!(left.unpack(), vec![
+            "aaa".to_owned(),
+            "----".to_owned(),
+        ]);
+        assert_eq!(right.unpack(), vec![
+            "bbb".to_owned(),
+            "--".to_owned(),
+            "ccc".to_owned(),
+        ]);
     }
 }
 
