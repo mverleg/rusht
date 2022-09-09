@@ -6,6 +6,7 @@ pub use self::mon_args::MonArgs;
 pub use self::piped::piped;
 pub use self::piped_args::PipedArgs;
 pub use self::sound::sound_notification;
+pub use self::chain::chained;
 
 mod handle_mon;
 mod mon;
@@ -14,3 +15,4 @@ mod sound;
 mod piped;
 mod handle_piped;
 mod piped_args;
+mod chain;
