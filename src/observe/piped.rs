@@ -1,6 +1,7 @@
 use crate::common::LineReader;
 use crate::common::LineWriter;
 use crate::ExitStatus;
+use crate::observe::chained;
 use crate::observe::piped_args::PipedArgs;
 
 pub async fn piped(args: PipedArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) -> ExitStatus {
@@ -9,6 +10,7 @@ pub async fn piped(args: PipedArgs, reader: &mut impl LineReader, writer: &mut i
     let source = source.into_task();
     let sink  = sink.into_task();
     //source.execute_with_stdout();
+    let (chain_read, chain_write) = chained(args.pipe_buffer_size.try_into().unwrap_or(usize::MAX));
 
     unimplemented!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
