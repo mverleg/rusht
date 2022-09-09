@@ -99,6 +99,8 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
+    use ::clap::Parser;
+
     use crate::escape::HashPolicy;
 
     use super::*;
@@ -167,5 +169,13 @@ mod tests {
         );
         // use hash if result is too short
         assert_eq!(res, "cavx4zqano9q");
+    }
+
+    #[test]
+    fn long_once_without_hash() {
+        // based on real use bug
+        let args = NamesafeArgs::parse_from(vec!["namesafe", "-1", "-x=n"]);
+        let res = namesafe_line("commits-for-review-unpushed-firstN", &args);
+        assert_eq!(res, "commits-for-review-unpushed-firstN");
     }
 }
