@@ -103,16 +103,29 @@ impl Task {
     pub async fn execute_with_stdout(
         &self,
         monitor: bool,
-        writer: &mut impl LineWriter,
+        out_writer: &mut impl LineWriter,
+    ) -> ExitStatus {
+        let mut err_writer = StdWriter::stderr();
+        self.execute_with_outerr(monitor, out_writer, &mut err_writer).await
+    }
+
+    pub async fn execute_with_outerr(
+        &self,
+        monitor: bool,
+        out_writer: &mut impl LineWriter,
+        err_writer: &mut impl LineWriter,
     ) -> ExitStatus {
         if monitor {
-            mon_task(self, writer, true, true, true, false, true).await
+            mon_task(self, out_writer, true, true, true, false, true).await
         } else {
-            self.execute_with_stdout_nomonitor(writer).await
+            self.execute_with_stdout_nomonitor(out_writer, err_writer).await
         }
     }
 
-    pub async fn execute_with_stdout_nomonitor(&self, writer: &mut impl LineWriter) -> ExitStatus {
+    pub async fn execute_with_stdout_nomonitor(&self,
+        out_writer: &mut impl LineWriter,
+        err_writer: &mut impl LineWriter,
+    ) -> ExitStatus {
         let use_shell_env = "RUSHT_SHELL_EXEC";
         if env::var(use_shell_env).is_ok() {
             debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
@@ -125,24 +138,22 @@ impl Task {
                     .map(|arg| format!("'{}'", arg))
                 ).join(" ");
             cmd.args(&["-c".to_owned(), joined_cmd]);
-            self.execute_cmd_with_stdout(cmd, writer).await.unwrap()
+            self.execute_cmd_with_outerr(cmd, out_writer, err_writer).await.unwrap()
             //TODO @mverleg: get rid of unwrap
         } else {
             debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
             let mut cmd = Command::new(&self.cmd);
             cmd.args(&self.args);
-            self.execute_cmd_with_stdout(cmd, writer).await.unwrap()
+            self.execute_cmd_with_outerr(cmd, out_writer, err_writer).await.unwrap()
             //TODO @mverleg: get rid of unwrap
         }
     }
 
-    async fn execute_cmd_with_stdout(&self, mut base_cmd: Command, out_writer: &mut impl LineWriter) -> Result<ExitStatus, String> {
-        // Note: it is complex to read both stdout and stderr (https://stackoverflow.com/a/34616729)
-        // even with threading so for now do only the stdout.
-
-        let mut err_writer = StdWriter::stderr();
-        //TODO @mverleg: accept as input
-
+    async fn execute_cmd_with_outerr(&self,
+        mut base_cmd: Command,
+        out_writer: &mut impl LineWriter,
+        err_writer: &mut impl LineWriter,
+    ) -> Result<ExitStatus, String> {
         // note: cannot log with async_std because it does not expose getters on Command
         // debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
         //     base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
@@ -152,15 +163,14 @@ impl Task {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))
-            .unwrap();  //TODO @mverleg: change to return Result
+            .map_err(|err| format!("failed to start command '{}', error {}", self.as_cmd_str(), err))?;
 
-        // This uses threads because async_std spawn did not have scoped tasks, so writer needs to be 'static which it is not
+        // This uses threads because async_std spawn did not have scoped tasks, so writer needs to be 'static, which it is not
         thread::scope(move |scope| {
             let proc_out = child.stdout.take().unwrap();
             let proc_err = child.stderr.take().unwrap();
             let out_task = scope.spawn(move || block_on(forward_out(proc_out, out_writer)));
-            let err_task = scope.spawn(move || block_on(forward_out(proc_err, &mut err_writer)));
+            let err_task = scope.spawn(move || block_on(forward_out(proc_err, err_writer)));
             //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
             let status = block_on(child.status())
                 .map_err(|err| format!("failed to finish command '{}', error {}", self.as_cmd_str(), err))?;
