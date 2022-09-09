@@ -139,7 +139,7 @@ mod tests {
                 ..Default::default()
             },
         );
-        assert_eq!(res, "hello_world-make-this-name-really-really-long");
+        assert_eq!(res, "hello_world-make-this-name-reall");
     }
 
     #[test]
