@@ -33,6 +33,7 @@ mod re;
 mod read;
 mod stdin;
 mod task;
+mod exec;
 mod which;
 mod cmd_args;
 mod write;
