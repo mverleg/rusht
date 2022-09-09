@@ -1,9 +1,8 @@
-
 use ::clap::Parser;
 
-use ::rusht::observe::handle_mon;
-use ::rusht::observe::MonArgs;
 use ::rusht::ExitStatus;
+use ::rusht::observe::handle_piped;
+use ::rusht::observe::PipedArgs;
 
 #[async_std::main]
 async fn main() -> ExitStatus {

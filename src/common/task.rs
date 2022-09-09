@@ -19,7 +19,7 @@ use ::log::info;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::which::which_all;
-use async_std::io::Read;
+use ::async_std::io::Read;
 
 use crate::common::{LineWriter, StdWriter};
 use crate::ExitStatus;
@@ -45,6 +45,19 @@ impl CommandArgs {
 
     pub fn into_task(self) -> Task {
         Task::new_split_in_cwd(self.unpack())
+    }
+
+    pub fn split_once_at(self, separator: &str) -> (CommandArgs, CommandArgs) {
+        let mut first = vec![];
+        let mut second = vec![];
+        let mut current = &mut first;
+        for part in self.unpack().drain(..) {
+            if part == separator {
+                current = &mut second
+            }
+            current.push(part)
+        }
+        (CommandArgs::Cmd(first), CommandArgs::Cmd(second))
     }
 }
 

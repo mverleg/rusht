@@ -133,13 +133,13 @@ mod tests {
     #[test]
     fn subsequent_weird_symbols() {
         let res = namesafe_line(
-            "_-_hello!@#$%^&world-_-",
+            "_-_hello!@#$%^&world-_-make-this-name-really-really-long",
             &NamesafeArgs {
                 hash_policy: HashPolicy::Never,
                 ..Default::default()
             },
         );
-        assert_eq!(res, "hello_world");
+        assert_eq!(res, "hello_world-make-this-name-really-really-long");
     }
 
     #[test]
