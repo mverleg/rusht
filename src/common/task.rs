@@ -3,93 +3,21 @@ use ::std::env;
 use ::std::iter;
 use ::std::path::PathBuf;
 use ::std::thread;
-use ::std::time::Instant;
 
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
-use ::clap::StructOpt;
-use ::dashmap::DashMap;
 use ::itertools::Itertools;
-use ::lazy_static::lazy_static;
-use ::log::{debug, warn};
-use ::log::info;
+use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::which::which_all;
 use ::async_std::io::Read;
 
-use crate::common::{LineWriter, StdWriter};
+use crate::common::{LineWriter, resolve_executable, StdWriter};
 use crate::ExitStatus;
 use crate::observe::mon_task;
-
-lazy_static! {
-    static ref EXE_CACHE: DashMap<String, String> = DashMap::new();
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, StructOpt)]
-#[structopt(name = "command")]
-pub enum CommandArgs {
-    #[structopt(external_subcommand)]
-    Cmd(Vec<String>),
-}
-
-impl CommandArgs {
-    pub fn unpack(self) -> Vec<String> {
-        match self {
-            CommandArgs::Cmd(cmd) => cmd,
-        }
-    }
-
-    pub fn into_task(self) -> Task {
-        Task::new_split_in_cwd(self.unpack())
-    }
-
-    pub fn split_once_at(self, separator: &str) -> (CommandArgs, CommandArgs) {
-        let mut first = vec![];
-        let mut second = vec![];
-        let mut current = &mut first;
-        let mut is_first = true;
-        for part in self.unpack().drain(..) {
-            if is_first && part == separator {
-                current = &mut second;
-                is_first = false
-            } else {
-                current.push(part)
-            }
-        }
-        (CommandArgs::Cmd(first), CommandArgs::Cmd(second))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn split_in_middle() {
-        let orig = CommandArgs::Cmd(vec![
-            "aaa".to_owned(),
-            "----".to_owned(),
-            "--".to_owned(),
-            "bbb".to_owned(),
-            "--".to_owned(),
-            "ccc".to_owned(),
-        ]);
-        let (left, right) = orig.split_once_at("--");
-        assert_eq!(left.unpack(), vec![
-            "aaa".to_owned(),
-            "----".to_owned(),
-        ]);
-        assert_eq!(right.unpack(), vec![
-            "bbb".to_owned(),
-            "--".to_owned(),
-            "ccc".to_owned(),
-        ]);
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
@@ -263,73 +191,4 @@ async fn forward_out(stdout: impl Read + Unpin, writer: &mut impl LineWriter) ->
         }
     }
     Ok(())
-}
-
-fn resolve_executable(base_cmd: String) -> String {
-    let t0 = Instant::now();
-    if base_cmd.contains('/') {
-        debug!(
-            "command {} appears to already be a path, not resolving further",
-            base_cmd
-        );
-        return base_cmd;
-    }
-    if let Some(cached_exe) = EXE_CACHE.get(&base_cmd) {
-        debug!(
-            "using cached executable {} for {}",
-            cached_exe.value(),
-            base_cmd
-        );
-        return cached_exe.value().clone();
-    }
-    let do_warn = env::var("RUSHT_SUPPRESS_EXE_RESOLVE").is_err();
-    let full_cmd: String = {
-        let mut full_cmds = which_all(&base_cmd).unwrap_or_else(|err| {
-            panic!(
-                "error while trying to find command '{}' on path, err: {}",
-                base_cmd, err
-            )
-        });
-        match full_cmds.next() {
-            Some(cmd) => {
-                if let Some(more_cmd) = full_cmds.next() {
-                    if do_warn {
-                        info!(
-                            "more than one command found for {}: {} and {} (choosing the first)",
-                            base_cmd,
-                            cmd.to_string_lossy(),
-                            more_cmd.to_string_lossy()
-                        )
-                    }
-                }
-                cmd.to_str()
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "command {} executable {} not unicode",
-                            base_cmd,
-                            cmd.to_string_lossy()
-                        )
-                    })
-                    .to_owned()
-            }
-            None => {
-                if do_warn {
-                    warn!(
-                        "could not find executable for {}, will try to run anyway",
-                        base_cmd
-                    );
-                }
-                base_cmd.clone()
-            }
-        }
-    };
-    debug!("caching executable {} for {}", &full_cmd, &base_cmd);
-    EXE_CACHE.insert(base_cmd, full_cmd.clone());
-    let duration = t0.elapsed().as_millis();
-    if duration > 200 {
-        warn!("resolve_executable slow, took {} ms", duration);
-    } else {
-        debug!("resolve_executable took {} ms", duration);
-    }
-    full_cmd
 }
