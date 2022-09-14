@@ -114,7 +114,7 @@ async fn unique_nosort(
         if !keep.keep_is_first(seen.insert(key.to_owned())) {
             continue;
         }
-        writer.write_line(&line).await
+        writer.write_line(line).await
     }
 }
 

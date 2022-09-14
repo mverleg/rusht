@@ -53,6 +53,16 @@ impl LineReader for StdinReader {
     }
 }
 
+#[derive(Debug, Default)]
+struct RejectInput {}
+
+#[async_trait]
+impl LineReader for RejectInput {
+    async fn read_line(&mut self) -> Option<&str> {
+        todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    }
+}
+
 #[derive(Debug)]
 pub struct VecReader {
     lines: Vec<String>,

@@ -52,14 +52,10 @@ mod tests {
             "ccc".to_owned(),
         ]);
         let (left, right) = orig.split_once_at("--");
-        assert_eq!(left.unpack(), vec![
-            "aaa".to_owned(),
-            "----".to_owned(),
-        ]);
-        assert_eq!(right.unpack(), vec![
-            "bbb".to_owned(),
-            "--".to_owned(),
-            "ccc".to_owned(),
-        ]);
+        assert_eq!(left.unpack(), vec!["aaa".to_owned(), "----".to_owned(),]);
+        assert_eq!(
+            right.unpack(),
+            vec!["bbb".to_owned(), "--".to_owned(), "ccc".to_owned(),]
+        );
     }
 }

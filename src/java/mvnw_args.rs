@@ -106,7 +106,7 @@ pub struct MvnwArgs {
     pub rebuild_if_match: Vec<Regex>,
     //TODO @mverleg: ^
     /// Fail the command if the newly added code matches the regex.
-    #[structopt(short='g', long = "fail-if-added", hide_short_help = true)]
+    #[structopt(short = 'g', long = "fail-if-added", hide_short_help = true)]
     pub fail_if_added: Vec<Regex>,
     //TODO @mverleg: ^
 }

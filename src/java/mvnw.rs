@@ -10,11 +10,11 @@ use ::log::warn;
 use regex::Regex;
 use smallvec::SmallVec;
 
-use crate::common::{git_affected_files_head, LineWriter, RegexWatcherWriter, run_all, TeeWriter};
-use crate::ExitStatus;
-use crate::java::MvnCmdConfig;
+use crate::common::{git_affected_files_head, run_all, LineWriter, RegexWatcherWriter, TeeWriter};
 use crate::java::mvnw_args::AffectedPolicy;
+use crate::java::MvnCmdConfig;
 use crate::java::MvnwArgs;
+use crate::ExitStatus;
 
 pub async fn mvnw(
     args: MvnwArgs,
@@ -33,10 +33,18 @@ pub async fn mvnw(
 
     if !args.proj_roots.is_empty() {
         debug!("using multi-dir mode for {} roots", args.proj_roots.len());
-        for dir in args.proj_roots.iter(){
+        for dir in args.proj_roots.iter() {
             debug!("running for maven root {}", dir.to_string_lossy());
-            set_current_dir(dir).map_err(|err| (ExitStatus::err(), format!(
-                "failed to switch working directory to {}, err {}", dir.to_string_lossy(), err)))?;
+            set_current_dir(dir).map_err(|err| {
+                (
+                    ExitStatus::err(),
+                    format!(
+                        "failed to switch working directory to {}, err {}",
+                        dir.to_string_lossy(),
+                        err
+                    ),
+                )
+            })?;
             mvnw_dir(args.clone(), writer).await?;
         }
         Ok(())
@@ -47,8 +55,8 @@ pub async fn mvnw(
 }
 
 async fn mvnw_dir(
-        args: MvnwArgs,
-        writer: &mut impl LineWriter,
+    args: MvnwArgs,
+    writer: &mut impl LineWriter,
 ) -> Result<(), (ExitStatus, String)> {
     let cwd = current_dir().expect("could not determine working directory");
     if !PathBuf::from("pom.xml").is_file() {
@@ -83,7 +91,11 @@ async fn mvnw_dir(
     }
 
     let show_cmds_only = args.show_cmds_only;
-    let rebuild_if_match = args.rebuild_if_match.iter().cloned().collect::<SmallVec<[Regex; 1]>>();
+    let rebuild_if_match = args
+        .rebuild_if_match
+        .iter()
+        .cloned()
+        .collect::<SmallVec<[Regex; 1]>>();
     //let is_offline = !args.update;
     let cmd_config = build_config(cwd, java_home, args).map_err(|err| (ExitStatus::err(), err))?;
 
@@ -98,8 +110,9 @@ async fn mvnw_dir(
         return Ok(());
     }
     let has_pattern = AtomicBool::new(false);
-    let mut watcher = RegexWatcherWriter::new(
-        rebuild_if_match, |_| has_pattern.store(true, Ordering::Release));
+    let mut watcher = RegexWatcherWriter::new(rebuild_if_match, |_| {
+        has_pattern.store(true, Ordering::Release)
+    });
     let mut tee_writer = TeeWriter::new(writer, &mut watcher);
     let mut status = run_all(cmds, &mut tee_writer).await;
     if has_pattern.load(Ordering::Acquire) {

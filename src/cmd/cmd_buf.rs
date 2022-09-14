@@ -67,7 +67,11 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         0,
     );
     if !to_run.is_empty() {
-        println!("collected {} commands to run, e.g. {}", to_run.len(), to_run[0].as_str());
+        println!(
+            "collected {} commands to run, e.g. {}",
+            to_run.len(),
+            to_run[0].as_str()
+        );
     }
     let statuses = run_tasks(
         to_run,

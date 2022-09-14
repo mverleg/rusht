@@ -2,10 +2,10 @@ use ::std::collections::HashMap;
 use ::std::env;
 use ::std::path::PathBuf;
 
+use crate::common::resolve_executable;
 use ::itertools::Itertools;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use crate::common::resolve_executable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
@@ -84,6 +84,6 @@ impl Task {
                     .join(" ")
             )
         };
-        format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str, )
+        format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
     }
 }

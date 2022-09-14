@@ -38,12 +38,15 @@ pub async fn mon_task(
     let t0 = Instant::now();
     let status = if output_on_success {
         let mut err_writer = StdWriter::stderr();
-        task.execute_with_stdout_nomonitor(writer, &mut err_writer).await
+        task.execute_with_stdout_nomonitor(writer, &mut err_writer)
+            .await
     } else {
         debug!("mon buffering output, will show on error");
         let mut out_buffer = VecWriter::new();
         let mut err_writer = StdWriter::stderr();
-        let status = task.execute_with_stdout_nomonitor(&mut out_buffer, &mut err_writer).await;
+        let status = task
+            .execute_with_stdout_nomonitor(&mut out_buffer, &mut err_writer)
+            .await;
         if status.is_err() {
             eprintln!("printing all output because process failed");
             writer.write_all_lines(out_buffer.get().iter()).await;

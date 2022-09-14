@@ -2,8 +2,8 @@ extern crate core;
 
 use ::std::cmp::max;
 
-use ::async_std::channel::{bounded, Receiver};
 use ::async_std::channel::Sender;
+use ::async_std::channel::{bounded, Receiver};
 use ::async_std::task::block_on;
 use ::log::debug;
 
@@ -80,17 +80,12 @@ pub fn chained(buffer_size: usize) -> (ChainWriter, ChainReader) {
 
 #[cfg(test)]
 mod tests {
-    use ::std::cmp::max;
     use ::std::future::join;
 
-    use ::async_std::channel::{Receiver, Sender};
-    use ::async_std::channel::bounded;
-    use ::async_std::task::block_on;
-    use ::async_trait::async_trait;
     use ::regex::Regex;
 
-    use crate::common::{CollectorWriter, LineReader, LineWriter, VecReader};
-    use crate::filter::{grab, GrabArgs, Keep, Order, unique, UniqueArgs};
+    use crate::common::{CollectorWriter, VecReader};
+    use crate::filter::{grab, unique, GrabArgs, Keep, Order, UniqueArgs};
     use crate::observe::chain::chained;
 
     #[async_std::test]

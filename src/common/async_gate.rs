@@ -1,8 +1,8 @@
 use ::std::future::Future;
 use ::std::pin::Pin;
-use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicU8;
 use ::std::sync::atomic::Ordering;
+use ::std::sync::Arc;
 use ::std::sync::Mutex;
 use ::std::task::Context;
 use ::std::task::Poll;
@@ -97,8 +97,10 @@ impl AsyncGate {
     }
 
     pub async fn wait_timeout(&self, timeout: &Duration) -> Result<bool, ()> {
-        AsyncGateFuture(self).map(|val| Ok(val))
-            .race(sleep(*timeout).map(|()| Err(()))).await
+        AsyncGateFuture(self)
+            .map(Ok)
+            .race(sleep(*timeout).map(|()| Err(())))
+            .await
     }
 }
 
@@ -178,7 +180,7 @@ mod tests {
                 join(gate_clone.wait(), gate.wait()),
             ),
             join(
-                join(gate.wait(), (async || gate.open(true))()),
+                join(gate.wait(), async { gate.open(true) }),
                 join(gate.wait(), gate_clone.wait()),
             ),
         )

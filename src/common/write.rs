@@ -194,13 +194,15 @@ pub struct FunnelFactory<'a, W: LineWriter> {
 
 impl<'a, W: LineWriter> FunnelFactory<'a, W> {
     pub fn new(delegate: &'a mut W) -> Self {
-        FunnelFactory { delegate: Arc::new(Mutex::new(delegate)) }
+        FunnelFactory {
+            delegate: Arc::new(Mutex::new(delegate)),
+        }
     }
 
     pub fn writer(&self, name: &'a str) -> FunnelWriter<'a, W> {
         FunnelWriter {
             name,
-            delegate: self.delegate.clone()
+            delegate: self.delegate.clone(),
         }
     }
 }

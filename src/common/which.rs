@@ -3,8 +3,8 @@ use ::std::time::Instant;
 
 use ::dashmap::DashMap;
 use ::lazy_static::lazy_static;
-use ::log::{debug, warn};
 use ::log::info;
+use ::log::{debug, warn};
 use ::which::which_all;
 
 lazy_static! {

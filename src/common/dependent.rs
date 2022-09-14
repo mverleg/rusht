@@ -1,15 +1,14 @@
 use ::std::rc::Rc;
 use ::std::time::Duration;
 
-use ::async_std::task::sleep;
 use ::futures::future::join_all;
 use ::log::debug;
-use ::smallvec::SmallVec;
 use ::smallvec::smallvec;
+use ::smallvec::SmallVec;
 
-use crate::common::{LineWriter, Task};
 use crate::common::async_gate::AsyncGate;
 use crate::common::write::FunnelFactory;
+use crate::common::{LineWriter, Task};
 use crate::ExitStatus;
 
 #[derive(Debug)]
@@ -95,7 +94,7 @@ impl Dependent {
                             nr + 1,
                             count
                         );
-                    },
+                    }
                     Ok(false) => {
                         debug!(
                             "{} was waiting for {} [{}/{}] which just failed! skipping execution",
@@ -106,7 +105,7 @@ impl Dependent {
                         );
                         self.current.open(false);
                         return ExitStatus::err();
-                    },
+                    }
                     Err(()) => {
                         debug!(
                             "{} was waiting for {} [{}/{}] but it timed out ({} s)",
@@ -124,8 +123,7 @@ impl Dependent {
         }
         if let Some(task) = &self.task {
             self.current.open(false);
-            task.execute_with_stdout(true, &mut writer)
-                .await
+            task.execute_with_stdout(true, &mut writer).await
         } else {
             self.current.open(true);
             ExitStatus::ok()
@@ -156,8 +154,8 @@ mod tests {
     use ::std::time::Duration;
 
     use ::async_std::task::sleep;
-    use ::futures::future::Either;
     use ::futures::future::select;
+    use ::futures::future::Either;
 
     use crate::common::StdWriter;
 

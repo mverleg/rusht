@@ -26,11 +26,11 @@ fn parse_buffer_size(txt: &str) -> Result<u32, String> {
     match txt.parse::<u32>() {
         Ok(nr) => {
             if nr < 2 {
-                return Err("must be at least 2".to_owned())
+                return Err("must be at least 2".to_owned());
             }
             Ok(nr)
-        },
-        Err(err) => Err(format!("could not parse argument, err '{}'", err))
+        }
+        Err(err) => Err(format!("could not parse argument, err '{}'", err)),
     }
 }
 
