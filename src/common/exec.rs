@@ -3,6 +3,7 @@ use ::std::env;
 use ::std::iter;
 use ::std::path::PathBuf;
 use ::std::thread;
+use std::io;
 
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
@@ -15,7 +16,7 @@ use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::async_std::io::Read;
 
-use crate::common::{LineReader, LineWriter, resolve_executable, StdWriter, Task};
+use crate::common::{LineReader, LineWriter, resolve_executable, StdinReader, StdWriter, Task};
 use crate::ExitStatus;
 use crate::observe::mon_task;
 
@@ -32,7 +33,7 @@ pub struct ExecutionBuilder<'a, I, O, E>
 impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
         where I: LineReader, O: LineWriter, E: LineWriter {
 
-    pub fn of(task: &'a Task) -> Self {
+    pub fn of(task: &'a Task) -> ExecutionBuilder<'a, StdinReader, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
         ExecutionBuilder {
             task,
             inp: None,
