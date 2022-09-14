@@ -1,6 +1,11 @@
 use ::std::env;
 use ::std::path::PathBuf;
 use ::std::process::Command;
+use ::std::process::exit;
+use ::std::thread::sleep;
+use ::std::time::Duration;
+
+use ::rusht::common::RejectStdin;
 
 // The conclusion here is that running Command mvn is slow, compared to running `sh -c "mvn ..."`
 // * Copying all the end does not help.
@@ -10,6 +15,14 @@ use ::std::process::Command;
 
 #[async_std::main]
 async fn main() {
+
+    let reader = RejectStdin::new();
+    sleep(Duration::from_secs(2));
+    println!("done");
+    exit(0);
+
+    if 1==1 { unimplemented!(); }  //TODO @mverleg
+
     // JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.arm64.jdk/Contents/Home MAVEN_OPTS='-XX:+UseG1GC -Xms256m -Xmx8192m' time /opt/homebrew/bin/mvn test-compile --threads=10 --offline --quiet -Djava.net.preferIPv4Stack=true -Dmanagedversions.skip=true -Dmanagedversions.failOnError=false -Denforcer.skip=true -Ddatabase.skip=true -Dmaven.javadoc.skip=true -DskipTests=true --activate-profiles='!modules/all,!system,modules/viper'
     // let mut env = HashMap::new();
     // let path = env::var("PATH").unwrap();

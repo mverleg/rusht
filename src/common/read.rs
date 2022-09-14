@@ -1,11 +1,16 @@
-use std::thread;
+use ::std::process::exit;
+use ::std::thread;
+
+use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
-use ::async_std::io::BufReader;
 use ::async_std::io::Stdin;
+use ::async_std::prelude::FutureExt as AltExt;
+use ::async_std::task::block_on;
 use ::async_trait::async_trait;
-use async_std::prelude::FutureExt as AltExt;
-use futures::{AsyncReadExt, FutureExt};
+use ::futures::{AsyncReadExt, FutureExt};
+use ::log::debug;
+
 use crate::common::async_gate::AsyncGate;
 
 #[async_trait]
@@ -69,14 +74,15 @@ impl RejectStdin {
     pub fn new() -> Self {
         let gate = AsyncGate::new();
         let gate_clone = gate.clone();
-        thread::spawn(async move || {
+        thread::spawn(block_on(async move || {
+            debug!();
             let res = async_std::io::stdin().read(&mut [0]).map(|_| StdinWaitResult::DATA).race(
                 gate_clone.wait().map(|_| StdinWaitResult::COMPLETED)).await;
             if res == StdinWaitResult::DATA {
                 eprintln!("received data on stdin but did not expect any");
-                panic!("unexpected stdin");
+                exit(1);
             }
-        });
+        }));
         RejectStdin { gate }
     }
 }
