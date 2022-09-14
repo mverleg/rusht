@@ -1,13 +1,16 @@
 use ::std::future::Future;
 use ::std::pin::Pin;
+use ::std::sync::Arc;
 use ::std::sync::atomic::AtomicU8;
 use ::std::sync::atomic::Ordering;
-use ::std::sync::Arc;
 use ::std::sync::Mutex;
 use ::std::task::Context;
 use ::std::task::Poll;
 use ::std::task::Waker;
+use ::std::time::Duration;
 
+use ::async_std::task::sleep;
+use ::futures::FutureExt;
 use ::smallvec::smallvec;
 use ::smallvec::SmallVec;
 
@@ -90,6 +93,11 @@ impl AsyncGate {
     /// whether it was successful (true) or failed (false).
     pub fn wait(&self) -> AsyncGateFuture {
         AsyncGateFuture(self)
+    }
+
+    pub async fn wait_timeout(&self, timeout: &Duration) -> Result<bool, ()> {
+        AsyncGateFuture(self).map(|val| Ok(val))
+            .race(sleep(timeout).map(|()| Err(()))).await
     }
 }
 

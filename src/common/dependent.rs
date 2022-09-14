@@ -84,29 +84,41 @@ impl Dependent {
                     nr + 1,
                     count
                 );
-                let (dep_ok, ()) = race!(
-                    dependency.gate.wait(),
-                    sleep(Duration::from_millis(120_000)),
-                ).await;
-                //TODO @mverleg: make timeout configurable
-                if dep_ok {
-                    debug!(
-                        "{} was waiting for {} [{}/{}] which just completed",
-                        self.name,
-                        dependency.name,
-                        nr + 1,
-                        count
-                    );
-                } else {
-                    debug!(
-                        "{} was waiting for {} [{}/{}] which just failed! skipping execution",
-                        self.name,
-                        dependency.name,
-                        nr + 1,
-                        count
-                    );
-                    self.current.open(false);
-                    return ExitStatus::err();
+                let timeout = Duration::from_secs(150);
+                match dependency.gate.wait_timeout(&timeout).await {
+                    //TODO @mverleg: make timeout configurable
+                    Ok(true) => {
+                        debug!(
+                            "{} was waiting for {} [{}/{}] which just completed",
+                            self.name,
+                            dependency.name,
+                            nr + 1,
+                            count
+                        );
+                    },
+                    Ok(false) => {
+                        debug!(
+                            "{} was waiting for {} [{}/{}] which just failed! skipping execution",
+                            self.name,
+                            dependency.name,
+                            nr + 1,
+                            count
+                        );
+                        self.current.open(false);
+                        return ExitStatus::err();
+                    },
+                    Err(()) => {
+                        debug!(
+                            "{} was waiting for {} [{}/{}] but it timed out ({} s)",
+                            self.name,
+                            dependency.name,
+                            nr + 1,
+                            count,
+                            &timeout.as_secs(),
+                        );
+                        self.current.open(false);
+                        return ExitStatus::err();
+                    }
                 }
             }
         }
