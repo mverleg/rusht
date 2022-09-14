@@ -30,10 +30,8 @@ pub struct ExecutionBuilder<'a, I, O, E>
     monitor: bool,
 }
 
-impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
-        where I: LineReader, O: LineWriter, E: LineWriter {
-
-    pub fn of(task: &'a Task) -> ExecutionBuilder<'a, StdinReader, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
+impl <'a> ExecutionBuilder<'a, StdinReader, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
+    pub fn of(task: &'a Task) -> Self {
         ExecutionBuilder {
             task,
             inp: None,
@@ -42,15 +40,20 @@ impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
             monitor: false,
         }
     }
+}
 
-    pub fn out<O2: LineWriter>(self, out: &mut O2) -> ExecutionBuilder<'a, I, O2, E> {
+impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
+    where I: LineReader, O: LineWriter, E: LineWriter {
+
+
+    pub fn out<O2: LineWriter>(self, out: &'a mut O2) -> ExecutionBuilder<'a, I, O2, E> {
         ExecutionBuilder {
             out: Some(out),
             ..self
         }
     }
 
-    pub fn err<E2: LineWriter>(self, err: &mut E2) -> ExecutionBuilder<'a, I, O, E2> {
+    pub fn err<E2: LineWriter>(self, err: &'a mut E2) -> ExecutionBuilder<'a, I, O, E2> {
         ExecutionBuilder {
             err: Some(err),
             ..self
@@ -181,9 +184,9 @@ mod tests {
     #[test]
     fn build_exec() {
         let task = Task::noop();
-        let exec = ExecutionBuilder::of(&task)
-            .out(&mut VecWriter::new())
-            .err(&mut VecWriter::new())
-            .start();
+        let exec = ExecutionBuilder::of(&task);
+            // .out(&mut VecWriter::new())
+            // .err(&mut VecWriter::new())
+            // .start();
     }
 }
