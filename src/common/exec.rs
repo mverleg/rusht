@@ -70,12 +70,36 @@ where
     }
 
     pub fn start(self) {
-        let mut default_reader = RejectStdin::new();
-        let inp = self.inp.unwrap_or_else(|| &mut default_reader);
-
-
-        todo!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        exec_open_inp(self.task, self.inp, self.out, self.err, self.monitor)
     }
+}
+
+fn exec_open_inp<I, O, E>(task: &Task, inp: Option<&mut I>, out: Option<&mut O>, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+    if let Some(inp) = inp {
+        exec_open_out(task, inp, out, err, monitor)
+    } else {
+        exec_open_out(task, &mut RejectStdin::new(), out, err, monitor)
+    }
+}
+
+fn exec_open_out<I, O, E>(task: &Task, inp: &mut I, out: Option<&mut O>, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+    if let Some(out) = out {
+        exec_open_err(task, inp, out, err, monitor)
+    } else {
+        exec_open_err(task, inp, &mut StdWriter::stdout(), err, monitor)
+    }
+}
+
+fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+    if let Some(err) = err {
+        exec_ioe(task, inp, out, err, monitor)
+    } else {
+        exec_ioe(task, inp, out, &mut StdWriter::stderr(), monitor)
+    }
+}
+
+fn exec_ioe<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+    todo!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
 
 impl Task {
