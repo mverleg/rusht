@@ -106,6 +106,7 @@ async fn mvnw_dir(
         eprintln!("going to clean rebuild because a --rebuild-if-match was matched");
         let mut clean_config = cmd_config;
         clean_config.clean = true;
+        // TODO @mverleg: this hangs (sometimes? always?)
         status = run_all(clean_config.build_cmds(), writer).await;
     }
     if status.is_ok() {

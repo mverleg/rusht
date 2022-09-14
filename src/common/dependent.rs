@@ -1,5 +1,7 @@
 use ::std::rc::Rc;
+use ::std::time::Duration;
 
+use ::async_std::task::sleep;
 use ::futures::future::join_all;
 use ::log::debug;
 use ::smallvec::SmallVec;
@@ -82,7 +84,11 @@ impl Dependent {
                     nr + 1,
                     count
                 );
-                let dep_ok = dependency.gate.wait().await;
+                let (dep_ok, ()) = race!(
+                    dependency.gate.wait(),
+                    sleep(Duration::from_millis(120_000)),
+                ).await;
+                //TODO @mverleg: make timeout configurable
                 if dep_ok {
                     debug!(
                         "{} was waiting for {} [{}/{}] which just completed",
