@@ -1,8 +1,12 @@
+use std::thread;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
 use ::async_std::io::BufReader;
 use ::async_std::io::Stdin;
 use ::async_trait::async_trait;
+use async_std::prelude::FutureExt as AltExt;
+use futures::{AsyncReadExt, FutureExt};
+use crate::common::async_gate::AsyncGate;
 
 #[async_trait]
 pub trait LineReader: Send {
@@ -53,11 +57,38 @@ impl LineReader for StdinReader {
     }
 }
 
-#[derive(Debug, Default)]
-struct RejectInput {}
+#[derive(Debug)]
+pub struct RejectStdin {
+    gate: AsyncGate,
+}
+
+#[derive(Debug, PartialEq)]
+enum StdinWaitResult { DATA, COMPLETED }
+
+impl RejectStdin {
+    pub fn new() -> Self {
+        let gate = AsyncGate::new();
+        let gate_clone = gate.clone();
+        thread::spawn(async move || {
+            let res = async_std::io::stdin().read(&mut [0]).map(|_| StdinWaitResult::DATA).race(
+                gate_clone.wait().map(|_| StdinWaitResult::COMPLETED)).await;
+            if res == StdinWaitResult::DATA {
+                eprintln!("received data on stdin but did not expect any");
+                panic!("unexpected stdin");
+            }
+        });
+        RejectStdin { gate }
+    }
+}
+
+impl Drop for RejectStdin {
+    fn drop(&mut self) {
+        self.gate.open(true);
+    }
+}
 
 #[async_trait]
-impl LineReader for RejectInput {
+impl LineReader for RejectStdin {
     async fn read_line(&mut self) -> Option<&str> {
         todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }

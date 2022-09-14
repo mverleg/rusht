@@ -48,6 +48,13 @@ where
     O: LineWriter,
     E: LineWriter,
 {
+    pub fn inp<I2: LineReader>(self, inp: &'a mut I2) -> ExecutionBuilder<'a, I2, O, E> {
+        ExecutionBuilder {
+            inp: Some(inp),
+            ..self
+        }
+    }
+
     pub fn out<O2: LineWriter>(self, out: &'a mut O2) -> ExecutionBuilder<'a, I, O2, E> {
         ExecutionBuilder {
             out: Some(out),
@@ -197,6 +204,7 @@ async fn forward_out(
 
 #[cfg(test)]
 mod tests {
+    use crate::common::read::RejectStdin;
     use crate::common::VecWriter;
 
     use super::*;
@@ -205,6 +213,7 @@ mod tests {
     fn build_exec() {
         let task = Task::noop();
         ExecutionBuilder::of(&task)
+            .inp(&mut RejectStdin::new())
             .out(&mut VecWriter::new())
             .err(&mut VecWriter::new())
             .start();
