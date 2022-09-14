@@ -32,25 +32,30 @@ pub struct ExecutionBuilder<'a, I, O, E>
 impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
         where I: LineReader, O: LineWriter, E: LineWriter {
 
-    pub fn of(task: &Task) -> Self {
+    pub fn of(task: &'a Task) -> Self {
         ExecutionBuilder {
             task,
-            ..Default::default()
+            inp: None,
+            out: None,
+            err: None,
+            monitor: false,
         }
     }
 
-    pub fn out(&mut self, out: O) -> &mut self {
+    pub fn out(&mut self, out: &'a mut O) -> &mut Self {
         self.out = Some(out);
         self
     }
 
-    pub fn err(&mut self, err: E) -> &mut self {
+    pub fn err(&mut self, err: &'a mut E) -> &mut Self {
         self.err = Some(err);
         self
     }
+
+    pub fn start(self) {
+
+    }
 }
-
-
 
 impl Task {
 
@@ -160,4 +165,19 @@ async fn forward_out(stdout: impl Read + Unpin, writer: &mut impl LineWriter) ->
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::common::VecWriter;
+    use super::*;
+
+    #[test]
+    fn build_exec() {
+        let task = Task::noop();
+        let exec = ExecutionBuilder::of(&task)
+            .out(&mut VecWriter::new())
+            .err(&mut VecWriter::new())
+            .start();
+    }
 }

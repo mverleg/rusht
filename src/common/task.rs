@@ -1,23 +1,11 @@
 use ::std::collections::HashMap;
 use ::std::env;
-use ::std::iter;
 use ::std::path::PathBuf;
-use ::std::thread;
 
-use ::async_std::io::BufReader;
-use ::async_std::io::prelude::BufReadExt;
-use ::async_std::process::Command;
-use ::async_std::process::Stdio;
-use ::async_std::task::block_on;
 use ::itertools::Itertools;
-use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::async_std::io::Read;
-
-use crate::common::{LineWriter, resolve_executable, StdWriter};
-use crate::ExitStatus;
-use crate::observe::mon_task;
+use crate::common::resolve_executable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
@@ -31,6 +19,10 @@ pub struct Task {
 impl Task {
     pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
         Task::new_with_env(cmd, args, working_dir, HashMap::new())
+    }
+
+    pub fn new_in_cwd(cmd: String, args: Vec<String>) -> Self {
+        Task::new(cmd, args, env::current_dir().unwrap())
     }
 
     pub fn new_with_env(
