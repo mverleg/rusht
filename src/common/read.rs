@@ -74,15 +74,16 @@ impl RejectStdin {
     pub fn new() -> Self {
         let gate = AsyncGate::new();
         let gate_clone = gate.clone();
-        thread::spawn(block_on(async move || {
-            debug!();
+        async_std::task::spawn((async move || {
+            debug!("starting monitor to reject stdin input");
             let res = async_std::io::stdin().read(&mut [0]).map(|_| StdinWaitResult::DATA).race(
                 gate_clone.wait().map(|_| StdinWaitResult::COMPLETED)).await;
             if res == StdinWaitResult::DATA {
                 eprintln!("received data on stdin but did not expect any");
                 exit(1);
             }
-        }));
+            debug!("finished stdin rejection monitor because the reader was dropped");
+        })());
         RejectStdin { gate }
     }
 }
