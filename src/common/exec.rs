@@ -12,7 +12,7 @@ use ::async_std::task::block_on;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{LineReader, LineWriter, StdWriter, StdinReader, Task};
+use crate::common::{LineReader, LineWriter, StdWriter, Task, RejectStdin};
 use crate::observe::mon_task;
 use crate::ExitStatus;
 
@@ -30,7 +30,7 @@ where
     monitor: bool,
 }
 
-impl<'a> ExecutionBuilder<'a, StdinReader, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
+impl<'a> ExecutionBuilder<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
     pub fn of(task: &'a Task) -> Self {
         ExecutionBuilder {
             task,
@@ -70,6 +70,10 @@ where
     }
 
     pub fn start(self) {
+        let mut default_reader = RejectStdin::new();
+        let inp = self.inp.unwrap_or_else(|| &mut default_reader);
+
+
         todo!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
 }

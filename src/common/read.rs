@@ -1,12 +1,10 @@
 use ::std::process::exit;
-use ::std::thread;
 
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
 use ::async_std::io::Stdin;
 use ::async_std::prelude::FutureExt as AltExt;
-use ::async_std::task::block_on;
 use ::async_trait::async_trait;
 use ::futures::{AsyncReadExt, FutureExt};
 use ::log::debug;
