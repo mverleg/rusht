@@ -1,5 +1,6 @@
 #![feature(future_join)]
 #![feature(async_closure)]
+#![feature(type_changing_struct_update)]
 
 extern crate core;
 

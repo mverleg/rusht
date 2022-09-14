@@ -3,10 +3,11 @@ use ::std::env;
 use ::std::iter;
 use ::std::path::PathBuf;
 use ::std::thread;
-use std::io;
 
+use ::async_std::io;
 use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
+use ::async_std::io::Read;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
@@ -14,7 +15,6 @@ use ::itertools::Itertools;
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::async_std::io::Read;
 
 use crate::common::{LineReader, LineWriter, resolve_executable, StdinReader, StdWriter, Task};
 use crate::ExitStatus;
@@ -43,14 +43,18 @@ impl <'a, I, O, E> ExecutionBuilder<'a, I, O, E>
         }
     }
 
-    pub fn out(&mut self, out: &'a mut O) -> &mut Self {
-        self.out = Some(out);
-        self
+    pub fn out<O2: LineWriter>(self, out: &mut O2) -> ExecutionBuilder<'a, I, O2, E> {
+        ExecutionBuilder {
+            out: Some(out),
+            ..self
+        }
     }
 
-    pub fn err(&mut self, err: &'a mut E) -> &mut Self {
-        self.err = Some(err);
-        self
+    pub fn err<E2: LineWriter>(self, err: &mut E2) -> ExecutionBuilder<'a, I, O, E2> {
+        ExecutionBuilder {
+            err: Some(err),
+            ..self
+        }
     }
 
     pub fn start(self) {
@@ -171,6 +175,7 @@ async fn forward_out(stdout: impl Read + Unpin, writer: &mut impl LineWriter) ->
 #[cfg(test)]
 mod tests {
     use crate::common::VecWriter;
+
     use super::*;
 
     #[test]
