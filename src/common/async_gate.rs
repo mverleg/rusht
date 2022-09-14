@@ -9,6 +9,7 @@ use ::std::task::Poll;
 use ::std::task::Waker;
 use ::std::time::Duration;
 
+use ::async_std::prelude::FutureExt as AltExt;
 use ::async_std::task::sleep;
 use ::futures::FutureExt;
 use ::smallvec::smallvec;
@@ -97,7 +98,7 @@ impl AsyncGate {
 
     pub async fn wait_timeout(&self, timeout: &Duration) -> Result<bool, ()> {
         AsyncGateFuture(self).map(|val| Ok(val))
-            .race(sleep(timeout).map(|()| Err(()))).await
+            .race(sleep(*timeout).map(|()| Err(()))).await
     }
 }
 
