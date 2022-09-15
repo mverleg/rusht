@@ -19,7 +19,7 @@ pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
                 ExitStatus::ok()
             }
             CacheStatus::FromCache(out) => {
-                if show_cached_output {
+                if show_cached_output && !out.is_empty() {
                     writer.write_line(out).await;
                 }
                 if verbose {
