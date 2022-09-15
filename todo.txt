@@ -6,4 +6,20 @@ Command to expect a number of lines, specifically
 1) fail if no lines
 2) fail if more than one line
 
+Shell test command (shtest?) that reads a file and tests the command.
+Lines are interpreted based on prefix:
+* # Comment
+* $ Commands
+* 'stdin' Literal stdin data
+* 'infile' File containing stdin data
+* 'out' Output of the previous command
+* 'err' Error of the previous command
+* 'code' Exit code of the previous command
+* 'time' Expression to validate runtime, e.g. >1s
+* 'first' Instructions to run beforehand, ignore output
+* 'finally' Instructions to run afterwards, ingore output
+* 'do' Special shtest instructions, like loops etc
+All other lines are rejected if they contain non-whitespace.
+
+
 
