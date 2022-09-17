@@ -1,7 +1,7 @@
 use ::std::env;
 use ::std::path::PathBuf;
-use ::std::process::Command;
 use ::std::process::exit;
+use ::std::process::Command;
 use ::std::thread::sleep;
 use ::std::time::Duration;
 
@@ -15,7 +15,6 @@ use ::rusht::common::RejectStdin;
 
 #[async_std::main]
 async fn main() {
-
     let reader = RejectStdin::new();
     sleep(Duration::from_secs(2));
     println!("done");

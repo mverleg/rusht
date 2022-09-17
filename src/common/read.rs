@@ -1,8 +1,8 @@
 use ::std::process::exit;
 
-use ::async_std::io::BufReader;
 use ::async_std::io::prelude::BufReadExt;
 use ::async_std::io::stdin;
+use ::async_std::io::BufReader;
 use ::async_std::io::Stdin;
 use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
@@ -66,7 +66,10 @@ pub struct RejectStdin {
 }
 
 #[derive(Debug, PartialEq)]
-enum StdinWaitResult { DATA, COMPLETED }
+enum StdinWaitResult {
+    DATA,
+    COMPLETED,
+}
 
 impl RejectStdin {
     pub fn new() -> Self {
@@ -74,8 +77,11 @@ impl RejectStdin {
         let gate_clone = gate.clone();
         async_std::task::spawn((async move || {
             debug!("starting monitor to reject stdin input");
-            let res = async_std::io::stdin().read(&mut [0]).map(|_| StdinWaitResult::DATA).race(
-                gate_clone.wait().map(|_| StdinWaitResult::COMPLETED)).await;
+            let res = async_std::io::stdin()
+                .read(&mut [0])
+                .map(|_| StdinWaitResult::DATA)
+                .race(gate_clone.wait().map(|_| StdinWaitResult::COMPLETED))
+                .await;
             if res == StdinWaitResult::DATA {
                 eprintln!("received data on stdin but did not expect any");
                 exit(1);

@@ -12,7 +12,7 @@ use ::async_std::task::block_on;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{LineReader, LineWriter, StdWriter, Task, RejectStdin};
+use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
 use crate::observe::mon_task;
 use crate::ExitStatus;
 
@@ -74,7 +74,17 @@ where
     }
 }
 
-fn exec_open_inp<I, O, E>(task: &Task, inp: Option<&mut I>, out: Option<&mut O>, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+fn exec_open_inp<I, O, E>(
+    task: &Task,
+    inp: Option<&mut I>,
+    out: Option<&mut O>,
+    err: Option<&mut E>,
+    monitor: bool,
+) where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
     if let Some(inp) = inp {
         exec_open_out(task, inp, out, err, monitor)
     } else {
@@ -82,7 +92,17 @@ fn exec_open_inp<I, O, E>(task: &Task, inp: Option<&mut I>, out: Option<&mut O>,
     }
 }
 
-fn exec_open_out<I, O, E>(task: &Task, inp: &mut I, out: Option<&mut O>, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+fn exec_open_out<I, O, E>(
+    task: &Task,
+    inp: &mut I,
+    out: Option<&mut O>,
+    err: Option<&mut E>,
+    monitor: bool,
+) where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
     if let Some(out) = out {
         exec_open_err(task, inp, out, err, monitor)
     } else {
@@ -90,7 +110,12 @@ fn exec_open_out<I, O, E>(task: &Task, inp: &mut I, out: Option<&mut O>, err: Op
     }
 }
 
-fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mut E>, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
+fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mut E>, monitor: bool)
+where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
     if let Some(err) = err {
         exec_ioe(task, inp, out, err, monitor)
     } else {
@@ -98,8 +123,13 @@ fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mu
     }
 }
 
-fn exec_ioe<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E, monitor: bool) where I: LineReader, O: LineWriter, E: LineWriter {
-    todo!()  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+fn exec_ioe<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E, monitor: bool)
+where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
+    todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
 
 impl Task {
