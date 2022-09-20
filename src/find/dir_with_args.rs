@@ -30,6 +30,13 @@ pub struct DirWithArgs {
     #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
+    #[structopt(short = 'C', long)]
+    /// Minimum number of items in the directory
+    pub min_children: Option<u32>,
+    #[structopt(short = 'c', long)]
+    /// Maxumum number of items in the directory
+    pub max_children: Option<u32>,
+    //TODO @mverleg:
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
     /// File pattern that must exist in the directory to match
     pub files: Vec<Regex>,

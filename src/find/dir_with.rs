@@ -43,6 +43,7 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
+    let (min, max) = determine_children_range(&args);
     let mut results = vec![];
     for root in &args.roots {
         debug!("searching root '{}'", root.to_str().unwrap());
@@ -63,6 +64,22 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
         results.sort_unstable();
     }
     Ok(results)
+}
+
+fn determine_children_range(args: &DirWithArgs) -> (usize, usize) {
+    match (args.min_children, args.max_children) {
+        (None, None) => (0, usize::MAX),
+        (Some(min), None) => (min as usize, usize::MAX),
+        (None, Some(max)) => (0, max as usize),
+        (Some(min), Some(max)) => {
+            if max < min {
+                Err(format!(
+                    "--max-children ({max}) should not be smaller than --min-children ({min})"
+                ))?
+            }
+            (min as usize, max as usize)
+        }
+    }
 }
 
 fn find_matching_dirs(
