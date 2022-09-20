@@ -17,9 +17,13 @@ Lines are interpreted based on prefix:
 * 'code' Exit code of the previous command
 * 'time' Expression to validate runtime, e.g. >1s
 * 'first' Instructions to run beforehand, ignore output
-* 'finally' Instructions to run afterwards, ingore output
+* 'finally' Instructions to run afterwards, ignore output
 * 'do' Special shtest instructions, like loops etc
 All other lines are rejected if they contain non-whitespace.
+With : one can start an indented block, for e.g. multiline input
+Maybe also versions of finally for 1) everything ok 2) command ok but test failed and 3) command failed (maybe command failed but test ok?)
 
-
+Make a simple wrapper for creating Rust single-file scripts
+* Have special syntax for clap arguments
+* Have a simple command to call executables
 
