@@ -93,17 +93,30 @@ impl FromStr for IntRange {
 
     fn from_str(txt: &str) -> Result<Self, Self::Err> {
         match txt.split_once(",") {
+            Some(("", "")) => Ok(IntRange {
+                min: 0,
+                max: u32::MAX,
+                provided: false,
+            }),
             Some((min, max)) => {
-                let min = min.parse::<u32>().map_err(|err| {
-                    format!(
-                        "failed to parse lower bound of range (before comma) '{min}', err: {err}"
-                    )
-                })?;
-                let max = max.parse::<u32>().map_err(|err| {
-                    format!(
-                        "failed to parse upper bound of range (after comma) '{max}', err: {err}"
-                    )
-                })?;
+                let min = if !min.is_empty() {
+                    min.parse::<u32>().map_err(|err| {
+                        format!(
+                            "failed to parse lower bound of range (before comma) '{min}', err: {err}"
+                        )
+                    })?
+                } else {
+                    0
+                };
+                let max = if !max.is_empty() {
+                    max.parse::<u32>().map_err(|err| {
+                        format!(
+                            "failed to parse upper bound of range (after comma) '{max}', err: {err}"
+                        )
+                    })?
+                } else {
+                    u32::MAX
+                };
                 Ok(IntRange {
                     min,
                     max,
