@@ -92,20 +92,34 @@ impl FromStr for IntRange {
     type Err = String;
 
     fn from_str(txt: &str) -> Result<Self, Self::Err> {
-        if txt.contains(",") {
-            todo!()
-        } else {
-            let nr = txt.parse::<u32>().map_err(|err| {
-                format!(
-                    "failed to parse range, no comma and not a number, err: {}",
-                    err
-                )
-            })?;
-            Ok(IntRange {
-                min: nr,
-                max: nr,
-                provided: true,
-            })
+        match txt.split_once(",") {
+            Some((min, max)) => {
+                let min = min.parse::<u32>().map_err(|err| {
+                    format!(
+                        "failed to parse lower bound of range (before comma) '{min}', err: {err}"
+                    )
+                })?;
+                let max = max.parse::<u32>().map_err(|err| {
+                    format!(
+                        "failed to parse upper bound of range (after comma) '{max}', err: {err}"
+                    )
+                })?;
+                Ok(IntRange {
+                    min,
+                    max,
+                    provided: true,
+                })
+            }
+            None => {
+                let nr = txt.parse::<u32>().map_err(|err| {
+                    format!("failed to parse range, no comma and not a number, err: {err}")
+                })?;
+                Ok(IntRange {
+                    min: nr,
+                    max: nr,
+                    provided: true,
+                })
+            }
         }
     }
 }
@@ -212,4 +226,47 @@ fn root_parser(root: &str) -> Result<PathBuf, String> {
         return Err(format!("did not filter root '{}'", root));
     }
     Ok(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_value() {
+        let range = IntRange::from_str("5").unwrap();
+        assert!(range.is_provided());
+        assert!(range.includes(5));
+        assert!(!range.includes(4));
+        assert!(!range.includes(6));
+    }
+
+    #[test]
+    fn parse_lower_bound() {
+        let range = IntRange::from_str("5,").unwrap();
+        assert!(range.is_provided());
+        assert!(!range.includes(4));
+        assert!(range.includes(5));
+        assert!(range.includes(6));
+    }
+
+    #[test]
+    fn parse_upper_bound() {
+        let range = IntRange::from_str(",5").unwrap();
+        assert!(range.is_provided());
+        assert!(range.includes(4));
+        assert!(range.includes(5));
+        assert!(!range.includes(6));
+    }
+
+    #[test]
+    fn parse_closed_range() {
+        let range = IntRange::from_str("5,7").unwrap();
+        assert!(range.is_provided());
+        assert!(range.includes(5));
+        assert!(range.includes(6));
+        assert!(range.includes(7));
+        assert!(!range.includes(4));
+        assert!(!range.includes(8));
+    }
 }
