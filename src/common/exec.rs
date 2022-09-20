@@ -123,7 +123,7 @@ where
     }
 }
 
-fn exec_ioe<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E, monitor: bool)
+fn exec_ioe<I, O, E>(_task: &Task, _inp: &mut I, _out: &mut O, _err: &mut E, _monitor: bool)
 where
     I: LineReader,
     O: LineWriter,

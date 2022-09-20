@@ -46,10 +46,8 @@ pub fn get_first_match_or_all<'a>(pattern: &Option<Regex>, text: &'a str) -> &'a
         if let Some(captures) = re.captures(text) {
             let mut caps = captures.iter();
             let full_match = caps.next().unwrap().unwrap().as_str();
-            for mtch_opt in caps {
-                if let Some(mtch) = mtch_opt {
-                    return mtch.as_str();
-                }
+            if let Some(mtch) = caps.flatten().next() {
+                return mtch.as_str();
             }
             return full_match;
         }

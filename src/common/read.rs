@@ -67,28 +67,35 @@ pub struct RejectStdin {
 
 #[derive(Debug, PartialEq)]
 enum StdinWaitResult {
-    DATA,
-    COMPLETED,
+    Data,
+    Completed,
 }
 
 impl RejectStdin {
     pub fn new() -> Self {
         let gate = AsyncGate::new();
         let gate_clone = gate.clone();
+        #[allow(clippy::redundant_closure_call)] // not as easy to remove as clippy thinks
         async_std::task::spawn((async move || {
             debug!("starting monitor to reject stdin input");
             let res = async_std::io::stdin()
                 .read(&mut [0])
-                .map(|_| StdinWaitResult::DATA)
-                .race(gate_clone.wait().map(|_| StdinWaitResult::COMPLETED))
+                .map(|_| StdinWaitResult::Data)
+                .race(gate_clone.wait().map(|_| StdinWaitResult::Completed))
                 .await;
-            if res == StdinWaitResult::DATA {
+            if res == StdinWaitResult::Data {
                 eprintln!("received data on stdin but did not expect any");
                 exit(1);
             }
             debug!("finished stdin rejection monitor because the reader was dropped");
         })());
         RejectStdin { gate }
+    }
+}
+
+impl Default for RejectStdin {
+    fn default() -> Self {
+        RejectStdin::new()
     }
 }
 

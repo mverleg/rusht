@@ -205,15 +205,15 @@ impl MvnwArgs {
     }
 
     pub fn is_test_arg_provided(&self) -> bool {
-        match (
-            self.test_files,
-            self.test_modules,
-            self.test_all,
-            self.test_none,
-        ) {
-            (false, false, false, false) => false,
-            _ => true,
-        }
+        !matches!(
+            (
+                self.test_files,
+                self.test_modules,
+                self.test_all,
+                self.test_none,
+            ),
+            (false, false, false, false)
+        )
     }
 }
 
