@@ -2,6 +2,7 @@ use ::std::fs;
 use ::std::fs::DirEntry;
 use ::std::path::Path;
 use ::std::path::PathBuf;
+use std::io::stdout;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -91,8 +92,18 @@ fn find_matching_dirs(
     if depth_remaining == 0 {
         return Ok(smallvec![]);
     }
+    let content = dir_listing(parent, args.on_err)?;
+    let children_count_in_range = content.len() < child_range.0 || content.len() > child_range.1;
+    //TODO @mverleg: this is incorrect:
+    //TODO @mverleg: * doesn't take excludes into account
+    //TODO @mverleg: * doesn't include the match if there are no filters
+    let mut results: Dirs = smallvec![];
     let mut current_is_match = false;
-    let mut results: Dirs = match is_parent_match(parent, &args.itself, &args.not_self) {
+    let parent_match = if_count_ok(
+        children_count_in_range,
+        is_parent_match(parent, &args.itself, &args.not_self),
+    );
+    results = match parent_match {
         IsMatch::Include => {
             let found = parent.to_path_buf();
             if args.nested == StopOnMatch {
@@ -112,34 +123,28 @@ fn find_matching_dirs(
         IsMatch::Exclude => return Ok(smallvec![]),
         IsMatch::NoMatch => smallvec![],
     };
-    let content = dir_listing(parent, args.on_err)?;
     trace!(
         "found {} items in {}",
         content.len(),
         parent.to_str().unwrap()
     );
-    if content.len() < child_range.0 || content.len() > child_range.1 {
-        debug!(
-            "number of children {} outside of range {} - {} for {}",
-            content.len(),
-            child_range.0,
-            child_range.1,
-            parent.to_str().unwrap()
-        );
-        return Ok(smallvec![]);
-    }
+    current_is_match = false;
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if current_is_match {
             continue;
         }
-        match is_content_match(
-            sub,
-            &args.files,
-            &args.not_files,
-            &args.dirs,
-            &args.not_dirs,
-        ) {
+        let content_match = if_count_ok(
+            children_count_in_range,
+            is_content_match(
+                sub,
+                &args.files,
+                &args.not_files,
+                &args.dirs,
+                &args.not_dirs,
+            ),
+        );
+        match content_match {
             IsMatch::Include => {
                 let found = parent.to_path_buf();
                 if args.nested == StopOnMatch {
@@ -168,6 +173,13 @@ fn find_matching_dirs(
         results.extend(found);
     }
     Ok(results)
+}
+
+fn if_count_ok(count_ok: bool, is_match: IsMatch) -> IsMatch {
+    if !count_ok && matches!(is_match, IsMatch::Include) {
+        return IsMatch::Exclude;
+    }
+    is_match
 }
 
 fn dir_listing(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
