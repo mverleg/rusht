@@ -1,5 +1,5 @@
-pub use self::filter::filter;
 pub use self::filter_args::FilterArgs;
+pub use self::filtering::filter;
 pub use self::grab::grab;
 pub use self::grab_args::GrabArgs;
 pub use self::handle::handle_filter;
@@ -11,8 +11,8 @@ pub use self::unique::Keep;
 pub use self::unique::Order;
 pub use self::unique::UniqueArgs;
 
-mod filter;
 mod filter_args;
+mod filtering;
 mod grab;
 mod grab_args;
 mod handle;
