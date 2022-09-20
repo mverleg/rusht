@@ -43,11 +43,11 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
 type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+    debug!("args = {:?}", args);
     validate_roots_unique(&args.roots)?;
     let mut results = vec![];
     for root in &args.roots {
         debug!("searching root '{}'", root.to_str().unwrap());
-        //TODO @mverleg: range
         let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
         if args.path_modification == PathModification::Relative {
             matches = matches
@@ -147,7 +147,11 @@ fn find_matching_dirs(
     }
     let has_positive_pattern =
         !args.itself.is_empty() || !args.files.is_empty() || !args.dirs.is_empty();
-    if args.child_count_range.is_provided() && !has_positive_pattern && !current_is_match {
+    if args.child_count_range.is_provided()
+        && children_count_in_range
+        && !has_positive_pattern
+        && !current_is_match
+    {
         //TODO @mverleg: need to make sure range isn't default
         debug!("selecting {} based on range {} because there were no positive patterns, and negative ones did not match",
             parent.to_str().unwrap(), args.child_count_range);

@@ -32,7 +32,7 @@ pub struct DirWithArgs {
     #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
-    #[structopt(short = 'c', long = "child-count")]
+    #[structopt(short = 'c', long = "child-count", default_value = "")]
     /// Range for number of items in the directory, e.g. '5' (exactly),or '2,10' (inclusive) or ',1' (upto)
     pub child_count_range: IntRange,
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
@@ -124,14 +124,18 @@ impl FromStr for IntRange {
                 })
             }
             None => {
-                let nr = txt.parse::<u32>().map_err(|err| {
-                    format!("failed to parse range, no comma and not a number, err: {err}")
-                })?;
-                Ok(IntRange {
-                    min: nr,
-                    max: nr,
-                    provided: true,
-                })
+                if txt.is_empty() {
+                    Ok(IntRange::default())
+                } else {
+                    let nr = txt.parse::<u32>().map_err(|err| {
+                        format!("failed to parse range, no comma and not a number, err: {err}")
+                    })?;
+                    Ok(IntRange {
+                        min: nr,
+                        max: nr,
+                        provided: true,
+                    })
+                }
             }
         }
     }
