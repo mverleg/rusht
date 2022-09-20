@@ -81,35 +81,35 @@ name = "rusht"
 path = "src/main_all.rs"
 
 [dependencies]
-clap = { version = "3.2.15", default-features = true, features = ["std", "derive", "unicode"] }
+clap = { version = "3.2.22", default-features = true, features = ["std", "derive", "unicode"] }
 lazy_static = "1.4.0"
 regex = "1.6.0"
-itertools = "0.10.3"
-serde = { version = "1.0.140", features = ["derive"] }
-serde_json = "1.0.82"
+itertools = "0.10.4"
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
 bincode = "2.0.0-rc.1"
-time = { version = "0.3.11", features = ["serde"] }
+time = { version = "0.3.14", features = ["serde"] }
 dirs = "4.0.0"
 log = "0.4.17"
-env_logger = "0.9.0"
-memoize = "0.3.0"
+env_logger = "0.9.1"
+memoize = "0.3.1"
 rand = "0.8.5"
 ustr = "0.9.0"
 parse_duration0 = "3.0.0"
 smallvec = "1.9.0"
-sha2 = "0.10.2"
+sha2 = "0.10.6"
 base64 = "0.13.0"
 rayon = "1.5.3"
-dashmap = "5.3.4"
+dashmap = "5.4.0"
 async-std = { version = "1.12.0", features = ["attributes", "unstable"] }
-async-trait = "0.1.56"
+async-trait = "0.1.57"
 wait-for-me = "0.2.0"
-futures = "0.3.23"
+futures = "0.3.24"
 num_cpus = "1.13.1"
 git2 = "0.15.0"
 derive_more = "0.99.17"
 rodio = "0.16.0"
-which = "4.2.5"
+which = "4.3.0"
 
 [dev-dependencies]
 tempfile = "3.3.0"
