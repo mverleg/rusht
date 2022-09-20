@@ -43,11 +43,11 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
-    let (min, max) = determine_children_range(&args);
+    let child_range = determine_children_range(&args)?;
     let mut results = vec![];
     for root in &args.roots {
         debug!("searching root '{}'", root.to_str().unwrap());
-        let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
+        let mut matches = find_matching_dirs(root, &args, child_range, args.max_depth)?;
         if args.path_modification == PathModification::Relative {
             matches = matches
                 .into_iter()
@@ -66,8 +66,8 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     Ok(results)
 }
 
-fn determine_children_range(args: &DirWithArgs) -> (usize, usize) {
-    match (args.min_children, args.max_children) {
+fn determine_children_range(args: &DirWithArgs) -> Result<(usize, usize), String> {
+    Ok(match (args.min_children, args.max_children) {
         (None, None) => (0, usize::MAX),
         (Some(min), None) => (min as usize, usize::MAX),
         (None, Some(max)) => (0, max as usize),
@@ -79,12 +79,13 @@ fn determine_children_range(args: &DirWithArgs) -> (usize, usize) {
             }
             (min as usize, max as usize)
         }
-    }
+    })
 }
 
 fn find_matching_dirs(
     parent: &Path,
     args: &DirWithArgs,
+    child_range: (usize, usize),
     depth_remaining: u32,
 ) -> Result<Dirs, String> {
     if depth_remaining == 0 {
@@ -111,12 +112,22 @@ fn find_matching_dirs(
         IsMatch::Exclude => return Ok(smallvec![]),
         IsMatch::NoMatch => smallvec![],
     };
-    let content = read_content(parent, args.on_err)?;
+    let content = dir_listing(parent, args.on_err)?;
     trace!(
         "found {} items in {}",
         content.len(),
         parent.to_str().unwrap()
     );
+    if content.len() < child_range.0 || content.len() > child_range.1 {
+        debug!(
+            "number of children {} outside of range {} - {} for {}",
+            content.len(),
+            child_range.0,
+            child_range.1,
+            parent.to_str().unwrap()
+        );
+        return Ok(smallvec![]);
+    }
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if current_is_match {
@@ -153,13 +164,13 @@ fn find_matching_dirs(
         if !sub.is_dir() {
             continue;
         }
-        let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
+        let found = find_matching_dirs(&sub, args, child_range, depth_remaining - 1)?;
         results.extend(found);
     }
     Ok(results)
 }
 
-fn read_content(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
+fn dir_listing(parent: &Path, on_err: OnErr) -> Result<Dirs, String> {
     let content = read_dir_err_handling(parent, on_err)?;
     let mut subdirs = smallvec![];
     for entry in content {
