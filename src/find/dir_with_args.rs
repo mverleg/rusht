@@ -1,6 +1,8 @@
 use ::std::fs;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
+use std::fmt;
+use std::fmt::Formatter;
 
 use ::clap::StructOpt;
 use ::regex::Regex;
@@ -30,9 +32,9 @@ pub struct DirWithArgs {
     #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
-    #[structopt(short = 'c', long)]
+    #[structopt(short = 'c', long = "child-count")]
     /// Range for number of items in the directory, e.g. '5' (exactly),or '2,10' (inclusive) or ',1' (upto)
-    pub child_count: IntRange,
+    pub child_count_range: IntRange,
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
     /// File pattern that must exist in the directory to match
     pub files: Vec<Regex>,
@@ -66,6 +68,16 @@ pub struct IntRange {
     provided: bool,
 }
 
+impl IntRange {
+    pub fn includes(&self, value: u32) -> bool {
+        value >= self.min && value <= self.max
+    }
+
+    pub fn is_provided(&self) -> bool {
+        self.provided
+    }
+}
+
 impl Default for IntRange {
     fn default() -> Self {
         IntRange {
@@ -94,6 +106,16 @@ impl FromStr for IntRange {
                 max: nr,
                 provided: true,
             })
+        }
+    }
+}
+
+impl fmt::Display for IntRange {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        if self.min == self.max {
+            write!(f, "{}", self.min)
+        } else {
+            write!(f, "[{},{}]", self.min, self.max)
         }
     }
 }

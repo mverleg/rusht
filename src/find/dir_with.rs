@@ -76,7 +76,7 @@ fn find_matching_dirs(
         return Ok(smallvec![]);
     }
     let content = dir_listing(parent, args.on_err)?;
-    let children_count_in_range = content.len() < child_range.0 || content.len() > child_range.1;
+    let children_count_in_range = args.child_count_range.includes(content.len() as u32);
     let mut results: Dirs = smallvec![];
     let mut current_is_match = false;
     let parent_match = if_count_ok(
@@ -147,17 +147,17 @@ fn find_matching_dirs(
     }
     let has_positive_pattern =
         !args.itself.is_empty() || !args.files.is_empty() || !args.dirs.is_empty();
-    if !has_positive_pattern && !current_is_match {
+    if args.child_count_range.is_provided() && !has_positive_pattern && !current_is_match {
         //TODO @mverleg: need to make sure range isn't default
-        debug!("selecting {} based on range [{}, {}] because there were no positive patterns, and negative ones did not match",
-            parent.to_str().unwrap(), child_range.0, child_range.1);
+        debug!("selecting {} based on range {} because there were no positive patterns, and negative ones did not match",
+            parent.to_str().unwrap(), args.child_count_range);
         results.push(parent.to_path_buf())
     }
     for sub in content {
         if !sub.is_dir() {
             continue;
         }
-        let found = find_matching_dirs(&sub, args, child_range, depth_remaining - 1)?;
+        let found = find_matching_dirs(&sub, args, depth_remaining - 1)?;
         results.extend(found);
     }
     Ok(results)
