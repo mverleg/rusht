@@ -94,9 +94,6 @@ fn find_matching_dirs(
     }
     let content = dir_listing(parent, args.on_err)?;
     let children_count_in_range = content.len() < child_range.0 || content.len() > child_range.1;
-    //TODO @mverleg: this is incorrect:
-    //TODO @mverleg: * doesn't take excludes into account
-    //TODO @mverleg: * doesn't include the match if there are no filters
     let mut results: Dirs = smallvec![];
     let mut current_is_match = false;
     let parent_match = if_count_ok(
@@ -164,6 +161,14 @@ fn find_matching_dirs(
             IsMatch::Exclude => return Ok(smallvec![]),
             IsMatch::NoMatch => {}
         }
+    }
+    let has_positive_pattern =
+        !args.itself.is_empty() || !args.files.is_empty() || !args.dirs.is_empty();
+    if !has_positive_pattern && !current_is_match {
+        //TODO @mverleg: need to make sure range isn't default
+        debug!("selecting {} based on range [{}, {}] because there were no positive patterns, and negative ones did not match",
+            parent.to_str().unwrap(), child_range.0, child_range.1);
+        results.push(parent.to_path_buf())
     }
     for sub in content {
         if !sub.is_dir() {
