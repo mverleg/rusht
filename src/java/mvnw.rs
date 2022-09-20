@@ -118,9 +118,11 @@ async fn mvnw_dir(
     if has_pattern.load(Ordering::Acquire) {
         eprintln!("going to clean rebuild because a --rebuild-if-match was matched");
         let mut clean_config = cmd_config;
-        clean_config.clean = false; //TODO @mverleg: DEBUG
-                                    //TODO @mverleg: this hangs if clean is true, but doesn't if false (it just fails again)
-                                    //TODO @mverleg: it reports 'no input on stdin so far' but is probably from grab
+        clean_config.clean = false;
+        //TODO @mverleg: debug^^^
+        //TODO @mverleg: this hangs if clean is true, but doesn't if false (it just fails again)
+        //TODO @mverleg: it reports 'no input on stdin so far' but is probably from grab
+        //TODO @mverleg: once this problem has triggered, it will hang on clean even if clean is the first command (i.e. no rebuild needed)
         status = run_all(clean_config.build_cmds(), writer).await;
     }
     if status.is_ok() {

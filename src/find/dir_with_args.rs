@@ -30,13 +30,9 @@ pub struct DirWithArgs {
     #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
-    #[structopt(short = 'C', long)]
-    /// Minimum number of items in the directory
-    pub min_children: Option<u32>,
     #[structopt(short = 'c', long)]
-    /// Maximum number of items in the directory
-    pub max_children: Option<u32>,
-    //TODO @mverleg:
+    /// Range for number of items in the directory, e.g. '5' (exactly),or '2,10' (inclusive) or ',1' (upto)
+    pub child_count: IntRange,
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
     /// File pattern that must exist in the directory to match
     pub files: Vec<Regex>,
@@ -62,6 +58,44 @@ pub struct DirWithArgs {
     // Keep recursing even if a directory is negative-matched by -F/-D/-I
     // pub negative_nested: Nested,
     // //TODO @mverleg: ^
+}
+#[derive(Debug)]
+pub struct IntRange {
+    min: u32,
+    max: u32,
+    provided: bool,
+}
+
+impl Default for IntRange {
+    fn default() -> Self {
+        IntRange {
+            min: 0,
+            max: u32::MAX,
+            provided: false,
+        }
+    }
+}
+
+impl FromStr for IntRange {
+    type Err = String;
+
+    fn from_str(txt: &str) -> Result<Self, Self::Err> {
+        if txt.contains(",") {
+            todo!()
+        } else {
+            let nr = txt.parse::<u32>().map_err(|err| {
+                format!(
+                    "failed to parse range, no comma and not a number, err: {}",
+                    err
+                )
+            })?;
+            Ok(IntRange {
+                min: nr,
+                max: nr,
+                provided: true,
+            })
+        }
+    }
 }
 
 #[test]

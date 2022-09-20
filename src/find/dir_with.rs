@@ -44,11 +44,11 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     validate_roots_unique(&args.roots)?;
-    let child_range = determine_children_range(&args)?;
     let mut results = vec![];
     for root in &args.roots {
         debug!("searching root '{}'", root.to_str().unwrap());
-        let mut matches = find_matching_dirs(root, &args, child_range, args.max_depth)?;
+        //TODO @mverleg: range
+        let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
         if args.path_modification == PathModification::Relative {
             matches = matches
                 .into_iter()
@@ -67,26 +67,9 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     Ok(results)
 }
 
-fn determine_children_range(args: &DirWithArgs) -> Result<(usize, usize), String> {
-    Ok(match (args.min_children, args.max_children) {
-        (None, None) => (0, usize::MAX),
-        (Some(min), None) => (min as usize, usize::MAX),
-        (None, Some(max)) => (0, max as usize),
-        (Some(min), Some(max)) => {
-            if max < min {
-                Err(format!(
-                    "--max-children ({max}) should not be smaller than --min-children ({min})"
-                ))?
-            }
-            (min as usize, max as usize)
-        }
-    })
-}
-
 fn find_matching_dirs(
     parent: &Path,
     args: &DirWithArgs,
-    child_range: (usize, usize),
     depth_remaining: u32,
 ) -> Result<Dirs, String> {
     if depth_remaining == 0 {
