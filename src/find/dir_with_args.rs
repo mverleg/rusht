@@ -27,14 +27,14 @@ pub struct DirWithArgs {
     #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative")]
     /// Results are relative to roots, instead of absolute
     pub path_modification: PathModification,
-    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", required = true, default_value = ".")]
+    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
     #[structopt(short = 'C', long)]
     /// Minimum number of items in the directory
     pub min_children: Option<u32>,
     #[structopt(short = 'c', long)]
-    /// Maxumum number of items in the directory
+    /// Maximum number of items in the directory
     pub max_children: Option<u32>,
     //TODO @mverleg:
     #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
