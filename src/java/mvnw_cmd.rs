@@ -87,6 +87,7 @@ impl MvnCmdConfig {
         } else if self.changed_files.is_empty() {
             debug!("no affected files, checkstyle lint was requested but will be skipped");
         } else {
+            //TODO @mverleg: avoid doing this if all files are deleted
             let mut checkstyle_conf_pth = self.cwd.clone();
             checkstyle_conf_pth.push("sputnik-rules");
             checkstyle_conf_pth.push("checkstyle.xml");

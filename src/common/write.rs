@@ -1,4 +1,5 @@
 use ::std::future::join;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use ::async_std::io;
 use ::async_std::io::Write;
@@ -7,9 +8,11 @@ use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
-use log::debug;
-use regex::Regex;
-use smallvec::SmallVec;
+use ::log::debug;
+use ::regex::Regex;
+use ::smallvec::SmallVec;
+
+static DEBUG_NR: AtomicU64 = AtomicU64::new(0); //TODO @mverleg:
 
 #[async_trait]
 pub trait LineWriter: Send {
@@ -54,7 +57,20 @@ impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();
+        let nr = DEBUG_NR.fetch_add(1, Ordering::AcqRel); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        debug!(
+            "{} before writing {} bytes to async std (out?): {}",
+            nr,
+            bytes.len(),
+            line.as_ref()
+        ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let write_len = self.writer.write(bytes).await.unwrap();
+        debug!(
+            "{} after writing {} bytes to async std (out?): {}",
+            nr,
+            bytes.len(),
+            line.as_ref()
+        ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(expected, write_len);
         assert_eq!(1, self.writer.write(&[b'\n']).await.unwrap()); //TODO @mverleg: more efficient way with single await?
     }
