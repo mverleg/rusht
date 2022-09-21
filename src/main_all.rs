@@ -15,6 +15,8 @@ use ::rusht::find::handle_dir_with;
 use ::rusht::find::DirWithArgs;
 use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::observe::{handle_mon, MonArgs};
+use ::rusht::observe::{handle_piped, PipedArgs};
+use ::rusht::rscript::{handle_rsh, RshArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
 use ::rusht::ExitStatus;
@@ -45,6 +47,8 @@ enum SubCmd {
     Namesafe(NamesafeArgs),
     Mvnw(MvnwArgs),
     Mon(MonArgs),
+    Piped(PipedArgs),
+    Rsh(RshArgs),
 }
 
 #[test]
@@ -73,5 +77,7 @@ async fn main() -> ExitStatus {
         SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args),
         SubCmd::Mvnw(sub_args) => handle_mvnw(sub_args).await,
         SubCmd::Mon(sub_args) => handle_mon(sub_args).await,
+        SubCmd::Piped(sub_args) => handle_piped(sub_args).await,
+        SubCmd::Rsh(sub_args) => handle_rsh(sub_args).await,
     }
 }

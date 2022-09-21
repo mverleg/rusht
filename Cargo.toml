@@ -72,12 +72,15 @@ path = "src/observe/main_mon.rs"
 name = "piped"
 path = "src/observe/main_piped.rs"
 
-#TODO @mverleg: shtest
-#TODO @mverleg: srs
+[[bin]]
+name = "rsh"
+path = "src/rscript/main_rsh.rs"
 
 [[bin]]
 name = "rusht_debug"
 path = "src/main_debug.rs"
+
+#TODO @mverleg: shtest
 
 [[bin]]
 name = "rusht"
