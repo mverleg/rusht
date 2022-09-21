@@ -13,14 +13,14 @@ pub struct RshArgs {
     #[structopt()]
     pub script: PathBuf,
     /// Build the code, but do not execute it.
-    #[structopt(short = 'b', long = "build-only")]
+    #[structopt(long = "rsh-build-only")]
     pub build_only: bool,
     /// Show generated Rust code, for debug purposes.
-    #[structopt(long = "show-generated")]
+    #[structopt(long = "rsh-show-generated")]
     pub show_generated: bool,
-    /// Extra arguments to pass to the Rust script.
-    #[structopt(subcommand)]
-    pub args: ExtraArgs,
+    // /// Extra arguments to pass to the Rust script.
+    // #[structopt(subcommand)]
+    // pub args: ExtraArgs,
 }
 //TODO @mverleg:
 
