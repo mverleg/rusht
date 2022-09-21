@@ -1,12 +1,13 @@
 use ::std::env;
 use ::std::io;
-use ::std::io::BufRead;
 use ::std::iter;
 use ::std::thread;
 
+use ::async_std::io as aio;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
+use ::futures::AsyncBufReadExt;
 use ::itertools::Itertools;
 use ::log::debug;
 
@@ -219,8 +220,8 @@ impl Task {
         thread::scope(move |scope| {
             let proc_out = child.stdout.take().unwrap();
             let proc_err = child.stderr.take().unwrap();
-            let out_task = scope.spawn(move || block_on(forward_out(proc_out, out_writer)));
-            let err_task = scope.spawn(move || block_on(forward_out(proc_err, err_writer)));
+            let out_task = scope.spawn(move || forward_out(proc_out, out_writer));
+            let err_task = scope.spawn(move || forward_out(proc_err, err_writer));
             //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
             let status = block_on(child.status()).map_err(|err| {
                 format!(
@@ -236,21 +237,18 @@ impl Task {
     }
 }
 
-async fn forward_out(
-    stdout: impl io::Read + Unpin,
-    writer: &mut impl LineWriter,
-) -> Result<(), String> {
-    let mut out_buf = io::BufReader::new(stdout);
+fn forward_out(stdout: impl aio::Read + Unpin, writer: &mut impl LineWriter) -> Result<(), String> {
+    let mut out_buf = aio::BufReader::new(stdout);
     let mut line = String::new();
     loop {
         line.clear();
-        match out_buf.read_line(&mut line) {
+        match block_on(out_buf.read_line(&mut line)) {
             Ok(0) => break,
             Ok(_) => {
                 while line.ends_with('\n') || line.ends_with('\r') {
                     line.pop();
                 }
-                writer.write_line(&line).await
+                block_on(writer.write_line(&line))
             }
             Err(err) => return Err(format!("failed to read, err: {}", err)),
         }
