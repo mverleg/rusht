@@ -1,4 +1,6 @@
 use ::std::rc::Rc;
+use ::std::sync::atomic::AtomicU64;
+use ::std::sync::atomic::Ordering;
 use ::std::time::Duration;
 
 use ::futures::future::join_all;
@@ -10,6 +12,8 @@ use crate::common::async_gate::AsyncGate;
 use crate::common::write::FunnelFactory;
 use crate::common::{LineWriter, Task};
 use crate::ExitStatus;
+
+static DEBUG_NR: AtomicU64 = AtomicU64::new(0); //TODO @mverleg:
 
 #[derive(Debug)]
 pub struct Dependency {
@@ -83,6 +87,8 @@ impl Dependent {
                     nr + 1,
                     count
                 );
+                let nr = DEBUG_NR.fetch_add(1, Ordering::AcqRel); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+                debug!("{} before {} waits for {}", nr, self.name, dependency.name); //TODO @mverleg: TEMPORARY! REMOVE THIS!
                 let timeout = Duration::from_secs(150);
                 match dependency.gate.wait_timeout(&timeout).await {
                     //TODO @mverleg: make timeout configurable
@@ -119,6 +125,8 @@ impl Dependent {
                         return ExitStatus::err();
                     }
                 }
+                debug!("{} after {} waits for {}", nr, self.name, dependency.name);
+                //TODO @mverleg: TEMPORARY! REMOVE THIS!
             }
         }
         if let Some(task) = &self.task {

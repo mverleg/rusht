@@ -1,11 +1,9 @@
 use ::std::env;
+use ::std::io;
+use ::std::io::BufRead;
 use ::std::iter;
 use ::std::thread;
 
-use ::async_std::io;
-use ::async_std::io::prelude::BufReadExt;
-use ::async_std::io::BufReader;
-use ::async_std::io::Read;
 use ::async_std::process::Command;
 use ::async_std::process::Stdio;
 use ::async_std::task::block_on;
@@ -239,14 +237,14 @@ impl Task {
 }
 
 async fn forward_out(
-    stdout: impl Read + Unpin,
+    stdout: impl io::Read + Unpin,
     writer: &mut impl LineWriter,
 ) -> Result<(), String> {
-    let mut out_buf = BufReader::new(stdout);
+    let mut out_buf = io::BufReader::new(stdout);
     let mut line = String::new();
     loop {
         line.clear();
-        match out_buf.read_line(&mut line).await {
+        match out_buf.read_line(&mut line) {
             Ok(0) => break,
             Ok(_) => {
                 while line.ends_with('\n') || line.ends_with('\r') {

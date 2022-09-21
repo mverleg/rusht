@@ -1,9 +1,8 @@
 use ::std::future::join;
-use std::sync::atomic::{AtomicU64, Ordering};
+use ::std::io;
+use ::std::io::Write;
+use ::std::sync::atomic::{AtomicU64, Ordering}; // using async caused deadlocks in concurrent mvn commands
 
-use ::async_std::io;
-use ::async_std::io::Write;
-use ::async_std::io::WriteExt;
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
@@ -64,7 +63,7 @@ impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
             bytes.len(),
             line.as_ref()
         ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        let write_len = self.writer.write(bytes).await.unwrap();
+        let write_len = self.writer.write(bytes).unwrap();
         debug!(
             "{} after writing {} bytes to async std (out?): {}",
             nr,
@@ -72,7 +71,7 @@ impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
             line.as_ref()
         ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(expected, write_len);
-        assert_eq!(1, self.writer.write(&[b'\n']).await.unwrap()); //TODO @mverleg: more efficient way with single await?
+        assert_eq!(1, self.writer.write(&[b'\n']).unwrap()); //TODO @mverleg: more efficient way with single await?
     }
 }
 

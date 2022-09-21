@@ -7,9 +7,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use ::itertools::Itertools;
 use ::log::debug;
 use ::log::warn;
-use async_std::io;
-use regex::Regex;
-use smallvec::SmallVec;
+use ::regex::Regex;
+use ::smallvec::SmallVec;
 
 use crate::common::{git_affected_files_head, run_all, LineWriter, RegexWatcherWriter, TeeWriter};
 use crate::java::mvnw_args::AffectedPolicy;
@@ -124,6 +123,8 @@ async fn mvnw_dir(
         //TODO @mverleg: this hangs if clean is true, but doesn't if false (it just fails again)
         //TODO @mverleg: it reports 'no input on stdin so far' but is probably from grab
         //TODO @mverleg: once this problem has triggered, it will hang on clean even if clean is the first command (i.e. no rebuild needed)
+        //TODO @mverleg: this seems to always happen on selective clean, i.e. with profile when clean runs as a separate mvn command - not just for re-run
+        //TODO @mverleg: it also happens when both checkstyle and -v (version) are enabled, which also triggers two simultaneous mvn commands - just version (-vL) does not
         //dbg!(&io::stdout()); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         status = run_all(clean_config.build_cmds(), writer).await;
     }

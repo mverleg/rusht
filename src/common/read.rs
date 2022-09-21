@@ -1,9 +1,7 @@
+use ::std::io::BufRead;
+use ::std::io::{stdin, BufReader, Stdin};
 use ::std::process::exit;
 
-use ::async_std::io::prelude::BufReadExt;
-use ::async_std::io::stdin;
-use ::async_std::io::BufReader;
-use ::async_std::io::Stdin;
 use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
 use ::futures::{AsyncReadExt, FutureExt};
@@ -49,7 +47,7 @@ impl Default for StdinReader {
 impl LineReader for StdinReader {
     async fn read_line(&mut self) -> Option<&str> {
         self.buffer.clear();
-        let read_len = self.reader.read_line(&mut self.buffer).await.unwrap();
+        let read_len = self.reader.read_line(&mut self.buffer).unwrap();
         while self.buffer.ends_with('\n') || self.buffer.ends_with('\r') {
             self.buffer.pop();
         }
