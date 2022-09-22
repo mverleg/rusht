@@ -1,6 +1,8 @@
 use ::std::collections::HashMap;
 use ::std::env;
 use ::std::fs;
+use ::std::fs::OpenOptions;
+use ::std::io::BufReader;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::process::Command;
@@ -26,7 +28,7 @@ const DUMMY_ARGS_SRC: &str = include_str!("./template/src/args.rs");
 const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 
 pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Result<PathBuf, String> {
-    let prev_state = read_prog_state(context, &prog);
+    let prev_state = read_prog_state(context, &prog)?;
     if !args.force_rebuild && !check_should_refresh(&prog, &prev_state) {
         return Ok(prev_state.unwrap().path);
     }
@@ -49,6 +51,14 @@ fn check_should_refresh(prog: &RshProg, prev_state: &Option<ProgState>) -> bool 
     //TODO @mverleg: make logging conditional?
     let name = prog.name();
     if let Some(prev_state) = prev_state {
+        if !prev_state.path.is_file() {
+            debug!(
+                "previous executable for {name} was not found at '{}'",
+                prev_state.path.to_string_lossy()
+            );
+            eprintln!("recompiling {name} because the previous executable has disappeared");
+            return true;
+        }
         let prog_hash = calc_hash(vec![&prog.code]);
         if prev_state.prog_hash != prog_hash {
             eprintln!("recompiling {name} because the script changed");
@@ -68,11 +78,46 @@ fn check_should_refresh(prog: &RshProg, prev_state: &Option<ProgState>) -> bool 
         eprintln!("compiling {name} because no previous state was found");
         return true;
     }
+    debug!("using cached value of {name} because nothing changed");
     false
 }
 
-fn read_prog_state(context: &RshContext, prog: &RshProg) -> Option<ProgState> {
-    todo!()
+fn read_prog_state(context: &RshContext, prog: &RshProg) -> Result<Option<ProgState>, String> {
+    let pth = context.state_path_for(prog.name());
+    if !pth.exists() {
+        debug!(
+            "no program state for {} at '{}'",
+            prog.name(),
+            pth.to_string_lossy()
+        );
+        return Ok(None);
+    } else {
+        debug!(
+            "reading program state for {} from '{}'",
+            prog.name(),
+            pth.to_string_lossy()
+        );
+    }
+    let reader = OpenOptions::new()
+        .read(true)
+        .open(&pth)
+        .map(BufReader::new)
+        .map_err(|err| {
+            format!(
+                "failed to read rsh state from '{}', err {}",
+                pth.to_string_lossy(),
+                err
+            )
+        })?;
+    serde_json::from_reader::<_, ProgState>(reader)
+        .map(|v| Some(v))
+        .map_err(|err| {
+            format!(
+                "failed to read rsh state from '{}', err {}",
+                pth.to_string_lossy(),
+                err
+            )
+        })
 }
 
 /// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.

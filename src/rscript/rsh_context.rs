@@ -3,6 +3,9 @@ use ::std::path::PathBuf;
 
 use ::log::debug;
 
+use crate::common::unique_filename;
+use crate::escape::namesafe_line;
+
 static CACHE_DIR_ENV: &str = "RSH_CACHE_DIR";
 
 #[derive(Debug)]
@@ -14,6 +17,13 @@ impl RshContext {
     pub fn empty_template_dir(&self) -> PathBuf {
         let mut pth = self.cache_dir.clone();
         pth.push("rsh_template");
+        pth
+    }
+
+    pub fn state_path_for(&self, name: &str) -> PathBuf {
+        let mut pth = self.cache_dir.clone();
+        pth.push("rsh_state");
+        pth.push(format!("{}.json", unique_filename(name)));
         pth
     }
 }

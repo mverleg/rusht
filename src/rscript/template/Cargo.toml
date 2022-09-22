@@ -1,5 +1,5 @@
 [package]
-name = "rsh-generated"
+name = "rsh-template"
 description = "Automatically generated code"
 version = "1.0.0"
 edition = "2021"
