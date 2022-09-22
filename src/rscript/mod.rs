@@ -1,7 +1,9 @@
 mod handle_rsh;
 mod rsh;
 mod rsh_args;
-mod rsh_io;
+mod rsh_build;
+mod rsh_program;
+mod rsh_read;
 
 pub use self::handle_rsh::handle_rsh;
 pub use self::rsh::rsh;

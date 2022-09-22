@@ -1,9 +1,10 @@
 use ::std::fs::read_to_string;
 use ::std::path::Path;
 
+use crate::rscript::rsh_program::RshProg;
 use ::log::debug;
 
-pub fn load_source(path: &Path) -> Result<String, String> {
+pub fn load_source(path: &Path) -> Result<RshProg, String> {
     let mut src = read_to_string(path).map_err(|err| {
         format!(
             "failed to read rsh source file at '{}', err {}",
@@ -24,5 +25,8 @@ pub fn load_source(path: &Path) -> Result<String, String> {
         path.to_string_lossy(),
         src.len()
     );
-    Ok(src)
+    Ok(RshProg {
+        path: path.to_owned(),
+        code: src,
+    })
 }
