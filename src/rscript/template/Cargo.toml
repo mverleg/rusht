@@ -1,0 +1,40 @@
+[package]
+name = "rsh-generated"
+description = "Automatically generated code"
+version = "1.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+clap = "*"
+lazy_static = "*"
+regex = "*"
+itertools = "*"
+serde = "*"
+serde_json = "*"
+bincode = "*"
+time = "*"
+dirs = "*"
+log = "*"
+env_logger = "*"
+rand = "*"
+ustr = "*"
+parse_duration0 = "*"
+smallvec = "*"
+sha2 = "*"
+base64 = "*"
+rayon = "*"
+dashmap = "*"
+num_cpus = "*"
+which = "*"
+
+[dev-dependencies]
+tempfile = "*"
+
+[profile.release]
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
+

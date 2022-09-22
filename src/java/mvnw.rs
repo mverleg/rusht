@@ -2,7 +2,7 @@ use ::std::env;
 use ::std::env::current_dir;
 use ::std::env::set_current_dir;
 use ::std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use ::std::sync::atomic::{AtomicBool, Ordering};
 
 use ::itertools::Itertools;
 use ::log::debug;
