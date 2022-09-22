@@ -1,17 +1,11 @@
-use ::std::collections::HashMap;
 use ::std::env;
-use ::std::fs;
 use ::std::fs::OpenOptions;
 use ::std::io::BufReader;
-use ::std::path::Path;
 use ::std::path::PathBuf;
-use ::std::process::Command;
 use ::std::time::UNIX_EPOCH;
 
 use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
-use ::log::info;
-use ::log::trace;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 
@@ -20,7 +14,6 @@ use ::serde::Serialize;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
-use crate::rscript::RshArgs;
 
 pub const CARGO_SRC: &str = include_str!("./template/Cargo.toml");
 pub const MAIN_SRC: &str = include_str!("./template/src/main.rs");

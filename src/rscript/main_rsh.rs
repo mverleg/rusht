@@ -1,7 +1,5 @@
 use ::clap::StructOpt;
 
-use ::rusht::find::handle_dir_with;
-use ::rusht::find::DirWithArgs;
 use ::rusht::rscript::{handle_rsh, RshArgs};
 use ::rusht::ExitStatus;
 

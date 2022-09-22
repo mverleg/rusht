@@ -4,7 +4,6 @@ use ::std::path::PathBuf;
 use ::log::debug;
 
 use crate::common::unique_filename;
-use crate::escape::namesafe_line;
 
 static CACHE_DIR_ENV: &str = "RSH_CACHE_DIR";
 
