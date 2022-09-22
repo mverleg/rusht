@@ -18,17 +18,9 @@ pub struct RshArgs {
     /// Show generated Rust code, for debug purposes.
     #[structopt(long = "rsh-show-generated")]
     pub show_generated: bool,
-    // /// Extra arguments to pass to the Rust script.
-    // #[structopt(subcommand)]
-    // pub args: ExtraArgs,
-}
-//TODO @mverleg:
-
-#[derive(Debug, Clone, PartialEq, Eq, StructOpt)]
-#[structopt(name = "command")]
-pub enum ExtraArgs {
-    #[structopt(external_subcommand)]
-    Cmd(Vec<String>),
+    /// Extra arguments to pass to the Rust script.
+    #[structopt()]
+    pub args: Vec<String>,
 }
 
 #[test]
