@@ -4,7 +4,7 @@ use crate::ExitStatus;
 
 pub fn handle_rsh(args: RshArgs) -> ExitStatus {
     match rsh(args) {
-        Ok(()) => ExitStatus::ok(),
+        Ok(status) => status,
         Err(err) => {
             eprintln!("{}", err);
             ExitStatus::err()
