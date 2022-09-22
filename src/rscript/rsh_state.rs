@@ -3,6 +3,8 @@ use ::std::fs::OpenOptions;
 use ::std::io::BufReader;
 use ::std::path::PathBuf;
 use ::std::time::UNIX_EPOCH;
+use std::fs;
+use std::time::SystemTime;
 
 use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
@@ -22,6 +24,7 @@ pub const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgState {
+    pub name: String,
     pub path: PathBuf,
     pub prog_hash: String,
     pub rsh_hash: u128,
@@ -29,9 +32,28 @@ pub struct ProgState {
     pub last_compile_ts_ms: u128,
 }
 
-pub fn check_should_refresh(prog: &RshProg, prev_state: &Option<ProgState>) -> bool {
-    //TODO @mverleg: make logging conditional?
+pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
     let name = prog.name();
+    ProgState {
+        name: name.to_owned(),
+        path: context.state_path_for(name),
+        prog_hash: calc_hash(vec![&prog.code]),
+        rsh_hash: get_rsh_exe_hash(),
+        template_hash: calc_hash(vec![CARGO_SRC, MAIN_SRC]),
+        last_compile_ts_ms: current_time_ms(),
+    }
+}
+
+pub fn current_time_ms() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_millis()
+}
+
+pub fn check_should_refresh(current_state: &ProgState, prev_state: &Option<ProgState>) -> bool {
+    //TODO @mverleg: make logging conditional?
+    let name = &current_state.name;
     if let Some(prev_state) = prev_state {
         if !prev_state.path.is_file() {
             debug!(
@@ -41,18 +63,15 @@ pub fn check_should_refresh(prog: &RshProg, prev_state: &Option<ProgState>) -> b
             eprintln!("recompiling {name} because the previous executable has disappeared");
             return true;
         }
-        let prog_hash = calc_hash(vec![&prog.code]);
-        if prev_state.prog_hash != prog_hash {
+        if prev_state.prog_hash != current_state.prog_hash {
             eprintln!("recompiling {name} because the script changed");
             return true;
         }
-        let rsh_hash = get_rsh_exe_hash();
-        if prev_state.rsh_hash != rsh_hash {
+        if prev_state.rsh_hash != current_state.rsh_hash {
             eprintln!("recompiling {name} because rsh was updated");
             return true;
         }
-        let template_hash = calc_hash(vec![CARGO_SRC, MAIN_SRC]);
-        if prev_state.template_hash != template_hash {
+        if prev_state.template_hash != current_state.template_hash {
             eprintln!("recompiling {name} because rsh has a new template");
             return true;
         }
@@ -100,6 +119,29 @@ pub fn read_prog_state(context: &RshContext, prog: &RshProg) -> Result<Option<Pr
                 err
             )
         })
+}
+
+pub fn write_prog_state(context: &RshContext, state: &ProgState) -> Result<(), String> {
+    let pth = context.state_path_for(&state.name);
+    let state_json = serde_json::to_string(state).map_err(|err| {
+        format!(
+            "failed to serialize program state for '{}', err {}",
+            &state.name, err
+        )
+    })?;
+    debug!(
+        "storing {} bytes of program state to '{}'",
+        state_json.len(),
+        pth.to_string_lossy()
+    );
+    fs::write(&pth, state_json).map_err(|err| {
+        format!(
+            "failed to store program state for '{}' into '{}', err {}",
+            &state.name,
+            pth.to_string_lossy(),
+            err
+        )
+    })
 }
 
 fn calc_hash(content: Vec<&str>) -> String {

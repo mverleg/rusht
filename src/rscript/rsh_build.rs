@@ -13,18 +13,21 @@ use ::serde::Serialize;
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
 use crate::rscript::rsh_state::{
-    check_should_refresh, read_prog_state, CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC,
+    check_should_refresh, derive_prog_state, read_prog_state, write_prog_state,
 };
+use crate::rscript::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
 use crate::rscript::RshArgs;
 
 pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Result<PathBuf, String> {
     let prev_state = read_prog_state(context, &prog)?;
-    if !args.force_rebuild && !check_should_refresh(&prog, &prev_state) {
+    let current_state = derive_prog_state(context, &prog);
+    if !args.force_rebuild && !check_should_refresh(&current_state, &prev_state) {
         return Ok(prev_state.unwrap().path);
     }
     let template_pth = init_template_dir(context)?;
     //TODO @mverleg: hash check here
 
+    write_prog_state(&context, &current_state)?;
     todo!();
 }
 

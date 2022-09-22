@@ -149,6 +149,7 @@ pub fn current_time_s() -> u32 {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
         .as_secs() as u32
+    //TODO @mverleg: shouldn't this be bigger than u32?
 }
 
 #[cfg(test)]
