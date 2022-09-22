@@ -5,16 +5,16 @@ use ::std::path::PathBuf;
 use ::std::process::Command;
 use std::fs::read_to_string;
 
+use ::fs_extra::copy_items;
+use ::fs_extra::dir::CopyOptions;
 use ::log::debug;
 use ::log::info;
 use ::log::trace;
-use ::serde::Deserialize;
-use ::serde::Serialize;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
 use crate::rscript::rsh_state::{
-    check_should_refresh, derive_prog_state, read_prog_state, write_prog_state,
+    check_should_refresh, derive_prog_state, read_prog_state, write_prog_state, ProgState,
 };
 use crate::rscript::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
 use crate::rscript::RshArgs;
@@ -26,19 +26,11 @@ pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Resul
         return Ok(prev_state.unwrap().exe_path);
     }
     let template_pth = init_template_dir(context)?;
+    compile_program(&current_state, template_pth)?;
     //TODO @mverleg: hash check here
 
     write_prog_state(&context, &current_state)?;
     Ok(current_state.exe_path)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct ProgState {
-    path: PathBuf,
-    prog_hash: String,
-    rsh_hash: String,
-    template_hash: String,
-    last_compile_ts_ms: u128,
 }
 
 /// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.
@@ -60,40 +52,74 @@ fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
     write_file(&pth, "src/main.rs", MAIN_SRC)?;
     write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
     write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
-    cargo_compile_dir(&pth)?;
+    cargo_compile_dir(&pth, false)?;
     Ok(pth)
 }
 
 /// Creates, compiles and cleans up the program directory, then returns the path. Returns executable path.
-fn compile_program(context: &RshContext) -> Result<ProgState, String> {
-    todo!();
-    // let pth = context.empty_template_dir();
-    // debug!(
-    //     "creating clean template in '{}', exists={}",
-    //     pth.to_string_lossy(),
-    //     pth.is_dir()
-    // );
-    // fs::create_dir_all(&pth).map_err(|err| {
-    //     format!(
-    //         "could not create dir '{}', err {}",
-    //         pth.to_string_lossy(),
-    //         err
-    //     )
-    // })?;
-    // write_file(&pth, "Cargo.toml", CARGO_SRC)?;
-    // write_file(&pth, "src/main.rs", MAIN_SRC)?;
-    // write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
-    // write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
-    // cargo_compile_dir(&pth)?;
-    // Ok(pth)
+fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), String> {
+    let build_dir_handle = tempfile::tempdir()
+        .map_err(|err| format!("could not create a temporary build directory"))?;
+    let build_dir = build_dir_handle.path();
+    debug!(
+        "copying template '{}' to '{}' for program {}",
+        template_pth.to_string_lossy(),
+        build_dir.to_string_lossy(),
+        &state.name,
+    );
+    let mut opts = CopyOptions::new();
+    opts.overwrite = true;
+    copy_items(&[&template_pth], build_dir, &opts).map_err(|err| {
+        format!(
+            "failed to copy directory '{}' to '{}'",
+            template_pth.to_string_lossy(),
+            build_dir.to_string_lossy()
+        )
+    })?;
+    debug!(
+        "compiling program {} in '{}'",
+        &state.name,
+        build_dir.to_string_lossy(),
+    );
+    write_file(
+        &build_dir,
+        "Cargo.toml",
+        &CARGO_SRC.replace("\"rsh-template\"", &format!("\"{}\"", &state.name)),
+    )?;
+    write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
+    write_file(&build_dir, "src/run.rs", DUMMY_RUN_SRC)?;
+    write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
+    cargo_compile_dir(build_dir, true)?;
+    let artifact_pth = guess_artifact_path(build_dir, &state.name);
+    copy_items(&[&artifact_pth], &state.exe_path, &opts).map_err(|err| {
+        format!(
+            "failed to copy directory '{}' to '{}'",
+            artifact_pth.to_string_lossy(),
+            state.exe_path.to_string_lossy()
+        )
+    })?;
+    drop(build_dir_handle);
+    Ok(())
 }
 
-fn cargo_compile_dir(pth: &PathBuf) -> Result<(), String> {
+fn guess_artifact_path(build_dir: &Path, name: &str) -> PathBuf {
+    let mut artifact_pth = build_dir.to_owned();
+    artifact_pth.push("target");
+    artifact_pth.push("release");
+    artifact_pth.push(name);
+    artifact_pth
+}
+
+fn cargo_compile_dir(pth: &Path, is_offline: bool) -> Result<(), String> {
     info!("going to compile Rust code in '{}'", pth.to_string_lossy());
     let mut env = HashMap::new();
     env.insert("RUSTFLAGS", "-C target-cpu=native");
+    let mut args = vec!["build", "--release"];
+    if is_offline {
+        args.push("--offline");
+    }
     let exit_code = Command::new("cargo")
-        .args(&["build", "--release"])
+        .args(&args)
         .current_dir(&pth)
         .envs(&env)
         .spawn()
