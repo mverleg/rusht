@@ -10,6 +10,14 @@ pub struct RshContext {
     cache_dir: PathBuf,
 }
 
+impl RshContext {
+    pub fn empty_template_dir(&self) -> PathBuf {
+        let mut pth = self.cache_dir.clone();
+        pth.push("rsh_template");
+        pth
+    }
+}
+
 pub fn rsh_context() -> Result<RshContext, String> {
     let build_dir = env::var(CACHE_DIR_ENV)
         .map(|pth| PathBuf::from(pth))

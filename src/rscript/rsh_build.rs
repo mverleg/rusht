@@ -1,9 +1,12 @@
 use ::std::env;
+use ::std::fs;
+use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::UNIX_EPOCH;
 
 use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
+use ::log::trace;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 
@@ -14,12 +17,60 @@ const CARGO_SRC: &str = include_str!("./template/Cargo.toml");
 const MAIN_SRC: &str = include_str!("./template/src/main.rs");
 
 pub fn compile_rsh(context: &RshContext, prog: RshProg) -> Result<PathBuf, String> {
-    let hash = compute_hash(vec![&get_rsh_exe_hash(), CARGO_SRC, MAIN_SRC, &prog.code]);
+    let hash = calc_hash(vec![&get_rsh_exe_hash(), CARGO_SRC, MAIN_SRC, &prog.code]);
     debug!("compiling '{}', hash '{}'", prog.name(), hash);
+    init_clean_template_dir(context);
     todo!();
 }
 
-fn compute_hash(content: Vec<&str>) -> String {
+fn init_clean_template_dir(context: &RshContext) -> Result<PathBuf, String> {
+    let pth = context.empty_template_dir();
+    debug!(
+        "creating clean template in '{}', exists={}",
+        pth.to_string_lossy(),
+        pth.is_dir()
+    );
+    fs::create_dir_all(&pth).map_err(|err| {
+        format!(
+            "could not create dir '{}', err {}",
+            pth.to_string_lossy(),
+            err
+        )
+    })?;
+    write_file(&pth, "Cargo.toml", CARGO_SRC);
+    write_file(&pth, "src/Cargo.toml", MAIN_SRC);
+    todo!();
+}
+
+fn write_file(base_pth: &Path, file: impl Into<PathBuf>, content: &str) -> Result<(), String> {
+    let mut pth = base_pth.to_owned();
+    pth.push(file.into());
+    let parent = pth
+        .parent()
+        .expect("could not get parent, but no root dir expected");
+    fs::create_dir_all(parent).map_err(|err| {
+        format!(
+            "could not create dir '{}' for file '{}', err {}",
+            parent.to_string_lossy(),
+            pth.to_string_lossy(),
+            err
+        )
+    })?;
+    trace!(
+        "writing {} bytes to '{}'",
+        content.len(),
+        pth.to_string_lossy()
+    );
+    fs::write(&pth, content).map_err(|err| {
+        format!(
+            "failed to write '{}' for empty template, err {}",
+            pth.to_string_lossy(),
+            err
+        )
+    })
+}
+
+fn calc_hash(content: Vec<&str>) -> String {
     let mut hasher = Sha256::new();
     for text in content {
         hasher.update(text.as_bytes());

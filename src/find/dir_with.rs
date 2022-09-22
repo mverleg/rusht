@@ -76,7 +76,7 @@ fn find_matching_dirs(
     }
     let content = dir_listing(parent, args.on_err)?;
     let children_count_in_range = args.child_count_range.includes(content.len() as u32);
-    let mut results: Dirs = smallvec![];
+    let mut results: Dirs;
     let mut current_is_match = false;
     let parent_match = if_count_ok(
         children_count_in_range,
@@ -107,7 +107,6 @@ fn find_matching_dirs(
         content.len(),
         parent.to_str().unwrap()
     );
-    current_is_match = false;
     // separate loop so as not to recurse when early-exit is enabled
     for sub in &content {
         if current_is_match {
