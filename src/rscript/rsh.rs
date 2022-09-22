@@ -1,10 +1,16 @@
+use ::log::debug;
+
 use crate::rscript::rsh_args::RshArgs;
 use crate::rscript::rsh_build::compile_rsh;
+use crate::rscript::rsh_context::rsh_context;
 use crate::rscript::rsh_read::load_source;
 
+static BUILD_DIR_ENV: &str = "RSH_BUILD_DIR";
+
 pub fn rsh(args: RshArgs) -> Result<(), String> {
-    eprintln!("{:?}", args);
+    debug!("{:?}", args);
+    let context = rsh_context()?;
     let prog = load_source(&args.script)?;
-    compile_rsh(prog)?;
+    let exe = compile_rsh(&context, prog)?;
     todo!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
