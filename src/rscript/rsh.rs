@@ -5,8 +5,6 @@ use crate::rscript::rsh_build::compile_rsh;
 use crate::rscript::rsh_context::rsh_context;
 use crate::rscript::rsh_read::load_source;
 
-static BUILD_DIR_ENV: &str = "RSH_BUILD_DIR";
-
 pub fn rsh(args: RshArgs) -> Result<(), String> {
     debug!("{:?}", args);
     let context = rsh_context()?;
