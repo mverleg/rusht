@@ -15,20 +15,20 @@ pub struct RshContext {
 impl RshContext {
     pub fn empty_template_dir(&self) -> PathBuf {
         let mut pth = self.cache_dir.clone();
-        pth.push("rsh_template");
+        pth.push("template");
         pth
     }
 
     pub fn exe_path_for(&self, name: &str) -> PathBuf {
         let mut pth = self.cache_dir.clone();
-        pth.push("rsh_exe");
+        pth.push("exe");
         pth.push(safe_filename(name));
         pth
     }
 
     pub fn state_path_for(&self, name: &str) -> PathBuf {
         let mut pth = self.cache_dir.clone();
-        pth.push("rsh_exe");
+        pth.push("state");
         pth.push(format!("{}.json", safe_filename(name)));
         pth
     }
@@ -39,7 +39,7 @@ pub fn rsh_context() -> Result<RshContext, String> {
         .map(|pth| PathBuf::from(pth))
         .unwrap_or_else(|_| {
             let mut pth = dirs::cache_dir().expect("failed to find cache directory");
-            pth.push("rsh_build");
+            pth.push("rsh");
             pth
         });
     debug!(

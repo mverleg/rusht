@@ -61,6 +61,9 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     let build_dir_handle = tempfile::tempdir()
         .map_err(|err| format!("could not create a temporary build directory"))?;
     let build_dir = build_dir_handle.path();
+    let build_dir0 = PathBuf::from("/tmp/rsh_debug"); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    fs::create_dir_all(&build_dir0).unwrap(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    let build_dir = &build_dir0; //TODO @mverleg: TEMPORARY! REMOVE THIS!
     debug!(
         "copying template '{}' to '{}' for program {}",
         template_pth.to_string_lossy(),
@@ -69,11 +72,21 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     );
     let mut opts = CopyOptions::new();
     opts.overwrite = true;
-    copy_items(&[&template_pth], build_dir, &opts).map_err(|err| {
+    let template_sub_pths = fs::read_dir(&template_pth)
+        .map_err(|err| {
+            format!(
+                "failed to list entries inside dir '{}'",
+                template_pth.to_string_lossy()
+            )
+        })?
+        .map(|pth| pth.expect("failed to read entry in template dir").path())
+        .collect::<Vec<_>>();
+    copy_items(&template_sub_pths, build_dir, &opts).map_err(|err| {
         format!(
-            "failed to copy directory '{}' to '{}'",
+            "failed to copy directory '{}' to '{}', err {}",
             template_pth.to_string_lossy(),
-            build_dir.to_string_lossy()
+            build_dir.to_string_lossy(),
+            err
         )
     })?;
     debug!(
@@ -93,9 +106,10 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
     copy_items(&[&artifact_pth], &state.exe_path, &opts).map_err(|err| {
         format!(
-            "failed to copy directory '{}' to '{}'",
+            "failed to copy artifact '{}' to '{}', err {}",
             artifact_pth.to_string_lossy(),
-            state.exe_path.to_string_lossy()
+            state.exe_path.to_string_lossy(),
+            err
         )
     })?;
     drop(build_dir_handle);
@@ -112,7 +126,7 @@ fn guess_artifact_path(build_dir: &Path, name: &str) -> PathBuf {
 
 fn cargo_compile_dir(pth: &Path, is_offline: bool) -> Result<(), String> {
     info!("going to compile Rust code in '{}'", pth.to_string_lossy());
-    let mut env = HashMap::new();
+    let mut env: HashMap<&str, &str> = HashMap::new();
     env.insert("RUSTFLAGS", "-C target-cpu=native");
     let mut args = vec!["build", "--release"];
     if is_offline {
