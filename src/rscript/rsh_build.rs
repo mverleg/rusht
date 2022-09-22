@@ -22,7 +22,7 @@ pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Resul
     let prev_state = read_prog_state(context, &prog)?;
     let current_state = derive_prog_state(context, &prog);
     if !args.force_rebuild && !check_should_refresh(&current_state, &prev_state) {
-        return Ok(prev_state.unwrap().path);
+        return Ok(prev_state.unwrap().exe_path);
     }
     let template_pth = init_template_dir(context)?;
     //TODO @mverleg: hash check here

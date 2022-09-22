@@ -19,9 +19,16 @@ impl RshContext {
         pth
     }
 
+    pub fn exe_path_for(&self, name: &str) -> PathBuf {
+        let mut pth = self.cache_dir.clone();
+        pth.push("rsh_exe");
+        pth.push(safe_filename(name));
+        pth
+    }
+
     pub fn state_path_for(&self, name: &str) -> PathBuf {
         let mut pth = self.cache_dir.clone();
-        pth.push("rsh_state");
+        pth.push("rsh_exe");
         pth.push(format!("{}.json", safe_filename(name)));
         pth
     }

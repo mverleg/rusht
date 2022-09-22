@@ -25,7 +25,7 @@ pub const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgState {
     pub name: String,
-    pub path: PathBuf,
+    pub exe_path: PathBuf,
     pub prog_hash: String,
     pub rsh_hash: u128,
     pub template_hash: String,
@@ -36,7 +36,7 @@ pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
     let name = prog.name();
     ProgState {
         name: name.to_owned(),
-        path: context.state_path_for(name),
+        exe_path: context.exe_path_for(name),
         prog_hash: calc_hash(vec![&prog.code]),
         rsh_hash: get_rsh_exe_hash(),
         template_hash: calc_hash(vec![CARGO_SRC, MAIN_SRC]),
@@ -55,10 +55,10 @@ pub fn check_should_refresh(current_state: &ProgState, prev_state: &Option<ProgS
     //TODO @mverleg: make logging conditional?
     let name = &current_state.name;
     if let Some(prev_state) = prev_state {
-        if !prev_state.path.is_file() {
+        if !prev_state.exe_path.is_file() {
             debug!(
                 "previous executable for {name} was not found at '{}'",
-                prev_state.path.to_string_lossy()
+                prev_state.exe_path.to_string_lossy()
             );
             eprintln!("recompiling {name} because the previous executable has disappeared");
             return true;
