@@ -8,6 +8,10 @@ pub struct RshProg {
 
 impl RshProg {
     pub fn name(&self) -> &str {
-        self.path.to_str().unwrap()
+        self.path
+            .file_name()
+            .expect("could not get filename")
+            .to_str()
+            .expect("filename is not utf8")
     }
 }
