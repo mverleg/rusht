@@ -123,6 +123,16 @@ pub fn read_prog_state(context: &RshContext, prog: &RshProg) -> Result<Option<Pr
 
 pub fn write_prog_state(context: &RshContext, state: &ProgState) -> Result<(), String> {
     let pth = context.state_path_for(&state.name);
+    let dir_pth = pth
+        .parent()
+        .expect("could not get parent of state file, but should not be root");
+    fs::create_dir_all(dir_pth).map_err(|err| {
+        format!(
+            "could not create dir '{}', err {}",
+            dir_pth.to_string_lossy(),
+            err
+        )
+    })?;
     let state_json = serde_json::to_string(state).map_err(|err| {
         format!(
             "failed to serialize program state for '{}', err {}",

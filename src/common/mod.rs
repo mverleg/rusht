@@ -39,6 +39,18 @@ mod task;
 mod which;
 mod write;
 
+pub fn safe_filename(text: &str) -> String {
+    namesafe_line(
+        text,
+        &NamesafeArgs {
+            charset: Charset::AsciiOnly,
+            hash_policy: HashPolicy::TooLong,
+            max_length: 32,
+            ..Default::default()
+        },
+    )
+}
+
 pub fn unique_filename(text: &str) -> String {
     namesafe_line(
         text,
