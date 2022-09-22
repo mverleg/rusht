@@ -13,26 +13,66 @@ use ::log::trace;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 
+use ::serde::Deserialize;
+use ::serde::Serialize;
+
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
+use crate::rscript::RshArgs;
 
 const CARGO_SRC: &str = include_str!("./template/Cargo.toml");
 const MAIN_SRC: &str = include_str!("./template/src/main.rs");
 const DUMMY_ARGS_SRC: &str = include_str!("./template/src/args.rs");
 const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 
-pub fn compile_rsh(context: &RshContext, prog: RshProg) -> Result<PathBuf, String> {
-    let hash = calc_hash(vec![&get_rsh_exe_hash(), CARGO_SRC, MAIN_SRC, &prog.code]);
-    debug!(
-        "compiling {} as '{}', hash '{}'",
-        prog.name(),
-        prog.path.to_string_lossy(),
-        hash
-    );
+pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Result<PathBuf, String> {
+    let prev_state = read_prog_state(context, &prog);
+    if !args.force_rebuild && !check_should_refresh(&prog, &prev_state) {
+        return Ok(prev_state.unwrap().path);
+    }
     let template_pth = init_template_dir(context)?;
     //TODO @mverleg: hash check here
 
     todo!();
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ProgState {
+    path: PathBuf,
+    prog_hash: String,
+    rsh_hash: String,
+    template_hash: String,
+    last_compile_ts_ms: u128,
+}
+
+fn check_should_refresh(prog: &RshProg, prev_state: &Option<ProgState>) -> bool {
+    //TODO @mverleg: make logging conditional?
+    let name = prog.name();
+    if let Some(prev_state) = prev_state {
+        let prog_hash = calc_hash(vec![&prog.code]);
+        if prev_state.prog_hash != prog_hash {
+            eprintln!("recompiling {name} because the script changed");
+            return true;
+        }
+        let rsh_hash = get_rsh_exe_hash();
+        if prev_state.rsh_hash != rsh_hash {
+            eprintln!("recompiling {name} because rsh was updated");
+            return true;
+        }
+        let template_hash = calc_hash(vec![CARGO_SRC, MAIN_SRC]);
+        if prev_state.template_hash != template_hash {
+            eprintln!("recompiling {name} because rsh has a new template");
+            return true;
+        }
+    } else {
+        eprintln!("compiling {name} because no previous state was found");
+        return true;
+    }
+    false
+}
+
+fn read_prog_state(context: &RshContext, prog: &RshProg) -> Option<ProgState> {
+    todo!()
 }
 
 /// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.
@@ -59,27 +99,27 @@ fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
 }
 
 /// Creates, compiles and cleans up the program directory, then returns the path. Returns executable path.
-fn compile_program(context: &RshContext) -> Result<PathBuf, String> {
+fn compile_program(context: &RshContext) -> Result<ProgState, String> {
     todo!();
-    let pth = context.empty_template_dir();
-    debug!(
-        "creating clean template in '{}', exists={}",
-        pth.to_string_lossy(),
-        pth.is_dir()
-    );
-    fs::create_dir_all(&pth).map_err(|err| {
-        format!(
-            "could not create dir '{}', err {}",
-            pth.to_string_lossy(),
-            err
-        )
-    })?;
-    write_file(&pth, "Cargo.toml", CARGO_SRC)?;
-    write_file(&pth, "src/main.rs", MAIN_SRC)?;
-    write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
-    write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
-    cargo_compile_dir(&pth)?;
-    Ok(pth)
+    // let pth = context.empty_template_dir();
+    // debug!(
+    //     "creating clean template in '{}', exists={}",
+    //     pth.to_string_lossy(),
+    //     pth.is_dir()
+    // );
+    // fs::create_dir_all(&pth).map_err(|err| {
+    //     format!(
+    //         "could not create dir '{}', err {}",
+    //         pth.to_string_lossy(),
+    //         err
+    //     )
+    // })?;
+    // write_file(&pth, "Cargo.toml", CARGO_SRC)?;
+    // write_file(&pth, "src/main.rs", MAIN_SRC)?;
+    // write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
+    // write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
+    // cargo_compile_dir(&pth)?;
+    // Ok(pth)
 }
 
 fn cargo_compile_dir(pth: &PathBuf) -> Result<(), String> {

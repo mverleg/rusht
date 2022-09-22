@@ -9,6 +9,6 @@ pub fn rsh(args: RshArgs) -> Result<(), String> {
     debug!("{:?}", args);
     let context = rsh_context()?;
     let prog = load_source(&args.script)?;
-    let exe = compile_rsh(&context, prog)?;
+    let exe = compile_rsh(&context, prog, &args)?;
     todo!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
