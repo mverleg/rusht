@@ -8,10 +8,10 @@ use ::std::time::UNIX_EPOCH;
 
 use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
+use ::log::info;
 use ::log::trace;
 use ::sha2::Digest;
 use ::sha2::Sha256;
-use log::info;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
@@ -29,11 +29,14 @@ pub fn compile_rsh(context: &RshContext, prog: RshProg) -> Result<PathBuf, Strin
         prog.path.to_string_lossy(),
         hash
     );
-    init_clean_template_dir(context);
+    let template_pth = init_template_dir(context)?;
+    //TODO @mverleg: hash check here
+
     todo!();
 }
 
-fn init_clean_template_dir(context: &RshContext) -> Result<PathBuf, String> {
+/// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.
+fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
     let pth = context.empty_template_dir();
     debug!(
         "creating clean template in '{}', exists={}",
@@ -47,11 +50,40 @@ fn init_clean_template_dir(context: &RshContext) -> Result<PathBuf, String> {
             err
         )
     })?;
-    write_file(&pth, "Cargo.toml", CARGO_SRC);
-    write_file(&pth, "src/main.rs", MAIN_SRC);
-    write_file(&pth, "src/run.rs", DUMMY_RUN_SRC);
-    write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC);
-    info!("going to compile empty template");
+    write_file(&pth, "Cargo.toml", CARGO_SRC)?;
+    write_file(&pth, "src/main.rs", MAIN_SRC)?;
+    write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
+    write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
+    cargo_compile_dir(&pth)?;
+    Ok(pth)
+}
+
+/// Creates, compiles and cleans up the program directory, then returns the path. Returns executable path.
+fn compile_program(context: &RshContext) -> Result<PathBuf, String> {
+    todo!();
+    let pth = context.empty_template_dir();
+    debug!(
+        "creating clean template in '{}', exists={}",
+        pth.to_string_lossy(),
+        pth.is_dir()
+    );
+    fs::create_dir_all(&pth).map_err(|err| {
+        format!(
+            "could not create dir '{}', err {}",
+            pth.to_string_lossy(),
+            err
+        )
+    })?;
+    write_file(&pth, "Cargo.toml", CARGO_SRC)?;
+    write_file(&pth, "src/main.rs", MAIN_SRC)?;
+    write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
+    write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
+    cargo_compile_dir(&pth)?;
+    Ok(pth)
+}
+
+fn cargo_compile_dir(pth: &PathBuf) -> Result<(), String> {
+    info!("going to compile Rust code in '{}'", pth.to_string_lossy());
     let mut env = HashMap::new();
     env.insert("RUSTFLAGS", "-C target-cpu=native");
     let exit_code = Command::new("cargo")
@@ -74,7 +106,13 @@ fn init_clean_template_dir(context: &RshContext) -> Result<PathBuf, String> {
                 err
             )
         })?;
-    Ok(pth)
+    if !exit_code.success() {
+        return Err(format!(
+            "failed to compile generated code in '{}'",
+            pth.to_string_lossy()
+        ));
+    }
+    Ok(())
 }
 
 fn write_file(base_pth: &Path, file: impl Into<PathBuf>, content: &str) -> Result<(), String> {

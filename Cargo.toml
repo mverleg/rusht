@@ -116,6 +116,7 @@ git2 = "0.15.0"
 derive_more = "0.99.17"
 rodio = "0.16.0"
 which = "4.3.0"
+fs_extra = "1.2.0"
 
 [dev-dependencies]
 tempfile = "3.3.0"

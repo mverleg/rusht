@@ -16,11 +16,18 @@
         "cmdo",
         "cmlist",
         "cmdrop",
+        "cmbuf",
         "cached",
         "unique",
+        "filter",
         "grab",
         "dir_with",
         "locked",
+        "namesafe",
+        "mvnw",
+        "mon",
+        "piped",
+        "rsh",
         "rusht"
       ]
     }
