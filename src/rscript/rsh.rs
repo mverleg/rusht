@@ -10,5 +10,13 @@ pub fn rsh(args: RshArgs) -> Result<(), String> {
     let context = rsh_context()?;
     let prog = load_source(&args.script)?;
     let exe = compile_rsh(&context, prog, &args)?;
-    todo!(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    if args.build_only {
+        println!(
+            "build done, result in {}",
+            exe.to_str().expect("executable path is not unicode")
+        );
+    } else {
+        todo!();
+    }
+    Ok(())
 }

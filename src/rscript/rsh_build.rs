@@ -3,6 +3,7 @@ use ::std::fs;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::process::Command;
+use std::fs::read_to_string;
 
 use ::log::debug;
 use ::log::info;
@@ -28,7 +29,7 @@ pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Resul
     //TODO @mverleg: hash check here
 
     write_prog_state(&context, &current_state)?;
-    todo!();
+    Ok(current_state.exe_path)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -120,9 +121,21 @@ fn cargo_compile_dir(pth: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
+/// Write the content to the file, creating directories as needed.
+/// Skips writing if content is the same, in order to not trigger rebuilds.
 fn write_file(base_pth: &Path, file: impl Into<PathBuf>, content: &str) -> Result<(), String> {
     let mut pth = base_pth.to_owned();
     pth.push(file.into());
+    if let Ok(existing_content) = read_to_string(&pth) {
+        if content == existing_content {
+            trace!(
+                "skip writing {} bytes to '{}' because the content has not changed",
+                content.len(),
+                pth.to_string_lossy()
+            );
+            return Ok(());
+        }
+    }
     let parent = pth
         .parent()
         .expect("could not get parent, but no root dir expected");
