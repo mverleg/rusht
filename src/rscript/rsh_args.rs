@@ -1,10 +1,6 @@
-use ::std::fmt;
 use ::std::path::PathBuf;
-use ::std::str::FromStr;
 
 use ::clap::StructOpt;
-use ::clap::ValueEnum;
-use ::regex::Regex;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "rsh", about = "Compile and run a Rust snippet.")]
