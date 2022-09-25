@@ -61,9 +61,6 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     let build_dir_handle = tempfile::tempdir()
         .map_err(|err| format!("could not create a temporary build directory"))?;
     let build_dir = build_dir_handle.path();
-    let build_dir0 = PathBuf::from("/tmp/rsh_debug"); //TODO @mverleg: TEMPORARY! REMOVE THIS!
-    fs::create_dir_all(&build_dir0).unwrap(); //TODO @mverleg: TEMPORARY! REMOVE THIS!
-    let build_dir = &build_dir0; //TODO @mverleg: TEMPORARY! REMOVE THIS!
     debug!(
         "copying template '{}' to '{}' for program {}",
         template_pth.to_string_lossy(),
@@ -97,7 +94,7 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     write_file(
         &build_dir,
         "Cargo.toml",
-        &CARGO_SRC.replace("\"rsh-template\"", &format!("\"{}\"", &state.name)),
+        &CARGO_SRC.replace("\"rsh-generated\"", &format!("\"{}\"", &state.name)),
     )?;
     write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
     write_file(&build_dir, "src/run.rs", DUMMY_RUN_SRC)?;
@@ -136,7 +133,9 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
             err
         )
     })?;
-    drop(build_dir_handle);
+    build_dir_handle
+        .close()
+        .expect("could not clean up build dir");
     Ok(())
 }
 

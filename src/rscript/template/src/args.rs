@@ -1,6 +1,6 @@
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(name = "rsh-generated", about = "This is just a placeholder")]
+#[structopt()]
 pub struct Args {
 }
 
