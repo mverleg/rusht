@@ -16,7 +16,11 @@ pub fn execute(exe: &ProgState, args: &RshArgs) -> Result<ExitStatus, String> {
         args.args.join(", ")
     );
     let mut env: HashMap<&str, &str> = HashMap::new();
-    env.insert("RSH_IS_RUN_THROUGH_WRAPPER", "1");
+    let script_path = exe.script_path.to_string_lossy();
+    let last_compile_ts = exe.last_compile_ts_ms.to_string();
+    env.insert("RSH_NAME", &exe.name);
+    env.insert("RSH_SCRIPT_PATH", &script_path);
+    env.insert("RSH_LAST_COMPILE_MS", &last_compile_ts);
     Command::new(&path)
         .args(&args.args)
         .envs(&env)

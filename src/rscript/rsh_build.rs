@@ -95,11 +95,16 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
         &state.name,
         build_dir.to_string_lossy(),
     );
-    write_file(
-        &build_dir,
-        "Cargo.toml",
-        &CARGO_SRC.replace("\"rsh-template\"", &format!("\"{}\"", &state.name)),
-    )?;
+    let cargo_src = CARGO_SRC
+        .replace("\"rsh-template\"", &format!("\"{}\"", &state.name))
+        .replace(
+            "\"Automatically generated\"",
+            &format!(
+                "\"Automatically generated from {}\"",
+                &state.script_path.to_string_lossy()
+            ),
+        );
+    write_file(&build_dir, "Cargo.toml", &cargo_src)?;
     write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
     write_file(&build_dir, "src/run.rs", DUMMY_RUN_SRC)?;
     write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
