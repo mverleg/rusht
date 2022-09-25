@@ -11,7 +11,7 @@ pub fn rsh(args: RshArgs) -> Result<ExitStatus, String> {
     debug!("{:?}", args);
     let context = rsh_context()?;
     let prog = load_source(&args.script)?;
-    let state = compile_rsh(&context, prog, &args)?;
+    let state = compile_rsh(&context, &prog, &args)?;
     if args.build_only {
         println!(
             "build done, result in {}",
@@ -22,6 +22,6 @@ pub fn rsh(args: RshArgs) -> Result<ExitStatus, String> {
         );
         Ok(ExitStatus::ok())
     } else {
-        execute(&state, &args)
+        execute(&prog, &state, &args)
     }
 }

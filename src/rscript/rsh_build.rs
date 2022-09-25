@@ -22,7 +22,7 @@ use crate::rscript::RshArgs;
 
 pub fn compile_rsh(
     context: &RshContext,
-    prog: RshProg,
+    prog: &RshProg,
     args: &RshArgs,
 ) -> Result<ProgState, String> {
     let prev_state = read_prog_state(context, &prog)?;
@@ -31,7 +31,7 @@ pub fn compile_rsh(
         return Ok(prev_state.unwrap());
     }
     let template_pth = init_template_dir(context)?;
-    compile_program(&current_state, template_pth)?;
+    compile_program(&prog, &current_state, template_pth)?;
     //TODO @mverleg: hash check here
 
     write_prog_state(&context, &current_state)?;
@@ -62,9 +62,9 @@ fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
 }
 
 /// Creates, compiles and cleans up the program directory, then returns the path. Returns executable path.
-fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), String> {
+fn compile_program(prog: &RshProg, state: &ProgState, template_pth: PathBuf) -> Result<(), String> {
     let build_dir_handle = tempfile::tempdir()
-        .map_err(|err| format!("could not create a temporary build directory"))?;
+        .map_err(|err| format!("could not create a temporary build directory, err {}", err))?;
     let build_dir = build_dir_handle.path();
     debug!(
         "copying template '{}' to '{}' for program {}",
@@ -77,8 +77,9 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     let template_sub_pths = fs::read_dir(&template_pth)
         .map_err(|err| {
             format!(
-                "failed to list entries inside dir '{}'",
-                template_pth.to_string_lossy()
+                "failed to list entries inside dir '{}', err {}",
+                template_pth.to_string_lossy(),
+                err
             )
         })?
         .map(|pth| pth.expect("failed to read entry in template dir").path())
@@ -102,12 +103,13 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
             "\"Automatically generated\"",
             &format!(
                 "\"Automatically generated from {}\"",
-                &state.script_path.to_string_lossy()
+                &prog.script_path.to_string_lossy()
             ),
         );
+    let run_src = format!("pub fn run(args: Args) {{\n\t{}\n}}", &prog.code);
     write_file(&build_dir, "Cargo.toml", &cargo_src)?;
     write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
-    write_file(&build_dir, "src/run.rs", DUMMY_RUN_SRC)?;
+    write_file(&build_dir, "src/run.rs", &run_src)?;
     write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
     cargo_compile_dir(build_dir, true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);

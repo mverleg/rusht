@@ -26,7 +26,6 @@ pub const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 pub struct ProgState {
     pub name: String,
     pub exe_path: PathBuf,
-    pub script_path: PathBuf,
     pub prog_hash: String,
     pub rsh_hash: u128,
     pub template_hash: String,
@@ -36,9 +35,8 @@ pub struct ProgState {
 pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
     let name = prog.name();
     ProgState {
-        name: name.to_owned(),
-        exe_path: context.exe_path_for(name),
-        script_path: prog.path.clone(),
+        exe_path: context.exe_path_for(&name),
+        name: name,
         prog_hash: calc_hash(vec![&prog.code]),
         rsh_hash: get_rsh_exe_hash(),
         template_hash: calc_hash(vec![CARGO_SRC, MAIN_SRC]),
@@ -86,7 +84,7 @@ pub fn check_should_refresh(current_state: &ProgState, prev_state: &Option<ProgS
 }
 
 pub fn read_prog_state(context: &RshContext, prog: &RshProg) -> Result<Option<ProgState>, String> {
-    let pth = context.state_path_for(prog.name());
+    let pth = context.state_path_for(&prog.name());
     if !pth.exists() {
         debug!(
             "no program state for {} at '{}'",

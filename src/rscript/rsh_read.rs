@@ -26,7 +26,7 @@ pub fn load_source(path: &Path) -> Result<RshProg, String> {
         src.len()
     );
     Ok(RshProg {
-        path: path.to_owned(),
+        script_path: path.to_owned(),
         code: src,
     })
 }
