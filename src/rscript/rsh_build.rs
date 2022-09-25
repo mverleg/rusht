@@ -1,9 +1,9 @@
 use ::std::collections::HashMap;
 use ::std::fs;
+use ::std::fs::read_to_string;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::process::Command;
-use std::fs::read_to_string;
 
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
@@ -105,22 +105,30 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     cargo_compile_dir(build_dir, true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
     let exe_dir = artifact_pth.parent();
-    let mut opts = CopyOptions::new();
-    opts.overwrite = true;
-    opts.content_only = true;
-    fs::create_dir_all(&state.exe_path).map_err(|err| {
+    let exe_path_parent = state
+        .exe_path
+        .parent()
+        .expect("no parent dir, but should not be root");
+    debug!(
+        "copy {} -> {} (creating {})",
+        artifact_pth.to_string_lossy(),
+        state.exe_path.to_string_lossy(),
+        exe_path_parent.to_string_lossy(),
+    );
+    fs::create_dir_all(
+        &state
+            .exe_path
+            .parent()
+            .expect("no parent dir, but should not be root"),
+    )
+    .map_err(|err| {
         format!(
             "failed to create executable directory '{}', err {}",
             state.exe_path.to_string_lossy(),
             err
         )
     })?;
-    debug!(
-        "copy {} -> {}",
-        artifact_pth.to_string_lossy(),
-        state.exe_path.to_string_lossy()
-    );
-    copy_items(&[&artifact_pth], &state.exe_path, &opts).map_err(|err| {
+    copy_items(&[&artifact_pth], exe_path_parent, &opts).map_err(|err| {
         format!(
             "failed to copy artifact '{}' to '{}', err {}",
             artifact_pth.to_string_lossy(),
