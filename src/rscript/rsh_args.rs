@@ -3,7 +3,11 @@ use ::std::path::PathBuf;
 use ::clap::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(name = "rsh", about = "Compile and run a Rust snippet.")]
+#[structopt(
+    name = "rsh",
+    about = "Compile and run a Rust snippet.",
+    after_help = "If you see this instead of your command's help, try adding -- before arguments."
+)]
 pub struct RshArgs {
     /// Name of the Rust script to run.
     #[structopt()]
