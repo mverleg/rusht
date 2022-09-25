@@ -1,25 +1,30 @@
-use ::std::path::Path;
+use ::std::collections::HashMap;
 use ::std::process::Command;
 
 use ::log::debug;
 
+use crate::rscript::rsh_state::ProgState;
 use crate::rscript::RshArgs;
 use crate::ExitStatus;
 
-pub fn execute(exe: &Path, args: &RshArgs) -> Result<ExitStatus, String> {
+pub fn execute(exe: &ProgState, args: &RshArgs) -> Result<ExitStatus, String> {
     //TODO @mverleg: is this going to be slow like mvn?
+    let path = &exe.exe_path;
     debug!(
         "going to execute {} with arguments: [{}]",
-        exe.to_string_lossy(),
+        path.to_string_lossy(),
         args.args.join(", ")
     );
-    Command::new(exe)
+    let mut env: HashMap<&str, &str> = HashMap::new();
+    env.insert("RSH_IS_RUN_THROUGH_WRAPPER", "1");
+    Command::new(&path)
         .args(&args.args)
+        .envs(&env)
         .spawn()
         .map_err(|err| {
             format!(
                 "failed to execute generated program '{}' which was based on '{}', starting failed, err: {}",
-                exe.to_string_lossy(),
+                path.to_string_lossy(),
                 args.script.to_string_lossy(),
                 err
             )
@@ -29,7 +34,7 @@ pub fn execute(exe: &Path, args: &RshArgs) -> Result<ExitStatus, String> {
         .map_err(|err| {
             format!(
                 "failed to execute generated program '{}' which was based on '{}', waiting failed, err: {}",
-                exe.to_string_lossy(),
+                path.to_string_lossy(),
                 args.script.to_string_lossy(),
                 err
             )

@@ -2,6 +2,7 @@
 
 use ::clap::StructOpt;
 use ::num_cpus;
+use ::std::env;
 
 include!("./args.rs");
 include!("./run.rs");

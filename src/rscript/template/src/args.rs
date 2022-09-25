@@ -1,6 +1,6 @@
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt()]
+#[structopt(about = env::var("CARGO_PKG_DESCRIPTION").unwrap())]
 pub struct Args {
 }
 

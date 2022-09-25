@@ -11,14 +11,17 @@ pub fn rsh(args: RshArgs) -> Result<ExitStatus, String> {
     debug!("{:?}", args);
     let context = rsh_context()?;
     let prog = load_source(&args.script)?;
-    let exe = compile_rsh(&context, prog, &args)?;
+    let state = compile_rsh(&context, prog, &args)?;
     if args.build_only {
         println!(
             "build done, result in {}",
-            exe.to_str().expect("executable path is not unicode")
+            state
+                .exe_path
+                .to_str()
+                .expect("executable path is not unicode")
         );
         Ok(ExitStatus::ok())
     } else {
-        execute(&exe, &args)
+        execute(&state, &args)
     }
 }

@@ -4,7 +4,6 @@ use ::std::fs::read_to_string;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::process::Command;
-use std::mem::forget;
 
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
@@ -20,18 +19,22 @@ use crate::rscript::rsh_state::{
 use crate::rscript::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
 use crate::rscript::RshArgs;
 
-pub fn compile_rsh(context: &RshContext, prog: RshProg, args: &RshArgs) -> Result<PathBuf, String> {
+pub fn compile_rsh(
+    context: &RshContext,
+    prog: RshProg,
+    args: &RshArgs,
+) -> Result<ProgState, String> {
     let prev_state = read_prog_state(context, &prog)?;
     let current_state = derive_prog_state(context, &prog);
     if !args.force_rebuild && !check_should_refresh(&current_state, &prev_state) {
-        return Ok(prev_state.unwrap().exe_path);
+        return Ok(prev_state.unwrap());
     }
     let template_pth = init_template_dir(context)?;
     compile_program(&current_state, template_pth)?;
     //TODO @mverleg: hash check here
 
     write_prog_state(&context, &current_state)?;
-    Ok(current_state.exe_path)
+    Ok(current_state)
 }
 
 /// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.
