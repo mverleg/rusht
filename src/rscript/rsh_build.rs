@@ -10,6 +10,7 @@ use ::fs_extra::dir::CopyOptions;
 use ::log::debug;
 use ::log::info;
 use ::log::trace;
+use fs_extra::move_items;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
@@ -141,7 +142,8 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
         artifact_pth.is_file(),
         "build directory was created but not executable was produced (release mode)"
     );
-    copy_items(&[&artifact_pth], exe_path_parent, &opts).map_err(|err| {
+    // Use move instead of copy, otherwise Macos finds it suspicious and it gets kill9'ed.
+    move_items(&[&artifact_pth], exe_path_parent, &opts).map_err(|err| {
         format!(
             "failed to copy artifact '{}' to '{}', err {}",
             artifact_pth.to_string_lossy(),
