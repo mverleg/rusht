@@ -4,6 +4,7 @@ use ::std::fs::read_to_string;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::process::Command;
+use std::mem::forget;
 
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
@@ -94,14 +95,13 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     write_file(
         &build_dir,
         "Cargo.toml",
-        &CARGO_SRC.replace("\"rsh-generated\"", &format!("\"{}\"", &state.name)),
+        &CARGO_SRC.replace("\"rsh-template\"", &format!("\"{}\"", &state.name)),
     )?;
     write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
     write_file(&build_dir, "src/run.rs", DUMMY_RUN_SRC)?;
     write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
     cargo_compile_dir(build_dir, true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
-    let exe_dir = artifact_pth.parent();
     let exe_path_parent = state
         .exe_path
         .parent()
@@ -125,6 +125,14 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
             err
         )
     })?;
+    assert!(
+        artifact_pth.parent().unwrap().is_dir(),
+        "no build directory was created (release mode)"
+    );
+    assert!(
+        artifact_pth.is_file(),
+        "build directory was created but not executable was produced (release mode)"
+    );
     copy_items(&[&artifact_pth], exe_path_parent, &opts).map_err(|err| {
         format!(
             "failed to copy artifact '{}' to '{}', err {}",
@@ -133,9 +141,6 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
             err
         )
     })?;
-    build_dir_handle
-        .close()
-        .expect("could not clean up build dir");
     Ok(())
 }
 
