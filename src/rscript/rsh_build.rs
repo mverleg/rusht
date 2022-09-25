@@ -104,6 +104,22 @@ fn compile_program(state: &ProgState, template_pth: PathBuf) -> Result<(), Strin
     write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
     cargo_compile_dir(build_dir, true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
+    let exe_dir = artifact_pth.parent();
+    let mut opts = CopyOptions::new();
+    opts.overwrite = true;
+    opts.content_only = true;
+    fs::create_dir_all(&state.exe_path).map_err(|err| {
+        format!(
+            "failed to create executable directory '{}', err {}",
+            state.exe_path.to_string_lossy(),
+            err
+        )
+    })?;
+    debug!(
+        "copy {} -> {}",
+        artifact_pth.to_string_lossy(),
+        state.exe_path.to_string_lossy()
+    );
     copy_items(&[&artifact_pth], &state.exe_path, &opts).map_err(|err| {
         format!(
             "failed to copy artifact '{}' to '{}', err {}",
