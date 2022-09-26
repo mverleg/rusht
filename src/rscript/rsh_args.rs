@@ -18,10 +18,9 @@ pub struct RshArgs {
     /// Build the code, but do not execute it.
     #[structopt(long = "rsh-build-only")]
     pub build_only: bool,
-    //TODO @mverleg:
     /// Show generated Rust code, for debug purposes.
-    #[structopt(long = "rsh-show-generated")]
-    pub show_generated: bool,
+    #[structopt(long = "rsh-keep-generated")]
+    pub keep_generated: bool,
     //TODO @mverleg:
     /// Extra arguments to pass to the Rust script.
     #[structopt()]

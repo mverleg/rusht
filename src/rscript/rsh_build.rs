@@ -7,10 +7,10 @@ use ::std::process::Command;
 
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
+use ::fs_extra::move_items;
 use ::log::debug;
 use ::log::info;
 use ::log::trace;
-use fs_extra::move_items;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
@@ -31,7 +31,13 @@ pub fn compile_rsh(
         return Ok(prev_state.unwrap());
     }
     let template_pth = init_template_dir(context)?;
-    compile_program(&prog, &current_state, template_pth)?;
+    compile_program(
+        context,
+        &prog,
+        &current_state,
+        template_pth,
+        args.keep_generated,
+    )?;
     //TODO @mverleg: hash check here
 
     write_prog_state(&context, &current_state)?;
@@ -62,10 +68,32 @@ fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
 }
 
 /// Creates, compiles and cleans up the program directory, then returns the path. Returns executable path.
-fn compile_program(prog: &RshProg, state: &ProgState, template_pth: PathBuf) -> Result<(), String> {
-    let build_dir_handle = tempfile::tempdir()
-        .map_err(|err| format!("could not create a temporary build directory, err {}", err))?;
-    let build_dir = build_dir_handle.path();
+fn compile_program(
+    context: &RshContext,
+    prog: &RshProg,
+    state: &ProgState,
+    template_pth: PathBuf,
+    keep_generated: bool,
+) -> Result<(), String> {
+    if keep_generated {
+        let build_dir = context.keep_generated_path_for(&prog.name());
+        let res = compile_program_in(&build_dir, prog, state, template_pth);
+        println!("generated code is in: {}", build_dir.to_string_lossy());
+        res
+    } else {
+        let build_dir_handle = tempfile::tempdir()
+            .map_err(|err| format!("could not create a temporary build directory, err {}", err))?;
+        let build_dir = build_dir_handle.path();
+        compile_program_in(build_dir, prog, state, template_pth)
+    }
+}
+
+fn compile_program_in(
+    build_dir: &Path,
+    prog: &RshProg,
+    state: &ProgState,
+    template_pth: PathBuf,
+) -> Result<(), String> {
     debug!(
         "copying template '{}' to '{}' for program {}",
         template_pth.to_string_lossy(),

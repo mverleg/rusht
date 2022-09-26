@@ -32,6 +32,13 @@ impl RshContext {
         pth.push(format!("{}.json", safe_filename(name)));
         pth
     }
+
+    pub fn keep_generated_path_for(&self, name: &str) -> PathBuf {
+        let mut pth = self.cache_dir.clone();
+        pth.push("generated");
+        pth.push(safe_filename(name));
+        pth
+    }
 }
 
 pub fn rsh_context() -> Result<RshContext, String> {

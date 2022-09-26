@@ -1,5 +1,6 @@
 use ::std::collections::HashMap;
 use ::std::process::Command;
+use std::env;
 
 use ::log::debug;
 
@@ -22,6 +23,10 @@ pub fn execute(prog: &RshProg, exe: &ProgState, args: &RshArgs) -> Result<ExitSt
     env.insert("RSH_NAME", &exe.name);
     env.insert("RSH_SCRIPT_PATH", &script_path);
     env.insert("RSH_LAST_COMPILE_MS", &last_compile_ts);
+    let comp_exe_pth = env::current_exe().map(|p| p.to_string_lossy());
+    if let Ok(pth) = comp_exe_pth {
+        env.insert("RSH_COMPILER_PATH", pth.as_ref());
+    }
     Command::new(&path)
         .args(&args.args)
         .envs(&env)
