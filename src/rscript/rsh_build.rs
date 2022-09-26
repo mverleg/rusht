@@ -15,6 +15,7 @@ use ::log::trace;
 
 use crate::rscript::rsh_context::RshContext;
 use crate::rscript::rsh_program::RshProg;
+use crate::rscript::rsh_run::create_rsh_env;
 use crate::rscript::rsh_state::{
     check_should_refresh, derive_prog_state, read_prog_state, write_prog_state, ProgState,
 };
@@ -68,7 +69,7 @@ fn init_template_dir(context: &RshContext) -> Result<PathBuf, String> {
     write_file(&pth, "src/main.rs", MAIN_SRC)?;
     write_file(&pth, "src/run.rs", DUMMY_RUN_SRC)?;
     write_file(&pth, "src/args.rs", DUMMY_ARGS_SRC)?;
-    cargo_compile_dir(&pth, false)?;
+    cargo_compile_dir(&pth, HashMap::new(), false)?;
     Ok(pth)
 }
 
@@ -164,7 +165,7 @@ fn compile_program_in(
     write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
     write_file(&build_dir, "src/run.rs", &run_src)?;
     write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
-    cargo_compile_dir(build_dir, true)?;
+    cargo_compile_dir(build_dir, create_rsh_env(prog, &state), true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
     let exe_path_parent = state
         .exe_path
@@ -217,10 +218,13 @@ fn guess_artifact_path(build_dir: &Path, name: &str) -> PathBuf {
     artifact_pth
 }
 
-fn cargo_compile_dir(pth: &Path, is_offline: bool) -> Result<(), String> {
+fn cargo_compile_dir(
+    pth: &Path,
+    mut env: HashMap<&'static str, String>,
+    is_offline: bool,
+) -> Result<(), String> {
     info!("going to compile Rust code in '{}'", pth.to_string_lossy());
-    let mut env: HashMap<&str, &str> = HashMap::new();
-    env.insert("RUSTFLAGS", "-C target-cpu=native");
+    env.insert("RUSTFLAGS", "-C target-cpu=native".to_owned());
     let mut args = vec!["build", "--release"];
     if is_offline {
         args.push("--offline");
