@@ -36,6 +36,7 @@ pub fn compile_rsh(
         );
         return Ok(prev_state.unwrap());
     }
+    remove_old_exe(prev_state)?;
     let template_pth = init_template_dir(context)?;
     compile_program(
         context,
@@ -48,6 +49,25 @@ pub fn compile_rsh(
 
     write_prog_state(&context, &current_state)?;
     Ok(current_state)
+}
+
+fn remove_old_exe(prev_state: Option<ProgState>) -> Result<(), String> {
+    if let Some(state) = prev_state {
+        if state.exe_path.is_file() {
+            debug!(
+                "removing old executable '{}'",
+                state.exe_path.to_string_lossy()
+            );
+            fs::remove_file(&state.exe_path).map_err(|err| {
+                format!(
+                    "failed to remove old executable '{}', err {}",
+                    state.exe_path.to_string_lossy(),
+                    err
+                )
+            })?;
+        }
+    }
+    Ok(())
 }
 
 /// Creates and compiles a fixed project directory, to cache dependencies. Returns directory.

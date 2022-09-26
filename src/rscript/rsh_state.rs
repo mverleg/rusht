@@ -25,6 +25,7 @@ pub const DUMMY_RUN_SRC: &str = include_str!("./template/src/run.rs");
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgState {
     pub name: String,
+    pub hash_tag: String,
     pub exe_path: PathBuf,
     pub prog_hash: String,
     pub rsh_hash: u128,
@@ -33,15 +34,27 @@ pub struct ProgState {
 }
 
 pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
-    let name = prog.name();
-    ProgState {
-        exe_path: context.exe_path_for(&name),
-        name: name,
-        prog_hash: calc_hash(vec![&prog.code]),
-        rsh_hash: get_rsh_exe_hash(),
-        template_hash: calc_hash(vec![CARGO_SRC, MAIN_SRC]),
+    let prog_hash = calc_hash(vec![&prog.code]);
+    let rsh_hash = get_rsh_exe_hash();
+    let template_hash = calc_hash(vec![CARGO_SRC, MAIN_SRC]);
+    let hash_tag = calc_hash(vec![
+        &prog.name(),
+        &prog_hash,
+        &rsh_hash.to_string(),
+        &template_hash,
+    ])[..12]
+        .to_owned();
+    let exe_path = context.exe_path_for(&format!("{}-{}", prog.name(), &hash_tag));
+    let state = ProgState {
+        name: prog.name(),
+        hash_tag,
+        exe_path,
+        prog_hash,
+        rsh_hash,
+        template_hash,
         last_compile_ts_ms: current_time_ms(),
-    }
+    };
+    state
 }
 
 pub fn current_time_ms() -> u128 {
@@ -177,7 +190,7 @@ fn get_rsh_exe_hash() -> u128 {
     {
         Some(ts_ms) => {
             debug!(
-                "rsh at '{}' was last changed {} ms ago",
+                "rsh at '{}' was last changed at timestamp(ms) {}",
                 env::current_exe().unwrap().to_string_lossy(),
                 ts_ms
             );

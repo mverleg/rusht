@@ -13,7 +13,7 @@ pub fn main() {
     env_logger::init_from_env(
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
-    if var("RSH_ALLOW_DIRECT_RUN").is_err() && var("RSH_NAME").is_err() {
+    if option_env!("RSH_ALLOW_DIRECT_RUN").is_none() && var("RSH_ALLOW_DIRECT_RUN").is_err() && var("RSH_NAME").is_err() {
         eprintln!("It is recommended to run through 'rsh' instead of calling '{}' directly.",
             env::current_exe().unwrap().to_string_lossy());
         eprintln!("For example use 'rsh \"{}\"', or use a script with shebang '#!{}'.",
