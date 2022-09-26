@@ -219,7 +219,7 @@ fn compile_program_in(
         "build directory was created but not executable was produced (release mode)"
     );
     // Use move instead of copy, otherwise Macos finds it suspicious and it gets kill9'ed.
-    move_items(&[&artifact_pth], exe_path_parent, &opts).map_err(|err| {
+    fs::rename(&artifact_pth, &state.exe_path).map_err(|err| {
         format!(
             "failed to copy artifact '{}' to '{}', err {}",
             artifact_pth.to_string_lossy(),
