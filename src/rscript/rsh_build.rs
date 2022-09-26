@@ -8,6 +8,7 @@ use ::std::process::Command;
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
 use ::fs_extra::move_items;
+use ::fs_extra::remove_items;
 use ::log::debug;
 use ::log::info;
 use ::log::trace;
@@ -28,6 +29,10 @@ pub fn compile_rsh(
     let prev_state = read_prog_state(context, &prog)?;
     let current_state = derive_prog_state(context, &prog);
     if !args.force_rebuild && !check_should_refresh(&current_state, &prev_state) {
+        debug!(
+            "using cached executable for {} (force_rebuild={})",
+            current_state.name, args.force_rebuild
+        );
         return Ok(prev_state.unwrap());
     }
     let template_pth = init_template_dir(context)?;
@@ -77,6 +82,26 @@ fn compile_program(
 ) -> Result<(), String> {
     if keep_generated {
         let build_dir = context.keep_generated_path_for(&prog.name());
+        if build_dir.is_dir() {
+            debug!(
+                "build directory not empty, clearing: '{}'",
+                build_dir.to_string_lossy()
+            );
+            remove_items(&[&build_dir]).map_err(|err| {
+                format!(
+                    "failed to clear the build directory '{}' before compiling, err {}",
+                    build_dir.to_string_lossy(),
+                    err
+                )
+            })?;
+        }
+        fs::create_dir_all(&build_dir).map_err(|err| {
+            format!(
+                "failed to create build directory '{}', err {}",
+                build_dir.to_string_lossy(),
+                err
+            )
+        })?;
         let res = compile_program_in(&build_dir, prog, state, template_pth);
         println!("generated code is in: {}", build_dir.to_string_lossy());
         res

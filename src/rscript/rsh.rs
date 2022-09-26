@@ -14,7 +14,7 @@ pub fn rsh(args: RshArgs) -> Result<ExitStatus, String> {
     let state = compile_rsh(&context, &prog, &args)?;
     if args.build_only {
         println!(
-            "build done, result in {}",
+            "build done, executable in {}",
             state
                 .exe_path
                 .to_str()
