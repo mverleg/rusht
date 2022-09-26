@@ -4,6 +4,7 @@ use ::clap::StructOpt;
 use ::num_cpus;
 use ::std::env;
 use ::std::env::var;
+use ::log::{trace, debug, info, warn, error};
 
 include!("./args.rs");
 include!("./run.rs");
@@ -12,8 +13,13 @@ pub fn main() {
     env_logger::init_from_env(
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
-    if var("RSH_NAME").is_err() {
-        eprintln!("it is recommended to run through 'rsh', like 'rsh {}', instead of calling '{}' directly");
+    if var("RSH_ALLOW_DIRECT_RUN").is_err() && var("RSH_NAME").is_err() {
+        eprintln!("It is recommended to run through 'rsh' instead of calling '{}' directly.",
+            env::current_exe().unwrap().to_string_lossy());
+        eprintln!("For example use 'rsh \"{}\"', or use a script with shebang '#!{}'.",
+            option_env!("RSH_SCRIPT_PATH").unwrap_or("$NAME"),
+            option_env!("RSH_COMPILER_PATH").unwrap_or("/usr/bin/env rsh"));
+        debug!("set env RSH_ALLOW_DIRECT_RUN to skip this check")
     }
     let args = Args::from_args();
     run(args);
