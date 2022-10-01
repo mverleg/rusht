@@ -87,14 +87,14 @@ name = "rusht"
 path = "src/main_all.rs"
 
 [dependencies]
-clap = { version = "3.2.22", default-features = true, features = ["std", "derive", "unicode"] }
+clap = { version = "4.0.9", default-features = true, features = ["std", "derive", "unicode"] }
 lazy_static = "1.4.0"
 regex = "1.6.0"
-itertools = "0.10.4"
-serde = { version = "1.0.144", features = ["derive"] }
+itertools = "0.10.5"
+serde = { version = "1.0.145", features = ["derive"] }
 serde_json = "1.0.85"
-bincode = "2.0.0-rc.1"
-time = { version = "0.3.14", features = ["serde"] }
+bincode = "2.0.0-rc.2"
+time = { version = "0.3.15", features = ["serde"] }
 dirs = "4.0.0"
 log = "0.4.17"
 env_logger = "0.9.1"
@@ -102,7 +102,7 @@ memoize = "0.3.1"
 rand = "0.8.5"
 ustr = "0.9.0"
 parse_duration0 = "3.0.0"
-smallvec = "1.9.0"
+smallvec = "1.10.0"
 sha2 = "0.10.6"
 base64 = "0.13.0"
 rayon = "1.5.3"
@@ -114,7 +114,7 @@ futures = "0.3.24"
 num_cpus = "1.13.1"
 git2 = "0.15.0"
 derive_more = "0.99.17"
-rodio = "0.16.0"
+soloud = "1.0.2"
 which = "4.3.0"
 fs_extra = "1.2.0"
 tempfile = "3.3.0"
