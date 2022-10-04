@@ -114,10 +114,11 @@ futures = "0.3.24"
 num_cpus = "1.13.1"
 git2 = "0.15.0"
 derive_more = "0.99.17"
-soloud = "1.0.2"
+#soloud = "1.0.2"
 which = "4.3.0"
 fs_extra = "1.2.0"
 tempfile = "3.3.0"
+ssh2 = { version = "0.9.3", features = ["vendored-openssl"] }  # ssh2 is used transitively, use this to enable vendor feature
 
 [dev-dependencies]
 
