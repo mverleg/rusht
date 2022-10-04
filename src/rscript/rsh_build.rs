@@ -7,7 +7,6 @@ use ::std::process::Command;
 
 use ::fs_extra::copy_items;
 use ::fs_extra::dir::CopyOptions;
-use ::fs_extra::move_items;
 use ::fs_extra::remove_items;
 use ::log::debug;
 use ::log::info;
