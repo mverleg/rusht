@@ -9,7 +9,7 @@ pub fn sound_notification(
     sound_on_failure: bool,
     is_success: bool,
 ) -> Result<(), String> {
-    debug!("sound temporarily disabled, awaiting fixes");  //TODO @mark: TEMPORARY! REMOVE THIS!
+    debug!("sound temporarily disabled, awaiting fixes"); //TODO @mark: TEMPORARY! REMOVE THIS!
     Ok(())
     // let sl = Soloud::default().unwrap();
     // let mut sound = audio::Wav::default();
