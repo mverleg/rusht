@@ -8,14 +8,14 @@ use ::std::time::Duration;
 use ::rusht::common::RejectStdin;
 
 fn main() {
-    use cpal::traits::{DeviceTrait, HostTrait};
-    let mut supported_configs_range = device
-        .supported_output_configs()
-        .expect("error while querying configs");
-    let supported_config = supported_configs_range
-        .next()
-        .expect("no supported config?!")
-        .with_max_sample_rate();
+    // use cpal::traits::{DeviceTrait, HostTrait};
+    // let mut supported_configs_range = device
+    //     .supported_output_configs()
+    //     .expect("error while querying configs");
+    // let supported_config = supported_configs_range
+    //     .next()
+    //     .expect("no supported config?!")
+    //     .with_max_sample_rate();
 }
 
 // The conclusion here is that running Command mvn is slow, compared to running `sh -c "mvn ..."`
