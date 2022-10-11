@@ -1,12 +1,3 @@
-use ::std::env;
-use ::std::path::PathBuf;
-
-use ::std::process::Command;
-use ::std::thread::sleep;
-use ::std::time::Duration;
-
-use ::rusht::common::RejectStdin;
-
 fn main() {
     // use cpal::traits::{DeviceTrait, HostTrait};
     // let mut supported_configs_range = device
