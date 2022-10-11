@@ -60,8 +60,8 @@ fn batch_add_drop() {
     assert_eq!(
         out,
         vec![
-            "print hello Benjamin  # 1".to_owned(),
-            "print hello Leonardo  # 2".to_owned(),
+            "/usr/bin/print hello Benjamin  # 1".to_owned(),
+            "/usr/bin/print hello Leonardo  # 2".to_owned(),
         ]
     );
     drop_cmd(DropArgs {

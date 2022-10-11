@@ -181,6 +181,6 @@ mod tests {
         // based on real use bug
         let args = NamesafeArgs::parse_from(vec!["namesafe", "-1", "-x=n"]);
         let res = namesafe_line("commits-for-review-unpushed-firstN", &args);
-        assert_eq!(res, "commits-for-review-unpushed-firstN");
+        assert_eq!(res, "commits-for-review-unpushed-firs");
     }
 }

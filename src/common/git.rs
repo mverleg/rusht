@@ -101,7 +101,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_add() {
-        git_affected_files_head(&PathBuf::from("/Users/mverleg/data/goat")).unwrap();
+    fn test_git_repo() {
+        git_affected_files_head(&PathBuf::from(".")).unwrap();
     }
 }
