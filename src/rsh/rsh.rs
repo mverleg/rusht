@@ -1,11 +1,11 @@
 use crate::ExitStatus;
 use ::log::debug;
 
-use crate::rscript::rsh_args::RshArgs;
-use crate::rscript::rsh_build::compile_rsh;
-use crate::rscript::rsh_context::rsh_context;
-use crate::rscript::rsh_read::load_source;
-use crate::rscript::rsh_run::execute;
+use crate::rsh::rsh_args::RshArgs;
+use crate::rsh::rsh_build::compile_rsh;
+use crate::rsh::rsh_context::rsh_context;
+use crate::rsh::rsh_read::load_source;
+use crate::rsh::rsh_run::execute;
 
 pub fn rsh(args: RshArgs) -> Result<ExitStatus, String> {
     debug!("{:?}", args);

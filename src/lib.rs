@@ -15,5 +15,5 @@ pub mod filter;
 pub mod find;
 pub mod java;
 pub mod observe;
-pub mod rscript;
+pub mod rsh;
 pub mod wait;

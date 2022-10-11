@@ -4,9 +4,9 @@ use std::env;
 
 use ::log::debug;
 
-use crate::rscript::rsh_program::RshProg;
-use crate::rscript::rsh_state::ProgState;
-use crate::rscript::RshArgs;
+use crate::rsh::rsh_program::RshProg;
+use crate::rsh::rsh_state::ProgState;
+use crate::rsh::RshArgs;
 use crate::ExitStatus;
 
 pub fn execute(prog: &RshProg, state: &ProgState, args: &RshArgs) -> Result<ExitStatus, String> {

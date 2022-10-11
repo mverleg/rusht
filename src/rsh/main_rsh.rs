@@ -1,6 +1,6 @@
 use ::clap::StructOpt;
 
-use ::rusht::rscript::{handle_rsh, RshArgs};
+use ::rusht::rsh::{handle_rsh, RshArgs};
 use ::rusht::ExitStatus;
 
 fn main() -> ExitStatus {

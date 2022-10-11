@@ -1,7 +1,7 @@
 use ::std::fs::read_to_string;
 use ::std::path::Path;
 
-use crate::rscript::rsh_program::RshProg;
+use crate::rsh::rsh_program::RshProg;
 use ::log::debug;
 
 pub fn load_source(path: &Path) -> Result<RshProg, String> {

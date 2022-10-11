@@ -16,7 +16,7 @@ use ::rusht::find::DirWithArgs;
 use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::observe::{handle_mon, MonArgs};
 use ::rusht::observe::{handle_piped, PipedArgs};
-use ::rusht::rscript::{handle_rsh, RshArgs};
+use ::rusht::rsh::{handle_rsh, RshArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
 use ::rusht::ExitStatus;

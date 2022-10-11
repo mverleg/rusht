@@ -14,8 +14,8 @@ use ::sha2::Sha256;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 
-use crate::rscript::rsh_context::RshContext;
-use crate::rscript::rsh_program::RshProg;
+use crate::rsh::rsh_context::RshContext;
+use crate::rsh::rsh_program::RshProg;
 
 pub const CARGO_SRC: &str = include_str!("./template/Cargo.toml");
 pub const MAIN_SRC: &str = include_str!("./template/src/main.rs");

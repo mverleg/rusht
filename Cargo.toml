@@ -74,7 +74,7 @@ path = "src/observe/main_piped.rs"
 
 [[bin]]
 name = "rsh"
-path = "src/rscript/main_rsh.rs"
+path = "src/rsh/main_rsh.rs"
 
 [[bin]]
 name = "rusht_debug"

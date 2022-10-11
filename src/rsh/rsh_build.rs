@@ -12,14 +12,14 @@ use ::log::debug;
 use ::log::info;
 use ::log::trace;
 
-use crate::rscript::rsh_context::RshContext;
-use crate::rscript::rsh_program::RshProg;
-use crate::rscript::rsh_run::create_rsh_env;
-use crate::rscript::rsh_state::{
+use crate::rsh::rsh_context::RshContext;
+use crate::rsh::rsh_program::RshProg;
+use crate::rsh::rsh_run::create_rsh_env;
+use crate::rsh::rsh_state::{
     check_should_refresh, derive_prog_state, read_prog_state, write_prog_state, ProgState,
 };
-use crate::rscript::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
-use crate::rscript::RshArgs;
+use crate::rsh::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
+use crate::rsh::RshArgs;
 
 pub fn compile_rsh(
     context: &RshContext,
