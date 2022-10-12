@@ -19,19 +19,19 @@ use crate::rsh::rsh_program::RshProg;
 
 pub const CARGO_SRC: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/resource/rsh/template/Cargo.toml"
+    "/resource/rsh/template/Cargo.toml.template"
 ));
 pub const MAIN_SRC: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/resource/rsh/template/src/main.rs"
+    "/resource/rsh/template/src/main.rs.template"
 ));
 pub const DUMMY_ARGS_SRC: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/resource/rsh/template/src/args.rs"
+    "/resource/rsh/template/src/args.rs.template"
 ));
 pub const DUMMY_RUN_SRC: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/resource/rsh/template/src/run.rs"
+    "/resource/rsh/template/src/run.rs.template"
 ));
 
 #[derive(Debug, Serialize, Deserialize)]
