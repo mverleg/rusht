@@ -7,7 +7,11 @@ authors = ["Mark <mverleg.noreply@gmail.com>"]
 homepage = "https://github.com/mverleg/rusht"
 license = "BSD-3-Clause"
 publish = true
-include = ["src/**/*", "Cargo.toml", "src/rsh/template/*", "src/rsh/template/src/*"]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "/home/mark/rusht/src/rsh/template/Cargo.toml",
+]
 default-run = "rusht"
 
 [lib]
