@@ -10,7 +10,7 @@ publish = true
 include = [
     "**/*.rs",
     "Cargo.toml",
-    "/home/mark/rusht/src/rsh/template/Cargo.toml",
+    "resource/**/*",
 ]
 default-run = "rusht"
 
