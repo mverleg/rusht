@@ -1,5 +1,3 @@
-cargo-features = ["strip"]
-
 [package]
 name = "rusht"
 description = "Shell commands written in Rust"
