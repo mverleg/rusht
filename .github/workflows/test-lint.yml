@@ -23,4 +23,6 @@ jobs:
         with:
           file: ./ci/test-lint.Dockerfile
           context: .
+          build-args:
+            - LINT: $([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint' -r ci-conf.json)" != false ] && echo 1 || echo 0)
           push: false

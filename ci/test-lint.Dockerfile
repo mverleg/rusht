@@ -15,7 +15,8 @@ RUN find . -name target -prune -o -type f &&\
 RUN cargo --offline test --all-features
 
 # Lint
-RUN cargo --offline clippy --all-features --tests -- -D warnings
+ARG LINT=1
+RUN if [ "$LINT" != 0 ] ; then cargo --offline clippy --all-features --tests -- -D warnings; fi
 
 # Style
 RUN cargo --offline fmt --all -- --check
