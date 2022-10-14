@@ -1,5 +1,8 @@
 
-FROM mverleg/rust_nightly_musl_base:deps_2022-07-01_32
+# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten!
+
+FROM mverleg/rust_nightly_musl_base:deps_2022-01-01_5
+
 # Copy the code (all except .dockerignore).
 COPY ./ ./
 

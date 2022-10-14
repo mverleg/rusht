@@ -1,5 +1,7 @@
 
-FROM mverleg/rust_nightly_musl_base:deps_2022-07-01_32 AS build
+# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten!
+
+FROM mverleg/rust_nightly_musl_base:deps_2022-01-01_5 AS build
 
 ARG BIN
 ARG TARGET=x86_64-unknown-linux-musl

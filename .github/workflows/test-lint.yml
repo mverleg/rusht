@@ -1,4 +1,6 @@
 
+# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten!
+
 name: 'Test & lint'
 
 on:

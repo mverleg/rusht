@@ -1,4 +1,6 @@
 
+# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten!
+
 # Note: it is not safe to run this workflow multiple times concurrently.
 
 name: 'Release'

@@ -1,4 +1,6 @@
 
+# GENERATED: This file is automatically updated by 'Bump dependencies', local changes will be overwritten!
+
 # Automatically update:
 # * Cargo dependency versions
 # * Docker base image versions
@@ -68,10 +70,12 @@ jobs:
           update check_dependencies 'check-dependencies.Dockerfile' './ci/check-dependencies.Dockerfile' &
           update check_dependencies 'release.yml' './.github/workflows/release.yml' &
           update check_dependencies 'release.Dockerfile' './ci/release.Dockerfile' &
+          update check_dependencies 'deny.toml' './deny.toml' &
           update test_lint 'test-lint.yml' './.github/workflows/test-lint.yml' &
           update test_lint 'test-lint.Dockerfile' './ci/test-lint.Dockerfile' &
           wait
       - name: Docker bump
+        #TODO @mark:
         if: hashFiles('ci/upgrade_docker_base.sh') != '' && steps.conf.outputs.dockerfile == 1
         run: |
           sh ci/upgrade_docker_base.sh
