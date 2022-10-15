@@ -24,6 +24,7 @@ mkdir -p ./.github/workflows ./ci
 
 update bump_dependencies 'bump-dependencies.yml' './.github/workflows/bump-dependencies.yml' &
 update bump_dependencies 'bump-dependencies.Dockerfile' './ci/bump-dependencies.Dockerfile' &
+update bump_dependencies 'bump-dependencies.sh' './ci/bump-dependencies.sh' &
 update check_dependencies 'check-dependencies.yml' './.github/workflows/check-dependencies.yml' &
 update check_dependencies 'check-dependencies.Dockerfile' './ci/check-dependencies.Dockerfile' &
 update check_dependencies 'release.yml' './.github/workflows/release.yml' &

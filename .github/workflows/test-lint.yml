@@ -23,9 +23,4 @@ jobs:
         with:
           file: ./ci/test-lint.Dockerfile
           context: .
-          build-args:
-            - STRICT: $([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.strict' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            - TEST: $([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.test' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            - LINT: $([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            - FMT: $([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.fmt' -r ci-conf.json)" != false ] && echo 1 || echo 0)
           push: false

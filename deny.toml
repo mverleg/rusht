@@ -29,6 +29,7 @@ allow = [
     "BSD-2-Clause-Patent",
     "CC0-1.0",
     "Unicode-DFS-2016",
+    "copyright-by-mverleg",
 ]
 
 exceptions = [
