@@ -57,7 +57,7 @@ pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
     ])[..12]
         .to_owned();
     let exe_path = context.exe_path_for(&format!("{}-{}", prog.name(), &hash_tag));
-    let state = ProgState {
+    ProgState {
         name: prog.name(),
         hash_tag,
         exe_path,
@@ -65,8 +65,7 @@ pub fn derive_prog_state(context: &RshContext, prog: &RshProg) -> ProgState {
         rsh_hash,
         template_hash,
         last_compile_ts_ms: current_time_ms(),
-    };
-    state
+    }
 }
 
 pub fn current_time_ms() -> u128 {
@@ -136,7 +135,7 @@ pub fn read_prog_state(context: &RshContext, prog: &RshProg) -> Result<Option<Pr
             )
         })?;
     serde_json::from_reader::<_, ProgState>(reader)
-        .map(|v| Some(v))
+        .map(Some)
         .map_err(|err| {
             format!(
                 "failed to read rsh state from '{}', err {}",

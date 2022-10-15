@@ -1,4 +1,5 @@
 mod handle_rsh;
+#[allow(clippy::module_inception)]
 mod rsh;
 mod rsh_args;
 mod rsh_build;

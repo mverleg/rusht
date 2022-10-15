@@ -17,7 +17,7 @@ pub fn execute(prog: &RshProg, state: &ProgState, args: &RshArgs) -> Result<Exit
         path.to_string_lossy(),
         args.args.join(", ")
     );
-    Command::new(&path)
+    Command::new(path)
         .args(&args.args)
         .envs(&create_rsh_env(prog, &state))
         .spawn()

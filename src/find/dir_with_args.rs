@@ -92,7 +92,7 @@ impl FromStr for IntRange {
     type Err = String;
 
     fn from_str(txt: &str) -> Result<Self, Self::Err> {
-        match txt.split_once(",") {
+        match txt.split_once(',') {
             Some(("", "")) => Ok(IntRange {
                 min: 0,
                 max: u32::MAX,

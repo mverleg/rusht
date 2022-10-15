@@ -26,8 +26,8 @@ pub fn compile_rsh(
     prog: &RshProg,
     args: &RshArgs,
 ) -> Result<ProgState, String> {
-    let prev_state = read_prog_state(context, &prog)?;
-    let current_state = derive_prog_state(context, &prog);
+    let prev_state = read_prog_state(context, prog)?;
+    let current_state = derive_prog_state(context, prog);
     if !args.force_rebuild && !check_should_refresh(&current_state, &prev_state) {
         debug!(
             "using cached executable for {} (force_rebuild={})",
@@ -39,14 +39,14 @@ pub fn compile_rsh(
     let template_pth = init_template_dir(context)?;
     compile_program(
         context,
-        &prog,
+        prog,
         &current_state,
         template_pth,
         args.keep_generated,
     )?;
     //TODO @mverleg: hash check here
 
-    write_prog_state(&context, &current_state)?;
+    write_prog_state(context, &current_state)?;
     Ok(current_state)
 }
 
@@ -180,10 +180,10 @@ fn compile_program_in(
             ),
         );
     let run_src = format!("pub fn run(args: Args) {{\n\t{}\n}}", &prog.code);
-    write_file(&build_dir, "Cargo.toml", &cargo_src)?;
-    write_file(&build_dir, "src/main.rs", MAIN_SRC)?;
-    write_file(&build_dir, "src/run.rs", &run_src)?;
-    write_file(&build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
+    write_file(build_dir, "Cargo.toml", &cargo_src)?;
+    write_file(build_dir, "src/main.rs", MAIN_SRC)?;
+    write_file(build_dir, "src/run.rs", &run_src)?;
+    write_file(build_dir, "src/args.rs", DUMMY_ARGS_SRC)?;
     cargo_compile_dir(build_dir, create_rsh_env(prog, &state), true)?;
     let artifact_pth = guess_artifact_path(build_dir, &state.name);
     let exe_path_parent = state
@@ -197,7 +197,7 @@ fn compile_program_in(
         exe_path_parent.to_string_lossy(),
     );
     fs::create_dir_all(
-        &state
+        state
             .exe_path
             .parent()
             .expect("no parent dir, but should not be root"),
@@ -250,7 +250,7 @@ fn cargo_compile_dir(
     }
     let exit_code = Command::new("cargo")
         .args(&args)
-        .current_dir(&pth)
+        .current_dir(pth)
         .envs(&env)
         .spawn()
         .map_err(|err| {

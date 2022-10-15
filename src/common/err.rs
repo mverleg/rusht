@@ -30,7 +30,7 @@ impl ExitStatus {
     }
 
     pub fn of_is_ok(is_ok: bool) -> ExitStatus {
-        ExitStatus::of(if is_ok { 0 } else { 1 })
+        ExitStatus::of(u8::from(is_ok))
     }
 
     pub fn of_code(code: Option<i32>) -> ExitStatus {

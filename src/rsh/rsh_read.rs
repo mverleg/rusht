@@ -15,7 +15,7 @@ pub fn load_source(path: &Path) -> Result<RshProg, String> {
     if src.starts_with("#!") && !src.starts_with("#![") {
         debug!("detected shebang, stripping first line");
         //TODO @mverleg: deal with different platform line breaks?
-        src = match src.split_once("\n") {
+        src = match src.split_once('\n') {
             Some((_, content)) => content.to_owned(),
             None => "".to_owned(),
         };

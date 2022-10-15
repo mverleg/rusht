@@ -43,7 +43,7 @@ impl RshContext {
 
 pub fn rsh_context() -> Result<RshContext, String> {
     let build_dir = env::var(CACHE_DIR_ENV)
-        .map(|pth| PathBuf::from(pth))
+        .map(PathBuf::from)
         .unwrap_or_else(|_| {
             let mut pth = dirs::cache_dir().expect("failed to find cache directory");
             pth.push("rsh");
