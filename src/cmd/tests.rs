@@ -57,13 +57,8 @@ fn batch_add_drop() {
         exit_code: false,
     })
     .unwrap();
-    assert_eq!(
-        out,
-        vec![
-            "/usr/bin/print hello Benjamin  # 1".to_owned(),
-            "/usr/bin/print hello Leonardo  # 2".to_owned(),
-        ]
-    );
+    assert!(out[0].ends_with("print hello Benjamin  # 1"));
+    assert!(out[1].ends_with("print hello Leonardo  # 2"));
     drop_cmd(DropArgs {
         namespace: namespace.to_owned(),
         all: true,
