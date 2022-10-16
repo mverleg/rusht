@@ -17,6 +17,7 @@ unknown-git = "deny"
 allow-git = []
 
 [licenses]
+ignore-private = true
 unlicensed = "deny"
 allow-osi-fsf-free = "both"
 copyleft = "deny"
@@ -29,7 +30,6 @@ allow = [
     "BSD-2-Clause-Patent",
     "CC0-1.0",
     "Unicode-DFS-2016",
-    "copyright-by-mverleg",
 ]
 
 exceptions = [
