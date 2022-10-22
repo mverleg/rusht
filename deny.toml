@@ -17,7 +17,7 @@ unknown-git = "deny"
 allow-git = []
 
 [licenses]
-ignore-private = true
+private = { ignore = true }
 unlicensed = "deny"
 allow-osi-fsf-free = "both"
 copyleft = "deny"
