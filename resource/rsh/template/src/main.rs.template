@@ -21,6 +21,6 @@ pub fn main() {
             option_env!("RSH_COMPILER_PATH").unwrap_or("/usr/bin/env rsh"));
         debug!("set env RSH_ALLOW_DIRECT_RUN to skip this check")
     }
-    let args = Args::from_args();
+    let args = Args::parse();
     run(args);
 }

@@ -80,13 +80,13 @@ pub struct MvnwArgs {
     )]
     pub affected_policy: AffectedPolicy,
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
-    #[arg(long, validator = strictly_positive, hide_short_help = true)]
+    #[arg(long, value_parser = strictly_positive, hide_short_help = true)]
     pub threads: Option<u32>,
     /// Maximum memory to build, in MB.
-    #[arg(long = "max-memory", validator = strictly_positive, default_value = "8192", hide_short_help = true)]
+    #[arg(long = "max-memory", value_parser = strictly_positive, default_value = "8192", hide_short_help = true)]
     pub max_memory_mb: u32,
     /// Maximum memory to execute, in MB. Default to same as build.
-    #[arg(long = "max-exec-memory", validator = strictly_positive, hide_short_help = true)]
+    #[arg(long = "max-exec-memory", value_parser = strictly_positive, hide_short_help = true)]
     pub max_exec_memory_mb: Option<u32>,
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     #[arg(long, default_value = "mvn", hide_short_help = true)]

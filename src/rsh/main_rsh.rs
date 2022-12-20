@@ -7,6 +7,6 @@ fn main() -> ExitStatus {
     env_logger::init_from_env(
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
-    let args = RshArgs::from_args();
+    let args = RshArgs::parse();
     handle_rsh(args)
 }

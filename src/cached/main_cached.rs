@@ -1,5 +1,5 @@
-use ::clap::Parser;
 use ::env_logger;
+use ::clap::Parser;
 
 use ::rusht::cached::handle_cached;
 use ::rusht::cached::CachedArgs;
@@ -10,6 +10,6 @@ async fn main() -> ExitStatus {
     env_logger::init_from_env(
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
-    let args = CachedArgs::from_args();
+    let args = CachedArgs::parse();
     handle_cached(args).await
 }
