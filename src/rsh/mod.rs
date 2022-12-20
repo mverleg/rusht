@@ -11,5 +11,4 @@ mod rsh_state;
 
 pub use self::handle_rsh::handle_rsh;
 pub use self::rsh::rsh;
-pub use self::rsh_args::PassArgs;
 pub use self::rsh_args::RshArgs;
