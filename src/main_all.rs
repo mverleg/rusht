@@ -22,7 +22,7 @@ use ::rusht::wait::LockedArgs;
 use ::rusht::ExitStatus;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "rusht",
     about = "Single executable with all rusht utilities as subcommands."
 )]
@@ -53,8 +53,7 @@ enum SubCmd {
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    RushtArgs::from_arg_matches().unwrap();
+    RushtArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 #[async_std::main]

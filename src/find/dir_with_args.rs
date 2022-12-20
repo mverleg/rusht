@@ -8,51 +8,51 @@ use ::clap::Parser;
 use ::regex::Regex;
 
 #[derive(Parser, Debug, Default)]
-#[structopt(
+#[command(
     name = "dir_with",
     about = "Find directories that contain certain files or directories.",
     long_about = "Find directories that contain certain files or directories. Only supports utf8, sensible filenames."
 )]
 pub struct DirWithArgs {
-    #[structopt(short = 'l', long, default_value = "10000")]
+    #[arg(short = 'l', long, default_value = "10000")]
     /// Maximum directory depth to recurse into
     pub max_depth: u32,
-    #[structopt(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort")]
+    #[arg(parse(from_flag = Order::from_is_sorted), short = 's', long = "sort")]
     /// Sort the results alphabetically
     pub order: Order,
-    #[structopt(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested")]
+    #[arg(parse(from_flag = Nested::from_do_nested), short = 'n', long = "nested")]
     /// Keep recursing even if a directory matches
     pub nested: Nested,
-    #[structopt(short = 'x', long = "on-error", default_value = "warn")]
+    #[arg(short = 'x', long = "on-error", default_value = "warn")]
     /// What to do when an error occurs: [w]arn, [a]bort or [i]gnore
     pub on_err: OnErr,
-    #[structopt(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative")]
+    #[arg(parse(from_flag = PathModification::from_is_relative), short = 'z', long = "relative")]
     /// Results are relative to roots, instead of absolute
     pub path_modification: PathModification,
-    #[structopt(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
+    #[arg(parse(try_from_str = root_parser), short = 'r', long = "root", default_value = ".")]
     /// Root directories to start searching from (multiple allowed)
     pub roots: Vec<PathBuf>,
-    #[structopt(short = 'c', long = "child-count", default_value = "")]
+    #[arg(short = 'c', long = "child-count", default_value = "")]
     /// Range for number of items in the directory, e.g. '5' (exactly),or '2,10' (inclusive) or ',1' (upto)
     pub child_count_range: IntRange,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'f', long = "file")]
     /// File pattern that must exist in the directory to match
     pub files: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'd', long = "dir")]
     /// Subdirectory pattern that must exist in the directory to match
     pub dirs: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'i', long = "self")]
     /// Pattern for the directory itself for it to match
     pub itself: Vec<Regex>,
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'F', long = "not-file")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'F', long = "not-file")]
     /// Opposite of -f; directory only matches if this file pattern is NOT matched inside it
     pub not_files: Vec<Regex>,
     //TODO @mverleg: ^
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'D', long = "not-dir")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'D', long = "not-dir")]
     /// Opposite of -d, directory only matches if this directory pattern is NOT matched inside it
     pub not_dirs: Vec<Regex>,
     //TODO @mverleg: ^
-    #[structopt(parse(try_from_str = parse_full_str_regex), short = 'I', long = "not-self")]
+    #[arg(parse(try_from_str = parse_full_str_regex), short = 'I', long = "not-self")]
     /// Opposite of -i, directory only matches if its own name does NOT match this pattern
     pub not_self: Vec<Regex>,
     //TODO @mverleg: ^
@@ -153,8 +153,7 @@ impl fmt::Display for IntRange {
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    DirWithArgs::from_arg_matches().unwrap();
+    DirWithArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

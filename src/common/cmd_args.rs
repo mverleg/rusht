@@ -1,11 +1,11 @@
-use ::clap::Parser;
+use ::clap::Subcommand;
 
 use crate::common::Task;
 
-#[derive(Debug, Clone, PartialEq, Eq, Parser)]
-#[structopt(name = "command")]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
+#[command(name = "command")]
 pub enum CommandArgs {
-    #[structopt(external_subcommand)]
+    #[command(external_subcommand)]
     Cmd(Vec<String>),
 }
 

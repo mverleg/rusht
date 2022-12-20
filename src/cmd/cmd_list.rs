@@ -7,29 +7,28 @@ use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::stack_pth;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cmlist",
     about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
 )]
 pub struct ListArgs {
-    #[structopt(short = 'n', long, default_value = "")]
+    #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one
     pub namespace: String,
-    #[structopt(short = 'p', long)]
+    #[arg(short = 'p', long)]
     /// Show the path to the stack file, instead of commands
     pub file_path: bool,
-    #[structopt(short = 'c', long, conflicts_with = "file-path")]
+    #[arg(short = 'c', long, conflicts_with = "file-path")]
     /// Maximum number of (newest) commands to show.
     pub count: Option<u32>,
-    #[structopt(short = 'e', long, conflicts_with = "file-path")]
+    #[arg(short = 'e', long, conflicts_with = "file-path")]
     /// Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise).
     pub exit_code: bool,
 }
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    ListArgs::from_arg_matches().unwrap();
+    ListArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 #[derive(Debug, Clone)]

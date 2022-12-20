@@ -9,7 +9,7 @@ use ::regex::Regex;
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
 #[derive(Parser, Debug, Clone)]
-#[structopt(
+#[command(
     name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
     after_help = "Thanks for using! Note: some options are only visible with --help (not with -h).",
@@ -17,16 +17,16 @@ use crate::java::newtype::{FullyQualifiedName, Profile};
 )]
 pub struct MvnwArgs {
     /// Do a clean build (also cleans unchanged modules).
-    #[structopt(short = 'c', long)]
+    #[arg(short = 'c', long)]
     pub clean: bool,
     /// Install the modules into local .m2 after building them.
-    #[structopt(short = 'i', long)]
+    #[arg(short = 'i', long)]
     pub install: bool,
     /// Build all the code, not just changed files.
-    #[structopt(short = 'a', long)]
+    #[arg(short = 'a', long)]
     pub all: bool,
     /// Update snapshots, even if it was recently done.
-    #[structopt(short = 'U', long)]
+    #[arg(short = 'U', long)]
     pub update: bool,
     /// Execute these java classes.
     ///
@@ -35,34 +35,34 @@ pub struct MvnwArgs {
     /// {n}* Class must be inside selected module, which may be controlled by --affected.
     /// {n}* Must be in selected profile, if any, and mvn exec plugin must be available.
     /// {n}* This does not automatically disable running unit tests.
-    #[structopt(short = 'm', long = "exec-main")]
+    #[arg(short = 'm', long = "exec-main")]
     pub execs: Vec<FullyQualifiedName>,
 
     /// Run tests that were changed, or that match files that were changed (i.e. XyzTest if Xyz is changed). Default.
-    #[structopt(long = "test-files", group = "test")]
+    #[arg(long = "test-files", group = "test")]
     test_files: bool,
     /// All tests in modules that contain changes.
-    #[structopt(short = 't', long = "test-modules", group = "test")]
+    #[arg(short = 't', long = "test-modules", group = "test")]
     test_modules: bool,
     /// Run all the tests.
-    #[structopt(long = "test-all", group = "test")]
+    #[arg(long = "test-all", group = "test")]
     test_all: bool,
     /// Do not run any tests (but still build them).
-    #[structopt(long = "test-none", group = "test")]
+    #[arg(long = "test-none", group = "test")]
     test_none: bool,
     /// Only build prod (main) code, skip building tests.
-    #[structopt(short = 'T', long = "prod-only", group = "test")]
+    #[arg(short = 'T', long = "prod-only", group = "test")]
     prod_only: bool,
 
     /// Do not run checkstyle lints on the code.
-    #[structopt(short = 'L', long = "no-lint")]
+    #[arg(short = 'L', long = "no-lint")]
     pub no_lint: bool,
 
     /// Show the maven version, and the output of commands.
-    #[structopt(short = 'v', long)]
+    #[arg(short = 'v', long)]
     pub verbose: bool,
     /// Only show the maven commands to be ran, do not actually run them.
-    #[structopt(short = 'V', long, hide_short_help = true)]
+    #[arg(short = 'V', long, hide_short_help = true)]
     pub show_cmds_only: bool,
     /// How to determine which files/modules have been changed.
     ///
@@ -71,7 +71,7 @@ pub struct MvnwArgs {
     /// {n}[b]ranch: changes from any commit in the branch, that aren't in origin/master (or main)
     /// {n}[a]ny-change: uncommitted + branch
     /// {n}[r]ecent: uncommitted + head
-    #[structopt(
+    #[arg(
         value_enum,
         short = 'x',
         long = "affected",
@@ -80,33 +80,33 @@ pub struct MvnwArgs {
     )]
     pub affected_policy: AffectedPolicy,
     /// Number of threads to build with. Defaults to number of cores. Multiplied by 4 for running tests.
-    #[structopt(long, validator = strictly_positive, hide_short_help = true)]
+    #[arg(long, validator = strictly_positive, hide_short_help = true)]
     pub threads: Option<u32>,
     /// Maximum memory to build, in MB.
-    #[structopt(long = "max-memory", validator = strictly_positive, default_value = "8192", hide_short_help = true)]
+    #[arg(long = "max-memory", validator = strictly_positive, default_value = "8192", hide_short_help = true)]
     pub max_memory_mb: u32,
     /// Maximum memory to execute, in MB. Default to same as build.
-    #[structopt(long = "max-exec-memory", validator = strictly_positive, hide_short_help = true)]
+    #[arg(long = "max-exec-memory", validator = strictly_positive, hide_short_help = true)]
     pub max_exec_memory_mb: Option<u32>,
     /// Maven executable. Can be used to select a different path or switch to mvnd.
-    #[structopt(long, default_value = "mvn", hide_short_help = true)]
+    #[arg(long, default_value = "mvn", hide_short_help = true)]
     pub mvn_exe: PathBuf,
     /// Extra arguments to pass to maven.
-    #[structopt(long = "mvn-arg", hide_short_help = true)]
+    #[arg(long = "mvn-arg", hide_short_help = true)]
     pub mvn_args: Vec<String>,
     /// Maven profiles to activate. Prefix '!' to deactivate.
-    #[structopt(short = 'P', long = "profile")]
+    #[arg(short = 'P', long = "profile")]
     pub profiles: Vec<Profile>,
     /// Maven projects to build. Defaults to current working directory.
-    #[structopt(long = "proj-root", hide_short_help = true)]
+    #[arg(long = "proj-root", hide_short_help = true)]
     pub proj_roots: Vec<PathBuf>,
 
     /// Re-run the commands with --clean --update if the output matches this pattern
-    #[structopt(short = 'C', long = "rebuild-if-match", hide_short_help = true)]
+    #[arg(short = 'C', long = "rebuild-if-match", hide_short_help = true)]
     pub rebuild_if_match: Vec<Regex>,
     //TODO @mverleg: ^
     /// Fail the command if the newly added code matches the regex.
-    #[structopt(short = 'g', long = "fail-if-added", hide_short_help = true)]
+    #[arg(short = 'g', long = "fail-if-added", hide_short_help = true)]
     pub fail_if_added: Vec<Regex>,
     //TODO @mverleg: ^
 }
@@ -219,6 +219,5 @@ impl MvnwArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    MvnwArgs::from_arg_matches().unwrap();
+    MvnwArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }

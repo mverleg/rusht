@@ -5,32 +5,31 @@ use crate::cmd::cmd_io::write;
 use crate::cmd::cmd_type::TaskStack;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cmdrop",
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist"
 )]
 pub struct DropArgs {
-    #[structopt(short = 'n', long, default_value = "")]
+    #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one
     pub namespace: String,
-    #[structopt(short = 'a', long, conflicts_with = "count")]
+    #[arg(short = 'a', long, conflicts_with = "count")]
     /// Drop the entire stack of commands to run.
     pub all: bool,
-    #[structopt(short = 'c', long, default_value = "1")]
+    #[arg(short = 'c', long, default_value = "1")]
     /// Number of commands to drop
     pub count: u32,
-    #[structopt(short = 'e', long)]
+    #[arg(short = 'e', long)]
     /// Drop command from the end (last) instead of as the next
     pub end: bool,
-    #[structopt(short = 'q', long)]
+    #[arg(short = 'q', long)]
     /// Do not log command(s).
     pub quiet: bool,
 }
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    DropArgs::from_arg_matches().unwrap();
+    DropArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 pub fn drop_cmd(args: DropArgs) {

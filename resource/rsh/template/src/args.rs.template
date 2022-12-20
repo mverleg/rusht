@@ -1,11 +1,11 @@
 
 #[derive(StructOpt, Debug, Clone)]
-#[structopt(about = env!("CARGO_PKG_DESCRIPTION"))]
+#[command(about = env!("CARGO_PKG_DESCRIPTION"))]
 pub struct Args {
 }
 
 #[test]
 fn test_cli_args() {
     use clap::IntoApp;
-    Args::from_arg_matches().unwrap();
+    Args::try_parse_from(&["cmd", "--help"]).unwrap();
 }

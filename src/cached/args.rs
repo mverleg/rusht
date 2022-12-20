@@ -2,20 +2,19 @@ use ::std::time::Duration;
 
 use ::clap::Parser;
 use ::parse_duration0::parse as parse_dur;
-use ::clap::FromArgMatches;
 
 use crate::common::CommandArgs;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cached",
     about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired. Stderr is only shown on first run."
 )]
 pub struct CachedArgs {
     /// Duration the cache should be valid for, e.g. "30 min" or "1 day -1 hour".
-    #[structopt(parse(try_from_str = parse_dur), short = 'd', long = "duration", default_value = "15 min")]
+    #[arg(parse(try_from_str = parse_dur), short = 'd', long = "duration", default_value = "15 min")]
     pub duration: Duration,
-    #[structopt(
+    #[arg(
         short = 'k',
         long = "key",
         default_value = "%{pwd}_%{env}_%{cmd}.cache",
@@ -30,15 +29,15 @@ pub struct CachedArgs {
     // pub git: bool,
     /// Print extra information, e.g. whether the command was run or not.
     /// When loading from cache, do not show the previous output.
-    #[structopt(short = 's', long)]
+    #[arg(short = 's', long)]
     pub no_cached_output: bool,
-    #[structopt(short = 'v', long)]
+    #[arg(short = 'v', long)]
     pub verbose: bool,
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     pub cmd: CommandArgs,
 }
 
 #[test]
 fn test_cli_args() {
-    CachedArgs::from_arg_matches().unwrap();
+    CachedArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }

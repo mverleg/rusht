@@ -7,7 +7,7 @@ use crate::common::{stdin_lines, CommandArgs, EmptyLineHandling};
 use crate::ExitStatus;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cmbuf",
     about = "Read input, build commands and buffer them, then run them all. Somewhat xargs."
 )]
@@ -15,39 +15,38 @@ pub struct BufArgs {
     // #[structopt(short = 'e', long)]
     // /// Add command at the end (last) instead of as the next.
     // pub end: bool,
-    #[structopt(short = 'L', long)]
+    #[arg(short = 'L', long)]
     /// Give a replacement placeholder for each line, instead of '{}'.
     pub lines_with: Option<String>,
-    #[structopt(short = 'u', long)]
+    #[arg(short = 'u', long)]
     /// Skip any duplicate placeholders.
     pub unique: bool,
-    #[structopt(short = 'P', long)]
+    #[arg(short = 'P', long)]
     /// Working directory when running the command. Can use placeholder with -L.
     pub working_dir: Option<String>,
 
-    #[structopt(short = 'c', long)]
+    #[arg(short = 'c', long)]
     /// Maximum number of commands to run (others are forgotten).
     pub count: Option<u32>,
-    #[structopt(short = 'p', long = "parallel", default_value = "1")]
+    #[arg(short = 'p', long = "parallel", default_value = "1")]
     /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
-    #[structopt(short = 'f', long = "continue-on-error")]
+    #[arg(short = 'f', long = "continue-on-error")]
     /// Keep running tasks even if one fails.
     pub continue_on_error: bool,
-    #[structopt(short = 'q', long)]
+    #[arg(short = 'q', long)]
     /// Do not log command and timing.
     pub quiet: bool,
     // #[structopt(short = '0', long = "allow-empty")]
     // /// Silently do nothing if there are no commands.
     // pub allow_empty: bool,
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     pub cmd: CommandArgs,
 }
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    BufArgs::from_arg_matches().unwrap();
+    BufArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {

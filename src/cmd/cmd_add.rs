@@ -7,46 +7,45 @@ use ::std::thread::spawn;
 
 use ::clap::Parser;
 use ::log::debug;
-use ::clap::FromArgMatches;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
 use crate::common::{fail, CommandArgs, Task};
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cmadd",
     about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
 )]
 pub struct AddArgs {
-    #[structopt(short = 'n', long, default_value = "")]
+    #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[structopt(short = 'q', long)]
+    #[arg(short = 'q', long)]
     /// Do not log the command.
     pub quiet: bool,
-    #[structopt(short = 'e', long)]
+    #[arg(short = 'e', long)]
     /// Add command at the end (last) instead of as the next.
     pub end: bool,
-    #[structopt(short = 'l', long)]
+    #[arg(short = 'l', long)]
     /// Add command for each line of stdin, replacing '{}' by the line.
     pub lines: bool,
-    #[structopt(short = 'L', long, conflicts_with = "lines")]
+    #[arg(short = 'L', long, conflicts_with = "lines")]
     /// Like --lines, but use given replacement placeholder instead of '{}'.
     pub lines_with: Option<String>,
-    #[structopt(short = 'u', long)]
+    #[arg(short = 'u', long)]
     /// With --lines or --lines-with, skip any duplicate placeholders.
     pub unique: bool,
-    #[structopt(short = 'P', long)]
+    #[arg(short = 'P', long)]
     /// Working directory when running the command. Can use placeholder with -l/-L.
     pub working_dir: Option<String>,
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     pub cmd: CommandArgs,
 }
 
 #[test]
 fn test_cli_args() {
-    AddArgs::from_arg_matches().unwrap();
+    AddArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {

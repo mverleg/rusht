@@ -3,21 +3,21 @@ use ::clap::Parser;
 use crate::common::CommandArgs;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "piped",
     about = "Split into two commands, and pipe the output of the first into the second."
 )]
 pub struct PipedArgs {
     /// Which token separates the two commands. Only the first occurrence is matched.
-    #[structopt(short = 's', long = "separator", default_value = "//")]
+    #[arg(short = 's', long = "separator", default_value = "//")]
     pub separator: String,
     /// Pipe stderr instead of stdout into the next command.
-    #[structopt(short = 'e', long = "stderr")]
+    #[arg(short = 'e', long = "stderr")]
     pub stderr: bool,
     /// Number of lines to buffer between the commands.
-    #[structopt(long = "pipe-buffer-size", default_value = "4", value_parser = parse_buffer_size, hide_short_help = true)]
+    #[arg(long = "pipe-buffer-size", default_value = "4", value_parser = parse_buffer_size, hide_short_help = true)]
     pub pipe_buffer_size: u32,
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     pub cmds: CommandArgs,
 }
 //TODO @mverleg: 1-to-1, 1-to-many
@@ -36,6 +36,5 @@ fn parse_buffer_size(txt: &str) -> Result<u32, String> {
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    PipedArgs::from_arg_matches().unwrap();
+    PipedArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }

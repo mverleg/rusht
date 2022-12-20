@@ -20,47 +20,46 @@ use crate::cmd::cmd_type::TaskType;
 use crate::ExitStatus;
 
 #[derive(Parser, Debug)]
-#[structopt(
+#[command(
     name = "cmdo",
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
 )]
 pub struct DoArgs {
-    #[structopt(short = 'n', long, default_value = "")]
+    #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[structopt(short = 'c', long, default_value = "1")]
+    #[arg(short = 'c', long, default_value = "1")]
     /// Number of commands to run.
     pub count: u32,
-    #[structopt(short = 'a', long, conflicts_with = "count")]
+    #[arg(short = 'a', long, conflicts_with = "count")]
     /// Try to run all the commands.
     pub all: bool,
-    #[structopt(short = 'p', long = "parallel", default_value = "1")]
+    #[arg(short = 'p', long = "parallel", default_value = "1")]
     /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
-    #[structopt(short = 'g', long = "restart-running")]
+    #[arg(short = 'g', long = "restart-running")]
     /// Run tasks even if they are marked as already running.
     pub restart_running: bool,
-    #[structopt(short = 'f', long = "continue-on-error")]
+    #[arg(short = 'f', long = "continue-on-error")]
     /// Keep running tasks even if one fails (it stays on stack unless -r).
     pub continue_on_error: bool,
-    #[structopt(short = 'r', long = "drop-failed")]
+    #[arg(short = 'r', long = "drop-failed")]
     /// Remove tasks from the stack when ran, even if they fail.
     pub drop_failed: bool,
-    #[structopt(short = 'k', long = "keep")]
+    #[arg(short = 'k', long = "keep")]
     /// Keep the task on the stack when ran when successful.
     pub keep_successful: bool,
-    #[structopt(short = 'q', long)]
+    #[arg(short = 'q', long)]
     /// Do not log command and timing.
     pub quiet: bool,
-    #[structopt(short = '0', long = "allow-empty")]
+    #[arg(short = '0', long = "allow-empty")]
     /// Silently do nothing if there are no commands.
     pub allow_empty: bool,
 }
 
 #[test]
 fn test_cli_args() {
-use ::clap::FromArgMatches;
-    DoArgs::from_arg_matches().unwrap();
+    DoArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {
