@@ -30,3 +30,20 @@ Make a simple wrapper for creating Rust single-file scripts
 * Have special syntax for clap arguments
 * Have a simple command to call executables
 
+/// This implements a lock-free way to update a serde object stored in a file.
+///
+/// It works by:
+/// 1. Reading the file, tracking the last modified time.
+/// 2. Transforming the read result into the updated one (without side effects).
+/// 3. Write the result to a temporary location.
+/// 3. Check the original file's modified time again:
+///   * If it is different, discard the result and temporary file, and go back to 1.
+///   * If it is the same, replace the original file by the temporary one.
+///
+/// Assumptions:
+/// * Any changes to the file update the modified time.
+/// * The update operation is pure, or at least idempotent (can be repeated without side effects).
+/// * The file is changed between the modification time check and the file move.
+
+
+

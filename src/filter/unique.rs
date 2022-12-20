@@ -30,7 +30,7 @@ pub struct UniqueArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     UniqueArgs::into_app().debug_assert()
 }
 

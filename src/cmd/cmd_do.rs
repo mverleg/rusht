@@ -59,7 +59,7 @@ pub struct DoArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     DoArgs::into_app().debug_assert()
 }
 

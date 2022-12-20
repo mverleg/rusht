@@ -48,6 +48,6 @@ pub struct LockedArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     LockedArgs::into_app().debug_assert()
 }

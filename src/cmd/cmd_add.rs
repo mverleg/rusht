@@ -45,7 +45,7 @@ pub struct AddArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     AddArgs::into_app().debug_assert()
 }
 

@@ -119,6 +119,6 @@ impl Default for NamesafeArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     NamesafeArgs::into_app().debug_assert()
 }

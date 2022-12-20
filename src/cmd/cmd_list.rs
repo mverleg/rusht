@@ -28,7 +28,7 @@ pub struct ListArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     ListArgs::into_app().debug_assert()
 }
 

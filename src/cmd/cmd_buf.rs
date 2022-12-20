@@ -46,7 +46,7 @@ pub struct BufArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     BufArgs::into_app().debug_assert()
 }
 

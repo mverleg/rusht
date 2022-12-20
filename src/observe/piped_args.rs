@@ -36,6 +36,6 @@ fn parse_buffer_size(txt: &str) -> Result<u32, String> {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     PipedArgs::into_app().debug_assert()
 }

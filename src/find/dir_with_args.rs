@@ -1,8 +1,8 @@
 use ::std::fs;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
-use std::fmt;
-use std::fmt::Formatter;
+use ::std::fmt;
+use ::std::fmt::Formatter;
 
 use ::clap::StructOpt;
 use ::regex::Regex;
@@ -153,7 +153,7 @@ impl fmt::Display for IntRange {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     DirWithArgs::into_app().debug_assert()
 }
 

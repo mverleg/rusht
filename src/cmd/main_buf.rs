@@ -2,7 +2,7 @@ use ::clap::StructOpt;
 
 use ::rusht::cmd::BufArgs;
 use ::rusht::ExitStatus;
-use rusht::cmd::handle_buf;
+use ::rusht::cmd::handle_buf;
 
 fn main() -> ExitStatus {
     env_logger::init_from_env(

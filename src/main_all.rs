@@ -53,7 +53,7 @@ enum SubCmd {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     RushtArgs::into_app().debug_assert()
 }
 

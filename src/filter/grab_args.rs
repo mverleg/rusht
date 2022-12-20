@@ -42,6 +42,6 @@ impl Default for GrabArgs {
 
 #[async_std::test]
 async fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     GrabArgs::into_app().debug_assert()
 }

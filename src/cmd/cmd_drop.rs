@@ -29,7 +29,7 @@ pub struct DropArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     DropArgs::into_app().debug_assert()
 }
 

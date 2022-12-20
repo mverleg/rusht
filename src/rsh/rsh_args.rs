@@ -29,6 +29,6 @@ pub struct RshArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     RshArgs::into_app().debug_assert()
 }

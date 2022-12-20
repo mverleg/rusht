@@ -30,6 +30,6 @@ pub struct MonArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     MonArgs::into_app().debug_assert()
 }

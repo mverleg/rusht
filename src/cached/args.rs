@@ -39,6 +39,6 @@ pub struct CachedArgs {
 
 #[test]
 fn test_cli_args() {
-    use clap::IntoApp;
+use ::clap::IntoApp;
     CachedArgs::into_app().debug_assert()
 }
