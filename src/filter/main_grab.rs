@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::filter::handle_grab;
 use ::rusht::filter::GrabArgs;

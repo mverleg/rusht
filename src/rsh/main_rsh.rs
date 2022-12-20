@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::rsh::{handle_rsh, RshArgs};
 use ::rusht::ExitStatus;

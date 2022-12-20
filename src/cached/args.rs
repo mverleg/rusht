@@ -1,11 +1,12 @@
 use ::std::time::Duration;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::parse_duration0::parse as parse_dur;
+use ::clap::FromArgMatches;
 
 use crate::common::CommandArgs;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cached",
     about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired. Stderr is only shown on first run."
@@ -39,6 +40,5 @@ pub struct CachedArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    CachedArgs::into_app().debug_assert()
+    CachedArgs::from_arg_matches().unwrap();
 }

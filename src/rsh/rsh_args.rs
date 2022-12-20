@@ -1,8 +1,8 @@
 use ::std::path::PathBuf;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 #[structopt(
     name = "rsh",
     about = "Compile and run a Rust snippet.",
@@ -29,6 +29,6 @@ pub struct RshArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    RshArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    RshArgs::from_arg_matches().unwrap();
 }

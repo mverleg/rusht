@@ -1,10 +1,10 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
 use crate::cmd::cmd_type::TaskStack;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cmdrop",
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist"
@@ -29,8 +29,8 @@ pub struct DropArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    DropArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    DropArgs::from_arg_matches().unwrap();
 }
 
 pub fn drop_cmd(args: DropArgs) {

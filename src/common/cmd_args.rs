@@ -1,8 +1,8 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use crate::common::Task;
 
-#[derive(Debug, Clone, PartialEq, Eq, StructOpt)]
+#[derive(Debug, Clone, PartialEq, Eq, Parser)]
 #[structopt(name = "command")]
 pub enum CommandArgs {
     #[structopt(external_subcommand)]

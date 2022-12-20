@@ -1,8 +1,8 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use crate::common::CommandArgs;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "mon",
     about = "Log the command, the outcome, timings and play a sound."
@@ -30,6 +30,6 @@ pub struct MonArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    MonArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    MonArgs::from_arg_matches().unwrap();
 }

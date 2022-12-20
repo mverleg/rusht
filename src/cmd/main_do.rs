@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::cmd::handle_do;
 use ::rusht::cmd::DoArgs;

@@ -1,6 +1,6 @@
 use ::std::collections::HashSet;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::log::debug;
 use ::regex::Regex;
 
@@ -8,7 +8,7 @@ use crate::common::LineWriter;
 use crate::common::VecWriter;
 use crate::common::{get_first_match_or_all, LineReader};
 
-#[derive(StructOpt, Debug, Default)]
+#[derive(Parser, Debug, Default)]
 #[structopt(
     name = "unique",
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
@@ -30,8 +30,8 @@ pub struct UniqueArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    UniqueArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    UniqueArgs::from_arg_matches().unwrap();
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

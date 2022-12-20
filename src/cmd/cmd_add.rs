@@ -5,14 +5,15 @@ use ::std::io::Read;
 use ::std::path::PathBuf;
 use ::std::thread::spawn;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::log::debug;
+use ::clap::FromArgMatches;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
 use crate::common::{fail, CommandArgs, Task};
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cmadd",
     about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
@@ -45,8 +46,7 @@ pub struct AddArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    AddArgs::into_app().debug_assert()
+    AddArgs::from_arg_matches().unwrap();
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {

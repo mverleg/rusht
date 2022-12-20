@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::java::handle_mvnw;
 use ::rusht::java::MvnwArgs;

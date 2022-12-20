@@ -93,7 +93,7 @@ name = "rusht"
 path = "src/main_all.rs"
 
 [dependencies]
-clap = { version = "3.2.23", default-features = true, features = ["std", "derive", "unicode"] }
+clap = { version = "4.0.29", default-features = true, features = ["std", "derive", "unicode"] }
 lazy_static = "1.4.0"
 regex = "1.7.0"
 itertools = "0.10.5"

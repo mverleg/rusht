@@ -2,13 +2,13 @@ use ::std::fmt;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::clap::ValueEnum;
 use ::regex::Regex;
 
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 #[structopt(
     name = "java",
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
@@ -219,6 +219,6 @@ impl MvnwArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    MvnwArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    MvnwArgs::from_arg_matches().unwrap();
 }

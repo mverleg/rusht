@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::clap::Subcommand;
 use ::env_logger;
 
@@ -21,7 +21,7 @@ use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
 use ::rusht::ExitStatus;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "rusht",
     about = "Single executable with all rusht utilities as subcommands."
@@ -53,8 +53,8 @@ enum SubCmd {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    RushtArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    RushtArgs::from_arg_matches().unwrap();
 }
 
 #[async_std::main]

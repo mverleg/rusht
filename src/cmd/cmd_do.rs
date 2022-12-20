@@ -2,7 +2,7 @@ use ::std::sync::atomic::AtomicUsize;
 use ::std::sync::atomic::Ordering;
 use ::std::sync::Arc;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::dashmap::DashMap;
 use ::log::debug;
 use ::log::info;
@@ -19,7 +19,7 @@ use crate::cmd::cmd_type::TaskStack;
 use crate::cmd::cmd_type::TaskType;
 use crate::ExitStatus;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cmdo",
     about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
@@ -59,8 +59,8 @@ pub struct DoArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    DoArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    DoArgs::from_arg_matches().unwrap();
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {

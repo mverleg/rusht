@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use crate::cmd::cmd_add::create_tasks;
 use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks};
@@ -6,7 +6,7 @@ use crate::cmd::cmd_type::{TaskStack, TaskType};
 use crate::common::{stdin_lines, CommandArgs, EmptyLineHandling};
 use crate::ExitStatus;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cmbuf",
     about = "Read input, build commands and buffer them, then run them all. Somewhat xargs."
@@ -46,8 +46,8 @@ pub struct BufArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    BufArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    BufArgs::from_arg_matches().unwrap();
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {

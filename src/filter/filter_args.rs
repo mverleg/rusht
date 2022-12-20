@@ -1,10 +1,10 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::regex::Regex;
 
 use crate::common::CommandArgs;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "filter",
     about = "Run a test command for each line, keeping the file if the command succeeds"
@@ -22,6 +22,6 @@ pub struct FilterArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    FilterArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    FilterArgs::from_arg_matches().unwrap();
 }

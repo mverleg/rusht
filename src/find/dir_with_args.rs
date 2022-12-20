@@ -4,10 +4,10 @@ use ::std::str::FromStr;
 use ::std::fmt;
 use ::std::fmt::Formatter;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::regex::Regex;
 
-#[derive(StructOpt, Debug, Default)]
+#[derive(Parser, Debug, Default)]
 #[structopt(
     name = "dir_with",
     about = "Find directories that contain certain files or directories.",
@@ -153,8 +153,8 @@ impl fmt::Display for IntRange {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    DirWithArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    DirWithArgs::from_arg_matches().unwrap();
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

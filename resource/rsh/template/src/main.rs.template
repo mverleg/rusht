@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::num_cpus;
 use ::std::env;
 use ::std::env::var;

@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::find::handle_dir_with;
 use ::rusht::find::DirWithArgs;

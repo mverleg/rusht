@@ -1,7 +1,7 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::std::str::FromStr;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "namesafe",
     about = "Convert each line to a string that is safe for names (no whitespace or special characters, not too long)."
@@ -119,6 +119,6 @@ impl Default for NamesafeArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    NamesafeArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    NamesafeArgs::from_arg_matches().unwrap();
 }

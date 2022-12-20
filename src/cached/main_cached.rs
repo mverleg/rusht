@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::env_logger;
 
 use ::rusht::cached::handle_cached;

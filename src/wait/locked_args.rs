@@ -1,11 +1,11 @@
 use ::std::time::Duration;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::parse_duration0::parse as parse_dur;
 
 use crate::common::CommandArgs;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "locked",
     about = "Do not start a command until a given lock is released."
@@ -48,6 +48,6 @@ pub struct LockedArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    LockedArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    LockedArgs::from_arg_matches().unwrap();
 }

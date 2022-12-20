@@ -1,4 +1,4 @@
-use ::clap::StructOpt;
+use ::clap::Parser;
 
 use ::rusht::filter::handle_filter;
 use ::rusht::filter::FilterArgs;

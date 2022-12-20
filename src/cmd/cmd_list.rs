@@ -1,12 +1,12 @@
 use ::std::env::current_dir;
 
-use ::clap::StructOpt;
+use ::clap::Parser;
 use ::log::debug;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::stack_pth;
 
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 #[structopt(
     name = "cmlist",
     about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
@@ -28,8 +28,8 @@ pub struct ListArgs {
 
 #[test]
 fn test_cli_args() {
-use ::clap::IntoApp;
-    ListArgs::into_app().debug_assert()
+use ::clap::FromArgMatches;
+    ListArgs::from_arg_matches().unwrap();
 }
 
 #[derive(Debug, Clone)]
