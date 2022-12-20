@@ -53,7 +53,7 @@ enum SubCmd {
 
 #[test]
 fn test_cli_args() {
-    RushtArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    RushtArgs::try_parse_from(&["cmd", "cached", "echo", "hi"]).unwrap();
 }
 
 #[async_std::main]
