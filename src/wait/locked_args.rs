@@ -43,5 +43,5 @@ pub struct LockedArgs {
 
 #[test]
 fn test_cli_args() {
-    LockedArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    LockedArgs::try_parse_from(&["cmd", "-t=5 min", "ls"]).unwrap();
 }

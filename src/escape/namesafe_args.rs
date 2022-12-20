@@ -3,6 +3,8 @@ use ::std::str::FromStr;
 use ::clap::builder::BoolishValueParser;
 use ::clap::builder::TypedValueParser;
 
+use ::clap::ArgAction;
+
 #[derive(Parser, Debug)]
 #[command(
     name = "namesafe",
@@ -10,7 +12,7 @@ use ::clap::builder::TypedValueParser;
 )]
 pub struct NamesafeArgs {
     /// Allow non-ascii letters (but no non-letter symbols).
-    #[arg(value_parser = BoolishValueParser::new().map(Charset::from_allow), short = 'u', long = "allow-unicode")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Charset::from_allow), short = 'u', long = "allow-unicode")]
     // #value_parser = Charset::from_allow,
     pub charset: Charset,
     /// In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever).
@@ -37,6 +39,11 @@ pub struct NamesafeArgs {
     pub single_line: bool,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
+
+#[test]
+fn test_cli_args() {
+    NamesafeArgs::try_parse_from(&["cmd", "-l", "16", "-x", "a", "--keep-tail"]).unwrap();
+}
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum HashPolicy {
@@ -114,9 +121,4 @@ impl Default for NamesafeArgs {
             single_line: false,
         }
     }
-}
-
-#[test]
-fn test_cli_args() {
-    NamesafeArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }

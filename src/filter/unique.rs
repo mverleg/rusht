@@ -1,10 +1,11 @@
 use ::std::collections::HashSet;
 
+use ::clap::ArgAction;
+use ::clap::builder::BoolishValueParser;
+use ::clap::builder::TypedValueParser;
 use ::clap::Parser;
 use ::log::debug;
 use ::regex::Regex;
-use ::clap::builder::BoolishValueParser;
-use ::clap::builder::TypedValueParser;
 
 use crate::common::{get_first_match_or_all, LineReader};
 use crate::common::LineWriter;
@@ -15,11 +16,12 @@ use crate::common::VecWriter;
     name = "unique",
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
+// //TODO @mark:
 pub struct UniqueArgs {
-    #[arg(value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sorted", )]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sorted", )]
     /// Sort the entries. Buffers all the input.
     pub order: Order,
-    #[arg(value_parser = BoolishValueParser::new().map(Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", conflicts_with = "prefix")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", conflicts_with = "prefix")]
     /// Invert the behaviour, removing all first occurrences and keeping any subsequent duplicates.
     pub keep: Keep,
     #[arg(long)]
@@ -32,7 +34,7 @@ pub struct UniqueArgs {
 
 #[test]
 fn test_cli_args() {
-    UniqueArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    UniqueArgs::try_parse_from(&["cmd", "--prefix"]).unwrap();
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

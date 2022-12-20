@@ -45,7 +45,7 @@ pub struct AddArgs {
 
 #[test]
 fn test_cli_args() {
-    AddArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    AddArgs::try_parse_from(&["cmd", "-l", "-u", "--", "ls", "{}"]).unwrap();
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {

@@ -42,5 +42,5 @@ impl Default for GrabArgs {
 
 #[async_std::test]
 async fn test_cli_args() {
-    GrabArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    GrabArgs::try_parse_from(&["cmd", "-f1kn", "5", "^.{5}$"]).unwrap();
 }

@@ -22,6 +22,12 @@ pub struct PipedArgs {
 }
 //TODO @mverleg: 1-to-1, 1-to-many
 
+#[test]
+fn test_cli_args() {
+    PipedArgs::try_parse_from(&["cmd", "-s=//", "ls", "//", "wc", "-l"]).unwrap();
+}
+
+
 fn parse_buffer_size(txt: &str) -> Result<u32, String> {
     match txt.parse::<u32>() {
         Ok(nr) => {
@@ -32,9 +38,4 @@ fn parse_buffer_size(txt: &str) -> Result<u32, String> {
         }
         Err(err) => Err(format!("could not parse argument, err '{}'", err)),
     }
-}
-
-#[test]
-fn test_cli_args() {
-    PipedArgs::try_parse_from(&["cmd", "--help"]).unwrap();
 }

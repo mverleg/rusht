@@ -46,7 +46,7 @@ pub struct BufArgs {
 
 #[test]
 fn test_cli_args() {
-    BufArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    BufArgs::try_parse_from(&["cmd", "-L", "%", "-c=5", "ls", "%"]).unwrap();
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {

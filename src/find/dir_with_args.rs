@@ -4,10 +4,11 @@ use ::std::fs;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
+use ::clap::ArgAction;
 use ::clap::builder::BoolishValueParser;
+use ::clap::builder::TypedValueParser;
 use ::clap::Parser;
 use ::regex::Regex;
-use ::clap::builder::TypedValueParser;
 
 #[derive(Parser, Debug, Default)]
 #[command(
@@ -19,16 +20,16 @@ pub struct DirWithArgs {
     #[arg(short = 'l', long, default_value = "10000")]
     /// Maximum directory depth to recurse into
     pub max_depth: u32,
-    #[arg(value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sort")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sort")]
     /// Sort the results alphabetically
     pub order: Order,
-    #[arg(value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'n', long = "nested")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'n', long = "nested")]
     /// Keep recursing even if a directory matches
     pub nested: Nested,
     #[arg(short = 'x', long = "on-error", default_value = "warn")]
     /// What to do when an error occurs: [w]arn, [a]bort or [i]gnore
     pub on_err: OnErr,
-    #[arg(value_parser = BoolishValueParser::new().map(PathModification::from_is_relative), short = 'z', long = "relative")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(PathModification::from_is_relative), short = 'z', long = "relative")]
     /// Results are relative to roots, instead of absolute
     pub path_modification: PathModification,
     #[arg(value_parser = root_parser, short = 'r', long = "root", default_value = ".")]
@@ -58,11 +59,17 @@ pub struct DirWithArgs {
     /// Opposite of -i, directory only matches if its own name does NOT match this pattern
     pub not_self: Vec<Regex>,
     //TODO @mverleg: ^
-    // #[structopt(value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'N', long = "exclude-not")]
+    // #[structopt(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'N', long = "exclude-not")]
     // Keep recursing even if a directory is negative-matched by -F/-D/-I
     // pub negative_nested: Nested,
     // //TODO @mverleg: ^
 }
+
+#[test]
+fn test_cli_args() {
+    DirWithArgs::try_parse_from(&["cmd", "-r", ".", "-l", "6", "-f", ".nobackup", "-n", "-x=silent"]).unwrap();
+}
+
 #[derive(Debug, Clone)]
 pub struct IntRange {
     min: u32,
@@ -153,11 +160,6 @@ impl fmt::Display for IntRange {
     }
 }
 
-#[test]
-fn test_cli_args() {
-    DirWithArgs::try_parse_from(&["cmd", "--help"]).unwrap();
-}
-
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum PathModification {
     Relative,
@@ -241,7 +243,7 @@ impl Nested {
 fn root_parser(root: &str) -> Result<PathBuf, String> {
     let path = PathBuf::from(root);
     if fs::metadata(&path).is_err() {
-        return Err(format!("did not filter root '{}'", root));
+        return Err(format!("did not find root '{}'", root));
     }
     Ok(path)
 }

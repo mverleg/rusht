@@ -39,5 +39,5 @@ pub struct CachedArgs {
 
 #[test]
 fn test_cli_args() {
-    CachedArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    CachedArgs::try_parse_from(&["cmd", "-v", "--", "ls"]).unwrap();
 }

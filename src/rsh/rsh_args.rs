@@ -1,5 +1,5 @@
 use ::std::path::PathBuf;
-
+use ::clap::Subcommand;
 use ::clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
@@ -23,11 +23,18 @@ pub struct RshArgs {
     pub keep_generated: bool,
     //TODO @mverleg:
     /// Extra arguments to pass to the Rust script.
-    #[arg()]
-    pub args: Vec<String>,
+    #[command(subcommand)]
+    pub args: PassArgs,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
+#[command(name = "args-to-pass")]
+pub enum PassArgs {
+    #[command(external_subcommand)]
+    Args(Vec<String>),
 }
 
 #[test]
 fn test_cli_args() {
-    RshArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    RshArgs::try_parse_from(&["cmd", "--rsh-rebuild", "script.rsh", "--", "--help"]).unwrap();
 }

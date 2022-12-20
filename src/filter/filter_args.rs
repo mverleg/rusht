@@ -22,5 +22,5 @@ pub struct FilterArgs {
 
 #[test]
 fn test_cli_args() {
-    FilterArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    FilterArgs::try_parse_from(&["cmd", "--", "test", "-f"]).unwrap();
 }

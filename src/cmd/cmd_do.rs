@@ -59,7 +59,7 @@ pub struct DoArgs {
 
 #[test]
 fn test_cli_args() {
-    DoArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    DoArgs::try_parse_from(&["cmd", "-q", "-p=8", "--keep", "--all"]).unwrap();
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {

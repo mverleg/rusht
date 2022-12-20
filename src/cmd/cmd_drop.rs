@@ -29,7 +29,7 @@ pub struct DropArgs {
 
 #[test]
 fn test_cli_args() {
-    DropArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    DropArgs::try_parse_from(&["cmd", "-a"]).unwrap();
 }
 
 pub fn drop_cmd(args: DropArgs) {

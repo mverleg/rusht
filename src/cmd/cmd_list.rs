@@ -18,17 +18,18 @@ pub struct ListArgs {
     #[arg(short = 'p', long)]
     /// Show the path to the stack file, instead of commands
     pub file_path: bool,
-    #[arg(short = 'c', long, conflicts_with = "file-path")]
+    #[arg(short = 'c', long, conflicts_with = "file_path")]
     /// Maximum number of (newest) commands to show.
     pub count: Option<u32>,
-    #[arg(short = 'e', long, conflicts_with = "file-path")]
+    #[arg(short = 'e', long, conflicts_with = "file_path")]
     /// Instead of printing output, use exit code 0 if there are one or more commands pending (1 otherwise).
     pub exit_code: bool,
 }
 
 #[test]
 fn test_cli_args() {
-    ListArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    ListArgs::try_parse_from(&["cmd", "--file-path",]).unwrap();
+    ListArgs::try_parse_from(&["cmd", "-c", "10"]).unwrap();
 }
 
 #[derive(Debug, Clone)]

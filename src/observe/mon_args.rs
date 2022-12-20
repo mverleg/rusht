@@ -30,5 +30,5 @@ pub struct MonArgs {
 
 #[test]
 fn test_cli_args() {
-    MonArgs::try_parse_from(&["cmd", "--help"]).unwrap();
+    MonArgs::try_parse_from(&["cmd", "ls"]).unwrap();
 }

@@ -1,24 +1,26 @@
 use ::std::collections::HashMap;
-use ::std::process::Command;
 use ::std::env;
+use ::std::process::Command;
 
 use ::log::debug;
 
+use crate::ExitStatus;
+use crate::rsh::PassArgs;
 use crate::rsh::rsh_program::RshProg;
 use crate::rsh::rsh_state::ProgState;
 use crate::rsh::RshArgs;
-use crate::ExitStatus;
 
 pub fn execute(prog: &RshProg, state: &ProgState, args: &RshArgs) -> Result<ExitStatus, String> {
     //TODO @mverleg: is this going to be slow like mvn?
     let path = &state.exe_path;
+    let PassArgs::Args(pass_args) = &args.args;
     debug!(
         "going to execute {} with arguments: [{}]",
         path.to_string_lossy(),
-        args.args.join(", ")
+        pass_args.join(", "),
     );
     Command::new(path)
-        .args(&args.args)
+        .args(pass_args)
         .envs(&create_rsh_env(prog, &state))
         .spawn()
         .map_err(|err| {
