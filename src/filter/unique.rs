@@ -3,10 +3,12 @@ use ::std::collections::HashSet;
 use ::clap::Parser;
 use ::log::debug;
 use ::regex::Regex;
+use ::clap::builder::BoolishValueParser;
+use ::clap::builder::TypedValueParser;
 
+use crate::common::{get_first_match_or_all, LineReader};
 use crate::common::LineWriter;
 use crate::common::VecWriter;
-use crate::common::{get_first_match_or_all, LineReader};
 
 #[derive(Parser, Debug, Default)]
 #[command(
@@ -14,10 +16,10 @@ use crate::common::{get_first_match_or_all, LineReader};
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
 pub struct UniqueArgs {
-    #[arg(parse(from_flag = Order::from_is_sorted), short = 's', long = "sorted", )]
+    #[arg(value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sorted", )]
     /// Sort the entries. Buffers all the input.
     pub order: Order,
-    #[arg(parse(from_flag = Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", conflicts_with = "prefix")]
+    #[arg(value_parser = BoolishValueParser::new().map(Keep::from_find_duplicates), short = 'd', long = "filter-duplicates", conflicts_with = "prefix")]
     /// Invert the behaviour, removing all first occurrences and keeping any subsequent duplicates.
     pub keep: Keep,
     #[arg(long)]

@@ -15,12 +15,7 @@ pub struct LockedArgs {
     /// The key to use for the lock. Only other commands with the same key are blocked. Can use %{pwd} and %{cmd} placeholders. Defaults to current directory.
     //TODO @mverleg: impl
     pub lock_key: String,
-    #[arg(
-        parse(try_from_str = parse_dur),
-        short = 't',
-        long = "timeout",
-        default_value = "15 min"
-    )]
+    #[arg(value_parser = parse_dur, short = 't', long = "timeout", default_value = "15 min")]
     /// Duration after which the waiting stops and the command fails. E.g. \"30 min\" or \"1 day -1 hour\".
     //TODO @mverleg: impl
     pub timeout: Duration,

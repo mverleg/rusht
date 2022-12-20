@@ -12,7 +12,7 @@ use crate::common::CommandArgs;
 )]
 pub struct CachedArgs {
     /// Duration the cache should be valid for, e.g. "30 min" or "1 day -1 hour".
-    #[arg(parse(try_from_str = parse_dur), short = 'd', long = "duration", default_value = "15 min")]
+    #[arg(value_parser = parse_dur, short = 'd', long = "duration", default_value = "15 min")]
     pub duration: Duration,
     #[arg(
         short = 'k',

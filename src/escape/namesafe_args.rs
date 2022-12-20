@@ -1,5 +1,7 @@
 use ::clap::Parser;
 use ::std::str::FromStr;
+use ::clap::builder::BoolishValueParser;
+use ::clap::builder::TypedValueParser;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -8,11 +10,8 @@ use ::std::str::FromStr;
 )]
 pub struct NamesafeArgs {
     /// Allow non-ascii letters (but no non-letter symbols).
-    #[arg(
-        parse(from_flag = Charset::from_allow),
-        short = 'u',
-        long = "allow-unicode",
-    )]
+    #[arg(value_parser = BoolishValueParser::new().map(Charset::from_allow), short = 'u', long = "allow-unicode")]
+    // #value_parser = Charset::from_allow,
     pub charset: Charset,
     /// In which cases to include a hash in the name ([a]lways, [c]hanged, too-[l]ong, [n]ever).
     #[arg(
