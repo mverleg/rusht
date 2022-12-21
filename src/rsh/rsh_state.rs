@@ -6,7 +6,6 @@ use ::std::path::PathBuf;
 use ::std::time::SystemTime;
 use ::std::time::UNIX_EPOCH;
 
-use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
@@ -33,6 +32,12 @@ pub const DUMMY_RUN_SRC: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/resource/rsh/template/src/run.rs.template"
 ));
+
+const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
+    base64::engine::fast_portable::FastPortable::from(
+        &base64::alphabet::URL_SAFE,
+        base64::engine::fast_portable::NO_PAD,
+    );
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgState {
@@ -184,7 +189,7 @@ fn calc_hash(content: Vec<&str>) -> String {
         hasher.update(text.as_bytes());
     }
     let hash_out = hasher.finalize();
-    encode_config(hash_out, URL_SAFE_NO_PAD)
+    base64::encode_engine(hash_out, &URL_SAFE_NO_PAD)
 }
 
 /// Returns the modified time in ms, to be used for checking whether rsh changed.

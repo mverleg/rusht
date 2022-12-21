@@ -2,10 +2,15 @@ use ::std::cmp::max;
 use ::std::cmp::min;
 use ::std::io;
 
-use ::base64::{encode_config, URL_SAFE_NO_PAD};
 use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
+
+const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
+    base64::engine::fast_portable::FastPortable::from(
+        &base64::alphabet::URL_SAFE,
+        base64::engine::fast_portable::NO_PAD,
+    );
 
 use super::NamesafeArgs;
 
@@ -98,7 +103,7 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
     let mut hasher = Sha256::new();
     hasher.update(text.as_bytes());
     let hash_out = hasher.finalize();
-    let encoded = encode_config(hash_out, URL_SAFE_NO_PAD);
+    let encoded = base64::encode_engine(hash_out, &URL_SAFE_NO_PAD);
     encoded[..hash_length].to_ascii_lowercase()
 }
 
