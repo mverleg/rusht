@@ -3,6 +3,7 @@ use ::std::env::current_dir;
 use ::std::env::set_current_dir;
 use ::std::path::PathBuf;
 use ::std::sync::atomic::{AtomicBool, Ordering};
+use std::collections::HashSet;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -180,7 +181,13 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         eprintln!("ignoring provided --affected and using --affected=head instead");
         //TODO @mverleg: ^
     }
-    let (changed_files, _) = git_affected_files_head(&cwd)?;
+    let (changed_files, _) = match git_affected_files_head(&cwd) {
+        Ok(files) => files,
+        Err(err) => {
+            eprintln!("skipping git integration: {}", err);
+            (HashSet::new(), HashSet::new())
+        }
+    };
     if let Some(example) = changed_files.iter().next() {
         debug!(
             "found {} affected files for {}, e.g. {}",
