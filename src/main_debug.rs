@@ -1,50 +1,51 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use ::egui::*;
+use ::egui;
 
-use ::eframe;
+use ::eframe::NativeOptions;
 
 fn main() {
-    // Log to stdout (if you run with `RUST_LOG=debug`).
-    tracing_subscriber::fmt::init();
-
-    let options = eframe::NativeOptions::default();
+    let options = NativeOptions {
+        initial_window_pos: Some(egui::Pos2 { x: 0., y: 0. }),
+        initial_window_size: Some(egui::Vec2 { x: 600., y: 400. }),
+        maximized: false,
+        ..NativeOptions::default()
+    };
     eframe::run_native(
         "Keyboard events",
         options,
-        Box::new(|_cc| Box::new(Content::default())),
+        Box::new(|_cc| Box::new(TestApp::default())),
     )
 }
 
 #[derive(Default)]
-struct Content {
-    text: String,
-}
+struct TestApp {}
 
-impl eframe::App for Content {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+impl eframe::App for TestApp {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Press/Hold/Release example. Press A to test.");
-            if ui.button("Clear").clicked() {
-                self.text.clear();
+            //let screen_size = frame.info().window_info.size;
+            ui.heading("Enter a number...");
+            // if ui.button("Clear").clicked() {
+            //     self.text.clear();
+            // }
+            // ScrollArea::vertical()
+            //     .auto_shrink([false; 2])
+            //     .stick_to_bottom(true)
+            //     .show(ui, |ui| {
+            //         ui.label(&self.text);
+            //     });
+            //
+            if ctx.input().key_pressed(egui::Key::Q) {
+                framemin
             }
-            ScrollArea::vertical()
-                .auto_shrink([false; 2])
-                .stick_to_bottom(true)
-                .show(ui, |ui| {
-                    ui.label(&self.text);
-                });
-
-            if ctx.input().key_pressed(Key::A) {
-                self.text.push_str("\nPressed");
-            }
-            if ctx.input().key_down(Key::A) {
-                self.text.push_str("\nHeld");
-                ui.ctx().request_repaint(); // make sure we note the holding.
-            }
-            if ctx.input().key_released(Key::A) {
-                self.text.push_str("\nReleased");
-            }
+            // if ctx.input().key_down(Key::A) {
+            //     self.text.push_str("\nHeld");
+            //     ui.ctx().request_repaint(); // make sure we note the holding.
+            // }
+            // if ctx.input().key_released(Key::A) {
+            //     self.text.push_str("\nReleased");
+            // }
         });
     }
 }
