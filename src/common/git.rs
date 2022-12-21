@@ -95,7 +95,7 @@ pub fn git_affected_files_branch() {
 
 #[cfg(test)]
 mod tests {
-use ::std::path::PathBuf;
+    use ::std::path::PathBuf;
 
     //TODO @mverleg: TEMPORARY! REMOVE THIS!
     use super::*;

@@ -123,7 +123,7 @@ derive_more = "0.99.17"
 which = "4.3.0"
 fs_extra = "1.2.0"
 tempfile = "3.3.0"
-ssh2 = { version = "0.9.3", features = ["vendored-openssl"] }  # ssh2 is used transitively, use this to enable vendor feature
+#ssh2 = { version = "0.9.3", features = ["vendored-openssl"] }  # ssh2 is used transitively, use this to enable vendor feature
 
 [dev-dependencies]
 

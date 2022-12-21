@@ -4,9 +4,9 @@ use ::std::fs;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
-use ::clap::ArgAction;
 use ::clap::builder::BoolishValueParser;
 use ::clap::builder::TypedValueParser;
+use ::clap::ArgAction;
 use ::clap::Parser;
 use ::regex::Regex;
 
@@ -67,7 +67,18 @@ pub struct DirWithArgs {
 
 #[test]
 fn test_cli_args() {
-    DirWithArgs::try_parse_from(&["cmd", "-r", ".", "-l", "6", "-f", ".nobackup", "-n", "-x=silent"]).unwrap();
+    DirWithArgs::try_parse_from(&[
+        "cmd",
+        "-r",
+        ".",
+        "-l",
+        "6",
+        "-f",
+        ".nobackup",
+        "-n",
+        "-x=silent",
+    ])
+    .unwrap();
 }
 
 #[derive(Debug, Clone)]

@@ -113,8 +113,19 @@ pub struct MvnwArgs {
 
 #[test]
 fn test_cli_args() {
-    MvnwArgs::try_parse_from(&["cmd", "--all", "--test-none", "--max-exec-memory=2048", "--fail-if-added=//TODO @mverleg:",
-        "--fail-if-added=^import .*\\.shaded\\.", "--rebuild-if-match=error: Javadoc retention failed; ", "--install", "--clean", "--update"]).unwrap();
+    MvnwArgs::try_parse_from(&[
+        "cmd",
+        "--all",
+        "--test-none",
+        "--max-exec-memory=2048",
+        "--fail-if-added=//TODO @mverleg:",
+        "--fail-if-added=^import .*\\.shaded\\.",
+        "--rebuild-if-match=error: Javadoc retention failed; ",
+        "--install",
+        "--clean",
+        "--update",
+    ])
+    .unwrap();
 }
 
 fn strictly_positive(val: &str) -> Result<u32, String> {
@@ -222,4 +233,3 @@ impl MvnwArgs {
         )
     }
 }
-

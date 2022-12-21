@@ -1,6 +1,6 @@
-use ::std::process::exit;
 use ::std::fmt;
 use ::std::fmt::Formatter;
+use ::std::process::exit;
 use ::std::process::{ExitCode, Termination};
 
 use ::log::warn;

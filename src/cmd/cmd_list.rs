@@ -28,7 +28,7 @@ pub struct ListArgs {
 
 #[test]
 fn test_cli_args() {
-    ListArgs::try_parse_from(&["cmd", "--file-path",]).unwrap();
+    ListArgs::try_parse_from(&["cmd", "--file-path"]).unwrap();
     ListArgs::try_parse_from(&["cmd", "-c", "10"]).unwrap();
 }
 

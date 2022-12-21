@@ -1,15 +1,15 @@
 use ::std::collections::HashSet;
 
-use ::clap::ArgAction;
 use ::clap::builder::BoolishValueParser;
 use ::clap::builder::TypedValueParser;
+use ::clap::ArgAction;
 use ::clap::Parser;
 use ::log::debug;
 use ::regex::Regex;
 
-use crate::common::{get_first_match_or_all, LineReader};
 use crate::common::LineWriter;
 use crate::common::VecWriter;
+use crate::common::{get_first_match_or_all, LineReader};
 
 #[derive(Parser, Debug, Default)]
 #[command(

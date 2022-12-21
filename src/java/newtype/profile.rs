@@ -7,7 +7,7 @@ use ::serde::Deserialize;
 use ::serde::Serialize;
 
 lazy_static! {
-    static ref PROFILE_RE: Regex = Regex::new(r"^!?\w[\w/]*\w?$").unwrap();
+    static ref PROFILE_RE: Regex = Regex::new(r"^!?\w[\w/_\-]*\w?$").unwrap();
 }
 
 #[derive(
@@ -22,7 +22,9 @@ impl Profile {
     pub fn new(value: impl Into<String>) -> Result<Self, String> {
         let value = value.into();
         if !PROFILE_RE.is_match(&value) {
-            return Err("profile name must be alphanumeric and may contain slashes".to_string());
+            return Err(
+                "profile name must be alphanumeric and may also contain: / - _".to_string(),
+            );
         }
         Ok(Profile { value })
     }

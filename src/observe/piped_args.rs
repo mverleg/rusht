@@ -27,7 +27,6 @@ fn test_cli_args() {
     PipedArgs::try_parse_from(&["cmd", "-s=//", "ls", "//", "wc", "-l"]).unwrap();
 }
 
-
 fn parse_buffer_size(txt: &str) -> Result<u32, String> {
     match txt.parse::<u32>() {
         Ok(nr) => {

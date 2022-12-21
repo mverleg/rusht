@@ -4,10 +4,10 @@ use ::std::process::Command;
 
 use ::log::debug;
 
-use crate::ExitStatus;
 use crate::rsh::rsh_program::RshProg;
 use crate::rsh::rsh_state::ProgState;
 use crate::rsh::RshArgs;
+use crate::ExitStatus;
 
 pub fn execute(prog: &RshProg, state: &ProgState, args: &RshArgs) -> Result<ExitStatus, String> {
     //TODO @mverleg: is this going to be slow like mvn?

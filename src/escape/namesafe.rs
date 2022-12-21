@@ -104,8 +104,8 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-use ::clap::Parser;
     use crate::escape::HashPolicy;
+    use ::clap::Parser;
 
     use super::*;
 
