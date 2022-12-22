@@ -1,13 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use ::egui;
-
 use ::eframe::NativeOptions;
+use ::egui;
 
 fn main() {
     let options = NativeOptions {
         initial_window_pos: Some(egui::Pos2 { x: 0., y: 0. }),
-        initial_window_size: Some(egui::Vec2 { x: 600., y: 400. }),
+        initial_window_size: Some(egui::Vec2 { x: 500., y: 200. }),
         maximized: false,
         ..NativeOptions::default()
     };
@@ -19,7 +18,9 @@ fn main() {
 }
 
 #[derive(Default)]
-struct TestApp {}
+struct TestApp {
+    input: String,
+}
 
 impl eframe::App for TestApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
@@ -36,9 +37,20 @@ impl eframe::App for TestApp {
             //         ui.label(&self.text);
             //     });
             //
-            if ctx.input().key_pressed(egui::Key::Q) {
-                framemin
+            ui.horizontal(|ui| {
+                ui.label("Your name: ");
+                let inp = ui.add_sized([400., 40.], egui::TextEdit::singleline(&mut self.input));
+                ui.button("Go");
+                inp.request_focus();
+            });
+            if ctx.input().key_pressed(egui::Key::Escape) {
+                frame.close();
             }
+            ui.style_mut().text_styles = [(
+                egui::TextStyle::Body,
+                egui::FontId::new(128.0, egui::FontFamily::Proportional),
+            )]
+            .into();
             // if ctx.input().key_down(Key::A) {
             //     self.text.push_str("\nHeld");
             //     ui.ctx().request_repaint(); // make sure we note the holding.
