@@ -85,6 +85,7 @@ path = "src/rsh/main_rsh.rs"
 [[bin]]
 name = "rusht_debug"
 path = "src/main_debug.rs"
+required-features = ["experimental"]
 
 #TODO @mverleg: shtest
 
@@ -124,9 +125,12 @@ which = "4.3.0"
 fs_extra = "1.2.0"
 tempfile = "3.3.0"
 #ssh2 = { version = "0.9.3", features = ["vendored-openssl"] }  # ssh2 is used transitively, use this to enable vendor feature
-egui = "0.20.1"  # TODO @mverleg: TEMPORARY! REMOVE THIS!
-eframe = "0.20.1"  ##TODO @mverleg:
-tracing-subscriber = "0.3.16"
+egui = { version = "0.20.1", optional = true }
+eframe = { version = "0.20.1", optional = true }
+tracing-subscriber = { version = "0.3.16", optional = true }
+
+[features]
+experimental = ["egui", "eframe", "tracing-subscriber"]
 
 [dev-dependencies]
 
