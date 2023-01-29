@@ -1,19 +1,21 @@
 use ::std::cmp::Ordering;
 
-#[derive(Debug, Clone)]
+use ::serde;
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FSNode {
-    name: String,
-    base_name: String,
-    extension: String,
-    rel_path: String,
-    canonical_path: String,
-    is_dir: bool,
-    is_link: bool,
-    created_ts: (),  //TODO @mverleg:
-    created_by: String,  //TODO @mverleg:
-    changed_ts: (),  //TODO @mverleg:
-    changed_age_sec: String,  //TODO @mverleg:
-    changed_by: String,  //TODO @mverleg:
+    pub name: String,
+    pub base_name: String,
+    pub extension: String,
+    pub rel_path: String,
+    pub canonical_path: String,
+    pub is_dir: bool,
+    pub is_link: bool,
+    pub created_ts: (),  //TODO @mverleg:
+    pub created_by: String,  //TODO @mverleg:
+    pub changed_ts: (),  //TODO @mverleg:
+    pub changed_age_sec: String,  //TODO @mverleg:
+    pub changed_by: String,  //TODO @mverleg:
 }
 
 impl PartialEq for FSNode {
