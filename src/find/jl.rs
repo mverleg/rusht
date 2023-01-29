@@ -1,4 +1,5 @@
 use ::log::debug;
+use ::regex::Regex;
 use ::walkdir::DirEntry;
 use ::walkdir::WalkDir;
 
@@ -28,7 +29,7 @@ pub async fn list_files(
         .max_depth(args.max_depth.try_into().expect("max depth too large"))
         .min_depth(1)
         .follow_links(!args.no_recurse_symlinks);
-    for file_res in walker.into_iter() {
+    for entry_res in walker.into_iter() {
         if is_first {
             is_first = false;
         } else {
@@ -39,8 +40,9 @@ pub async fn list_files(
             eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             line.clear();
         }
-        let file: DirEntry = match file_res {
-            Ok(file) => file,
+        let node = match analyze_file(entry_res, &args.filter) {
+            Ok(Some(node)) => node,
+            Ok(None) => continue,
             Err(err) => {
                 match args.on_error {
                     ErrorHandling::Abort => {
@@ -54,22 +56,6 @@ pub async fn list_files(
                 continue
             }
         };
-        let name = file.path().display();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        let node = FSNode {
-            name: "".to_string(),
-            base_name: "".to_string(),
-            extension: "".to_string(),
-            rel_path: "".to_string(),
-            canonical_path: "".to_string(),
-            is_dir: false,
-            is_link: false,
-            created_ts: (),
-            created_by: "".to_string(),
-            changed_ts: (),
-            changed_age_sec: "".to_string(),
-            changed_by: "".to_string(),
-            //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        };
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
         // unnecessary allocation but not performance-critical ^
     }
@@ -80,6 +66,38 @@ pub async fn list_files(
     eprintln!("last line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     assert!(!has_err);  //TODO @mverleg: msg
     ExitStatus::ok()
+}
+
+fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>) -> Result<Option<FSNode>, String> {
+    let entry = entry_res.map_err(|err| format!("failed to read file/dir, err: {err}"))?;
+    let path = entry.path();
+    let log_path_owned = path.to_string_lossy();
+    let log_path = log_path_owned.as_ref();
+    let name = path.file_name()
+        .ok_or_else(|| "could not read filename".to_owned())?
+        .to_str()
+        .ok_or_else(|| "could not convert filename to utf8".to_owned())?;
+    if let Some(pattern) = pattern {
+        if ! pattern.is_match(name) {
+            return Ok(None)
+        }
+    }
+    Ok(Some(FSNode {
+        name: name.to_owned(),
+        base_name: "".to_string(),
+        extension: "".to_string(),
+        rel_path: "".to_string(),
+        canonical_path: path.canonicalize()
+            .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
+            .to_str().ok_or_else(|| format!("could not convert canonical (abs) path for {log_path} to utf8"))?.to_owned(),
+        is_dir: false,
+        is_link: false,
+        created_ts: (),
+        created_by: "".to_string(),
+        changed_ts: (),
+        changed_age_sec: "".to_string(),
+        changed_by: "".to_string(),
+    }))
 }
 
 #[cfg(test)]

@@ -17,7 +17,7 @@ pub struct JlArgs {
     /// Return one entry per line, not wrapping into a list
     pub entry_per_lines: bool,
     #[arg(short = 'f', long)]
-    /// Regular expression to filter by (default: return everything)
+    /// Regular expression to filter filenames by (default: return everything) (only names)
     pub filter: Option<Regex>,
     #[arg(short = 'e', long = "on-error", default_value = "changed")]
     /// What to do when failing to read a file
