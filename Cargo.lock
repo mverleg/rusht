@@ -2367,6 +2367,7 @@ dependencies = [
  "time",
  "tracing-subscriber",
  "ustr",
+ "walkdir",
  "which",
 ]
 

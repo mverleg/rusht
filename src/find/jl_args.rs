@@ -1,12 +1,6 @@
-use ::std::fmt;
-use ::std::fmt::Formatter;
-use ::std::fs;
 use ::std::path::PathBuf;
 use ::std::str::FromStr;
 
-use ::clap::builder::BoolishValueParser;
-use ::clap::builder::TypedValueParser;
-use ::clap::ArgAction;
 use ::clap::Parser;
 use ::regex::Regex;
 
@@ -22,12 +16,41 @@ pub struct JlArgs {
     #[arg(short = 'L', long)]
     /// Return one entry per line, not wrapping into a list
     pub entry_per_lines: bool,
-    #[arg()]
+    #[arg(short = 'f', long)]
     /// Regular expression to filter by (default: return everything)
-    pub pattern: Option<Regex>,
+    pub filter: Option<Regex>,
+    #[arg(short = 'e', long = "on-error", default_value = "changed")]
+    /// What to do when failing to read a file
+    pub on_error: ErrorHandling,
+    #[arg(default_value = "./")]
+    /// Directory to search in
+    pub root: PathBuf,
 }
 
 #[test]
 fn test_cli_args() {
-    JlArgs::try_parse_from(&["cmd", "-d", "2", "^.*\\.java$"]).unwrap();
+    JlArgs::try_parse_from(&["cmd", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp"]).unwrap();
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorHandling {
+    Abort,
+    #[default]
+    FailAtEnd,
+    Warn,
+    Ignore,
+}
+
+impl FromStr for ErrorHandling {
+    type Err = String;
+
+    fn from_str(text: &str) -> Result<Self, Self::Err> {
+        Ok(match text.to_lowercase().as_str() {
+            "abort" | "a" => ErrorHandling::Abort,
+            "fail-at-end" | "fail" | "f" => ErrorHandling::FailAtEnd,
+            "warn" | "w" => ErrorHandling::Warn,
+            "ignore" | "silence" | "i" => ErrorHandling::Ignore,
+            other => return Err(format!("unknown error handling mode: {}", other)),
+        })
+    }
 }
