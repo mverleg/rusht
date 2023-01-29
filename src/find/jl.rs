@@ -29,6 +29,16 @@ pub async fn list_files(
         .min_depth(1)
         .follow_links(!args.no_recurse_symlinks);
     for file_res in walker.into_iter() {
+        if is_first {
+            is_first = false;
+        } else {
+            if ! args.entry_per_lines {
+                line.push(',');
+            }
+            writer.write_line(&line).await;
+            eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+            line.clear();
+        }
         let file: DirEntry = match file_res {
             Ok(file) => file,
             Err(err) => {
@@ -60,23 +70,14 @@ pub async fn list_files(
             changed_by: "".to_string(),
             //TODO @mverleg: TEMPORARY! REMOVE THIS!
         };
-        if is_first {
-            is_first = false;
-        } else {
-            if ! args.entry_per_lines {
-                line.push(',');
-            }
-        }
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
         // unnecessary allocation but not performance-critical ^
-        writer.write_line(&line).await;
-        eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        line.clear();
     }
     if ! args.entry_per_lines {
         line.push(']');
     }
     writer.write_line(&line).await;
+    eprintln!("last line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     assert!(!has_err);  //TODO @mverleg: msg
     ExitStatus::ok()
 }
@@ -100,7 +101,7 @@ mod tests {
         fs::create_dir_all(dir_path.join("subdir")).unwrap();
 
         let args = JlArgs {
-            max_depth: 0,
+            max_depth: 1,
             no_recurse_symlinks: false,
             entry_per_lines: true,
             filter: None,
@@ -113,11 +114,15 @@ mod tests {
         let status = list_files(args, &mut writer).await;
         let lines = line_container.snapshot().await;
 
+        lines.iter().enumerate().for_each(|(i, l)| println!("{i}: |{l}|"));
         assert!(status.is_ok());
         assert_eq!(lines.len(), 3);
         assert!(!lines[0].starts_with('['));
         assert!(!lines[1].ends_with(','));
         assert!(!lines[2].ends_with(']'));
+        assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
     }
 
     #[async_std::test]
@@ -143,10 +148,14 @@ mod tests {
         let status = list_files(args, &mut writer).await;
         let lines = line_container.snapshot().await;
 
+        lines.iter().enumerate().for_each(|(i, l)| println!("{i}: |{l}|"));
         assert!(status.is_ok());
         assert_eq!(lines.len(), 3);
         assert!(lines[0].starts_with('['));
         assert!(lines[1].ends_with(','));
         assert!(lines[2].ends_with(']'));
+        assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
     }
 }
