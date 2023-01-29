@@ -22,9 +22,15 @@ pub struct JlArgs {
     #[arg(short = 'e', long = "on-error", default_value = "changed")]
     /// What to do when failing to read a file
     pub on_error: ErrorHandling,
-    #[arg(short = 'h', long)]
+    #[arg(short = 'h', long = "hash")]
     /// Add a hash of file content to the result
-    pub hash: bool,
+    pub do_hash: bool,
+    #[arg(short = 'd', long)]
+    /// Only return directories, not files
+    pub only_dirs: bool,
+    #[arg(short = 'D', long, conflicts_with = "only_dirs")]
+    /// Do not return directories, only files
+    pub no_dirs: bool,
     #[arg(default_value = "./")]
     /// Directory to search in
     pub root: PathBuf,
@@ -32,7 +38,7 @@ pub struct JlArgs {
 
 #[test]
 fn test_cli_args() {
-    JlArgs::try_parse_from(&["cmd", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp"]).unwrap();
+    JlArgs::try_parse_from(&["cmd", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp", "-D"]).unwrap();
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

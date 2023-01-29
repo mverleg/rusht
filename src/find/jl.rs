@@ -3,7 +3,6 @@ use ::std::time::{SystemTime, UNIX_EPOCH};
 
 use ::async_std::fs;
 use ::log::debug;
-use ::regex::Regex;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 use ::walkdir::DirEntry;
@@ -18,6 +17,7 @@ pub async fn list_files(
     args: JlArgs,
     writer: &mut impl LineWriter,
 ) -> ExitStatus {
+    assert!(!(args.no_dirs && args.only_dirs));
     if args.max_depth == 0 {
         eprintln!("jq max-depth is 0, likely should be at least 1")
     }
@@ -31,7 +31,7 @@ pub async fn list_files(
         line.push('[');
     }
     //TODO @mverleg: async walk dir?
-    let walker = WalkDir::new(args.root)
+    let walker = WalkDir::new(&args.root)
         .max_depth(args.max_depth.try_into().expect("max depth too large"))
         .min_depth(1)
         .follow_links(!args.no_recurse_symlinks);
@@ -43,10 +43,9 @@ pub async fn list_files(
                 line.push(',');
             }
             writer.write_line(&line).await;
-            eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             line.clear();
         }
-        let node = match analyze_file(entry_res, &args.filter, args.hash).await {
+        let node = match analyze_file(entry_res, &args).await {
             Ok(Some(node)) => node,
             Ok(None) => continue,
             Err(err) => {
@@ -63,18 +62,17 @@ pub async fn list_files(
             }
         };
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
-        // unnecessary allocation but not performance-critical ^
+        // unnecessary allocation but probably not performance-critical ^
     }
     if ! args.entry_per_lines {
         line.push(']');
     }
     writer.write_line(&line).await;
-    eprintln!("last line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     assert!(!has_err);  //TODO @mverleg: msg
     ExitStatus::ok()
 }
 
-async fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>, do_hash: bool) -> Result<Option<FSNode>, String> {
+async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs) -> Result<Option<FSNode>, String> {
     let entry = entry_res.map_err(|err| format!("failed to read file/dir, err: {err}"))?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
@@ -85,14 +83,21 @@ async fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Reg
         .ok_or_else(|| "could not read filename".to_owned())?
         .to_str()
         .ok_or_else(|| "could not convert filename to utf8".to_owned())?;
-    if let Some(pattern) = pattern {
+    if let Some(pattern) = &args.filter {
         if ! pattern.is_match(name) {
             return Ok(None)
         }
     }
+    let is_dir = metadata.is_dir();
+    if args.no_dirs && is_dir {
+        return Ok(None)
+    }
+    if args.only_dirs && ! is_dir {
+        return Ok(None)
+    }
     let filesize_b = metadata.len();
     let filesize_bm = ((filesize_b as f64) / (1024. * 1024.)).round() as u64;
-    let hash = if do_hash && metadata.is_file() {
+    let hash = if args.do_hash && ! is_dir {
         let content: String = fs::read_to_string(path).await
             .map_err(|err| format!("could not read file content for hashing for {log_path}, err {err}"))?;
         Some(compute_hash(&content))
@@ -109,7 +114,7 @@ async fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Reg
         canonical_path: path.canonicalize()
             .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
             .to_str().ok_or_else(|| format!("could not convert canonical (abs) path for {log_path} to utf8"))?.to_owned(),
-        is_dir: metadata.is_dir(),
+        is_dir,
         is_link: entry.path_is_symlink(),
         size_b: filesize_b,
         size_mb: filesize_bm,
@@ -160,8 +165,8 @@ mod tests {
     async fn shallow_list_files_per_line_with_hash() {
         let dir_handle = tempfile::tempdir().unwrap();
         let dir_path = dir_handle.path();
-        fs::write(dir_path.join("file1.txt"), "(no content)").unwrap();
-        fs::write(dir_path.join("file2"), "(no content)").unwrap();
+        fs::write(dir_path.join("file1.txt"), "(no content 1)").unwrap();
+        fs::write(dir_path.join("file2"), "(no content 2)").unwrap();
         fs::create_dir_all(dir_path.join("subdir")).unwrap();
 
         let args = JlArgs {
@@ -171,7 +176,9 @@ mod tests {
             filter: None,
             on_error: ErrorHandling::Abort,
             root: dir_path.to_owned(),
-            hash: true,
+            do_hash: true,
+            only_dirs: false,
+            no_dirs: false,
         };
 
         let mut writer = CollectorWriter::new();
@@ -189,16 +196,22 @@ mod tests {
         assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"safe_name\":\"file1_txt\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("fa82qlus4fyauj8k1bgq2qtnj3jqsc0t92yx_uboqsm")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("sha256:hmfxpto-b9_cqulnzrwplpjh3mdi7zpitalvzledshe")).count(), 1);
     }
 
     #[async_std::test]
-    async fn deep_filtered_list_files_as_json_list() {
+    async fn deep_filtered_list_only_files_as_json_list() {
         let dir_handle = tempfile::tempdir().unwrap();
         let dir_path = dir_handle.path();
-        fs::write(dir_path.join("file1.txt"), "(no content)").unwrap();
-        fs::write(dir_path.join("file2"), "(no content)").unwrap();
-        fs::create_dir_all(dir_path.join("subdir")).unwrap();
+        let sub1 = dir_path.join("subdir");
+        let sub2 = dir_path.join("subdir2");
+        let sub3 = sub1.join("deeper");
+        fs::create_dir_all(&sub1).unwrap();
+        fs::create_dir_all(&sub2).unwrap();
+        fs::create_dir_all(&sub3).unwrap();
+        fs::write(sub1.join("needle.txt"), "(no content)").unwrap();
+        fs::write(sub2.join("do-not-find.txt"), "(no content)").unwrap();
+        fs::write(sub3.join("needle-name-so-as-to-be-found"), "(no content)").unwrap();
         //TODO @mverleg: create deeper directories and mismatching files
 
         let args = JlArgs {
@@ -208,7 +221,9 @@ mod tests {
             filter: Some(Regex::new("^needle.*$").unwrap()),
             on_error: ErrorHandling::FailAtEnd,
             root: dir_path.to_owned(),
-            hash: false,
+            do_hash: false,
+            only_dirs: false,
+            no_dirs: true,
         };
 
         let mut writer = CollectorWriter::new();
@@ -218,7 +233,7 @@ mod tests {
 
         lines.iter().enumerate().for_each(|(i, l)| println!("{i}: |{l}|"));
         assert!(status.is_ok());
-        assert_eq!(lines.len(), 3);
+        assert_eq!(lines.len(), 2);
         assert!(lines[0].starts_with('['));
         assert!(lines[1].ends_with(','));
         assert!(lines[2].ends_with(']'));
