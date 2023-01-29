@@ -80,7 +80,7 @@ path = "src/observe/main_piped.rs"
 
 [[bin]]
 name = "jl"
-path = "src/observe/main_jl.rs"
+path = "src/find/main_jl.rs"
 
 [[bin]]
 name = "rsh"
