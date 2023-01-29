@@ -11,7 +11,6 @@ pub async fn list_files(
     args: JlArgs,
     writer: &mut impl LineWriter,
 ) -> ExitStatus {
-    assert!(!args.no_recurse_symlinks, "no_recurse_symlinks not impl");
     if args.max_depth == 0 {
         eprintln!("jq max-depth is 0, likely should be at least 1")
     }
@@ -25,7 +24,10 @@ pub async fn list_files(
         line.push('[');
     }
     //TODO @mverleg: async walk dir?
-    let walker = WalkDir::new(args.root).max_depth(args.max_depth.try_into().expect("max depth too large"));
+    let walker = WalkDir::new(args.root)
+        .max_depth(args.max_depth.try_into().expect("max depth too large"))
+        .min_depth(1)
+        .follow_links(!args.no_recurse_symlinks);
     for file_res in walker.into_iter() {
         let file: DirEntry = match file_res {
             Ok(file) => file,
