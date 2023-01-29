@@ -1,8 +1,6 @@
 use ::clap::Parser;
 
 use ::rusht::ExitStatus;
-use ::rusht::find::DirWithArgs;
-use ::rusht::find::handle_dir_with;
 use ::rusht::find::handle_jl;
 use ::rusht::find::JlArgs;
 

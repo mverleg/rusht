@@ -55,6 +55,7 @@ pub async fn list_files(
         };
         if is_first {
             is_first = false;
+            line.push(' ');
         } else {
             if ! args.entry_per_lines {
                 line.push(',');

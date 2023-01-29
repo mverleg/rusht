@@ -5,7 +5,7 @@ use ::clap::Parser;
 use ::regex::Regex;
 
 #[derive(Parser, Debug)]
-#[command(name = "jl", about = "A mix of ls and find that outputs json")]
+#[command(name = "jl", about = "A mix of ls and find that outputs json (use jq)")]
 pub struct JlArgs {
     #[arg(short = 'd', long, default_value = "1")]
     /// Maximum directory depth to recurse into
@@ -19,7 +19,7 @@ pub struct JlArgs {
     #[arg(short = 'f', long)]
     /// Regular expression to filter filenames by (default: return everything) (only names)
     pub filter: Option<Regex>,
-    #[arg(short = 'e', long = "on-error", default_value = "changed")]
+    #[arg(short = 'e', long = "on-error", default_value = "fail-at-end")]
     /// What to do when failing to read a file
     pub on_error: ErrorHandling,
     #[arg(short = 'h', long = "hash")]
@@ -38,7 +38,8 @@ pub struct JlArgs {
 
 #[test]
 fn test_cli_args() {
-    JlArgs::try_parse_from(&["cmd", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp", "-D"]).unwrap();
+    JlArgs::try_parse_from(&["jl"]).unwrap();
+    JlArgs::try_parse_from(&["jl", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp", "-D"]).unwrap();
 }
 
 impl Default for JlArgs {
