@@ -1,10 +1,13 @@
 use crate::common::{LineReader, LineWriter};
-use std::process::ExitStatus;
+use crate::jl::jl_args::JlArgs;
+use crate::ExitStatus;
 
-pub async fn piped(
+pub async fn list_files(
     args: JlArgs,
-    _reader: &mut impl LineReader,
+    reader: &mut impl LineReader,
     writer: &mut impl LineWriter,
 ) -> ExitStatus {
+    assert!(!args.no_recurse_symlinks, "no_recurse_symlinks not impl");
+    assert!(!args.entry_per_lines, "entry_per_lines not impl");
     todo!()
 }

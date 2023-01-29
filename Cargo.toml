@@ -79,6 +79,10 @@ name = "piped"
 path = "src/observe/main_piped.rs"
 
 [[bin]]
+name = "jl"
+path = "src/observe/main_jl.rs"
+
+[[bin]]
 name = "rsh"
 path = "src/rsh/main_rsh.rs"
 
