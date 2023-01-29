@@ -19,6 +19,7 @@ pub struct FSNode {
     pub changed_ts: u64,
     pub changed_age_sec: String,
     pub changed_by: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<String>,
     //TODO @mverleg: permissions
 }

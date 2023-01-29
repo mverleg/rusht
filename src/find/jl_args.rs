@@ -4,7 +4,7 @@ use ::std::str::FromStr;
 use ::clap::Parser;
 use ::regex::Regex;
 
-#[derive(Parser, Debug, Default)]
+#[derive(Parser, Debug)]
 #[command(name = "jl", about = "A mix of ls and find that outputs json")]
 pub struct JlArgs {
     #[arg(short = 'd', long, default_value = "1")]
@@ -39,6 +39,22 @@ pub struct JlArgs {
 #[test]
 fn test_cli_args() {
     JlArgs::try_parse_from(&["cmd", "-d", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp", "-D"]).unwrap();
+}
+
+impl Default for JlArgs {
+    fn default() -> Self {
+        JlArgs {
+            max_depth: 1,
+            no_recurse_symlinks: false,
+            entry_per_lines: false,
+            filter: None,
+            on_error: Default::default(),
+            do_hash: false,
+            only_dirs: false,
+            no_dirs: false,
+            root: Default::default(),
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

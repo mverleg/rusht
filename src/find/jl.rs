@@ -36,15 +36,6 @@ pub async fn list_files(
         .min_depth(1)
         .follow_links(!args.no_recurse_symlinks);
     for entry_res in walker.into_iter() {
-        if is_first {
-            is_first = false;
-        } else {
-            if ! args.entry_per_lines {
-                line.push(',');
-            }
-            writer.write_line(&line).await;
-            line.clear();
-        }
         let node = match analyze_file(entry_res, &args).await {
             Ok(Some(node)) => node,
             Ok(None) => continue,
@@ -61,6 +52,15 @@ pub async fn list_files(
                 continue
             }
         };
+        if is_first {
+            is_first = false;
+        } else {
+            if ! args.entry_per_lines {
+                line.push(',');
+            }
+            writer.write_line(&line).await;
+            line.clear();
+        }
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
         // unnecessary allocation but probably not performance-critical ^
     }
@@ -68,8 +68,7 @@ pub async fn list_files(
         line.push(']');
     }
     writer.write_line(&line).await;
-    assert!(!has_err);  //TODO @mverleg: msg
-    ExitStatus::ok()
+    ExitStatus::of_is_ok(!has_err)
 }
 
 async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs) -> Result<Option<FSNode>, String> {
@@ -154,6 +153,7 @@ fn compute_hash(content: &str) -> String {
 #[cfg(test)]
 mod tests {
     use ::std::fs;
+    use std::path::Path;
 
     use ::regex::Regex;
 
@@ -203,16 +203,7 @@ mod tests {
     async fn deep_filtered_list_only_files_as_json_list() {
         let dir_handle = tempfile::tempdir().unwrap();
         let dir_path = dir_handle.path();
-        let sub1 = dir_path.join("subdir");
-        let sub2 = dir_path.join("subdir2");
-        let sub3 = sub1.join("deeper");
-        fs::create_dir_all(&sub1).unwrap();
-        fs::create_dir_all(&sub2).unwrap();
-        fs::create_dir_all(&sub3).unwrap();
-        fs::write(sub1.join("needle.txt"), "(no content)").unwrap();
-        fs::write(sub2.join("do-not-find.txt"), "(no content)").unwrap();
-        fs::write(sub3.join("needle-name-so-as-to-be-found"), "(no content)").unwrap();
-        //TODO @mverleg: create deeper directories and mismatching files
+        setup_fs_for_nested_needle_search(dir_path);
 
         let args = JlArgs {
             max_depth: 1000,
@@ -235,11 +226,40 @@ mod tests {
         assert!(status.is_ok());
         assert_eq!(lines.len(), 2);
         assert!(lines[0].starts_with('['));
-        assert!(lines[1].ends_with(','));
-        assert!(lines[2].ends_with(']'));
-        assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
+        assert!(lines[0].ends_with(','));
+        assert!(lines[1].ends_with(']'));
+        assert_eq!(lines.iter().filter(|l| l.contains("do-not-find.txt")).count(), 0);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"needle.txt\"")).count(), 1);
         assert!(!lines[1].contains("hash"));
+    }
+
+    fn setup_fs_for_nested_needle_search(dir_path: &Path) {
+        let sub1 = dir_path.join("subdir");
+        let sub2 = dir_path.join("subdir2");
+        let sub3 = sub1.join("deeper");
+        fs::create_dir_all(&sub1).unwrap();
+        fs::create_dir_all(&sub2).unwrap();
+        fs::create_dir_all(&sub3).unwrap();
+        fs::write(sub1.join("needle.txt"), "(no content)").unwrap();
+        fs::write(sub2.join("do-not-find.txt"), "(no content)").unwrap();
+        fs::write(sub3.join("needle-name-so-as-to-be-found"), "(no content)").unwrap();
+    }
+
+    #[async_std::test]
+    async fn ser_deser() {
+        let dir_handle = tempfile::tempdir().unwrap();
+        let dir_path = dir_handle.path();
+        setup_fs_for_nested_needle_search(dir_path);
+
+        let mut writer = CollectorWriter::new();
+        let line_container = writer.lines();
+        let status = list_files(JlArgs::default(), &mut writer).await;
+        let lines = line_container.snapshot().await;
+
+        assert!(status.is_ok());
+        assert!(lines.len() >= 1);
+
+        let res: Vec<FSNode> = serde_json::from_str(&lines.join("\n")).expect("failed to parse");
+        assert_eq!(lines.len(), res.len());
     }
 }
