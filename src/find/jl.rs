@@ -22,10 +22,8 @@ pub async fn list_files(
         eprintln!("jq max-depth is 0, likely should be at least 1")
     }
 
-    //TODO @mverleg: filter
-    //TODO @mverleg: root
     let mut has_err = false;
-    let mut is_first = true;  //TODO @mverleg:
+    let mut is_first = true;
     let mut line = String::new();
     if ! args.entry_per_lines {
         line.push('[');
@@ -42,11 +40,14 @@ pub async fn list_files(
             Err(err) => {
                 match args.on_error {
                     ErrorHandling::Abort => {
-                        eprintln!("failed to read file, error: {err}");
+                        eprintln!("{err}");
                         return ExitStatus::of(1)
                     },
-                    ErrorHandling::FailAtEnd => { has_err = true; }
-                    ErrorHandling::Warn => eprintln!("failed to read file, error: {err}"),
+                    ErrorHandling::FailAtEnd => {
+                        eprintln!("{err}");
+                        has_err = true;
+                    }
+                    ErrorHandling::Warn => eprintln!("{err}"),
                     ErrorHandling::Ignore => debug!("ignoring file read error: {err}"),
                 }
                 continue
@@ -72,7 +73,7 @@ pub async fn list_files(
 }
 
 async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs) -> Result<Option<FSNode>, String> {
-    let entry = entry_res.map_err(|err| format!("failed to read file/dir, err: {err}"))?;
+    let entry = entry_res.map_err(|err| format!("failed to read file/dir inside {}, err: {err}", args.root.to_string_lossy()))?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
     let log_path = log_path_owned.as_ref();
@@ -253,7 +254,10 @@ mod tests {
 
         let mut writer = CollectorWriter::new();
         let line_container = writer.lines();
-        let status = list_files(JlArgs::default(), &mut writer).await;
+        let status = list_files(JlArgs {
+            root: dir_path.to_owned(),
+            ..JlArgs::default()
+        }, &mut writer).await;
         let lines = line_container.snapshot().await;
 
         assert!(status.is_ok());
