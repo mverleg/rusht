@@ -1,11 +1,13 @@
-use ::log::debug;
+use ::std::io;
 
+use ::log::debug;
 use ::walkdir::DirEntry;
 use ::walkdir::WalkDir;
 
 use crate::common::LineWriter;
 use crate::ExitStatus;
 use crate::find::jl_args::{ErrorHandling, JlArgs};
+use crate::find::jl_json_api::FSNode;
 
 pub async fn list_files(
     args: JlArgs,
@@ -17,6 +19,11 @@ pub async fn list_files(
     //TODO @mverleg: filter
     //TODO @mverleg: root
     let mut has_err = false;
+    let mut is_first = true;  //TODO @mverleg:
+    let mut line = String::new();
+    if ! args.entry_per_lines {
+        line.push('[');
+    }
     //TODO @mverleg: async walk dir?
     for file_res in WalkDir::new(args.root).into_iter() {
         let file: DirEntry = match file_res {
@@ -34,9 +41,18 @@ pub async fn list_files(
                 continue
             }
         };
-        let name = file.path().display();
-        writer.write_line(name).await
-    }
+        let name = file.path().display();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        let node = FSNode {
 
-    todo!();
+        };
+        serde_json::to_writer(io::Cursor(&mut line), &node).expect("failed to create json from FSNode");
+        writer.write_line(&line).await;
+        line.clear();
+    }
+    if ! args.entry_per_lines {
+        line.push(']');
+    }
+    writer.write_line(&line).await;
+    assert!(!has_err);  //TODO @mverleg: msg
+    ExitStatus::ok()
 }

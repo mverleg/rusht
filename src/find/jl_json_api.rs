@@ -1,7 +1,7 @@
 use ::std::cmp::Ordering;
 
 #[derive(Debug, Clone)]
-struct FSNode {
+pub struct FSNode {
     name: String,
     base_name: String,
     extension: String,
@@ -9,8 +9,11 @@ struct FSNode {
     canonical_path: String,
     is_dir: bool,
     is_link: bool,
-    created: (),  //TODO @mverleg:
-    changed: (),  //TODO @mverleg:
+    created_ts: (),  //TODO @mverleg:
+    created_by: String,  //TODO @mverleg:
+    changed_ts: (),  //TODO @mverleg:
+    changed_age_sec: String,  //TODO @mverleg:
+    changed_by: String,  //TODO @mverleg:
 }
 
 impl PartialEq for FSNode {
