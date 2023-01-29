@@ -1,4 +1,6 @@
-use crate::common::{StdinReader, StdWriter};
+use ::std::future::join;
+
+use crate::common::{RejectStdin, StdinReader, StdWriter};
 use crate::ExitStatus;
 use crate::find::jl::list_files;
 use crate::find::jl_args::JlArgs;
@@ -24,5 +26,8 @@ pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
 }
 
 pub async fn handle_jl(args: JlArgs) -> ExitStatus {
-    list_files(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await
+    join(
+        RejectStdin::new(),
+        list_files(args, &mut StdWriter::stdout()),
+    ).await
 }
