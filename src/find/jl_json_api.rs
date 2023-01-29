@@ -11,11 +11,15 @@ pub struct FSNode {
     pub canonical_path: String,
     pub is_dir: bool,
     pub is_link: bool,
-    pub created_ts: (),  //TODO @mverleg:
-    pub created_by: String,  //TODO @mverleg:
-    pub changed_ts: (),  //TODO @mverleg:
-    pub changed_age_sec: String,  //TODO @mverleg:
-    pub changed_by: String,  //TODO @mverleg:
+    pub size_b: u64,
+    pub size_mb: u64,
+    pub created_ts: u64,
+    pub created_by: String,
+    pub changed_ts: u64,
+    pub changed_age_sec: String,
+    pub changed_by: String,
+    pub hash: Option<String>,
+    //TODO @mverleg: permissions
 }
 
 impl PartialEq for FSNode {

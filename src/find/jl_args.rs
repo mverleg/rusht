@@ -22,6 +22,9 @@ pub struct JlArgs {
     #[arg(short = 'e', long = "on-error", default_value = "changed")]
     /// What to do when failing to read a file
     pub on_error: ErrorHandling,
+    #[arg(short = 'h', long)]
+    /// Add a hash of file content to the result
+    pub hash: bool,
     #[arg(default_value = "./")]
     /// Directory to search in
     pub root: PathBuf,

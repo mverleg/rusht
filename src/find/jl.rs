@@ -1,3 +1,5 @@
+use std::io;
+use std::time::{SystemTime, UNIX_EPOCH};
 use ::log::debug;
 use ::regex::Regex;
 use ::walkdir::DirEntry;
@@ -40,7 +42,7 @@ pub async fn list_files(
             eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             line.clear();
         }
-        let node = match analyze_file(entry_res, &args.filter) {
+        let node = match analyze_file(entry_res, &args.filter, args.hash) {
             Ok(Some(node)) => node,
             Ok(None) => continue,
             Err(err) => {
@@ -68,11 +70,13 @@ pub async fn list_files(
     ExitStatus::ok()
 }
 
-fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>) -> Result<Option<FSNode>, String> {
+fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>, do_hash: bool) -> Result<Option<FSNode>, String> {
     let entry = entry_res.map_err(|err| format!("failed to read file/dir, err: {err}"))?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
     let log_path = log_path_owned.as_ref();
+    let metadata = entry.metadata().map_err(|err| format!("could not get metadata for {log_path}, err {err}"))?;
+
     let name = path.file_name()
         .ok_or_else(|| "could not read filename".to_owned())?
         .to_str()
@@ -82,6 +86,14 @@ fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>) -
             return Ok(None)
         }
     }
+    let filesize_b = metadata.len();
+    let filesize_bm = ((filesize_b as f64) / (1024. * 1024.)).round() as u64;
+    let hash = if do_hash {
+        Some("hash".to_owned())
+    } else {
+        None
+    };
+
     Ok(Some(FSNode {
         name: name.to_owned(),
         base_name: "".to_string(),
@@ -90,14 +102,26 @@ fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>) -
         canonical_path: path.canonicalize()
             .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
             .to_str().ok_or_else(|| format!("could not convert canonical (abs) path for {log_path} to utf8"))?.to_owned(),
-        is_dir: false,
-        is_link: false,
-        created_ts: (),
-        created_by: "".to_string(),
-        changed_ts: (),
+        is_dir: metadata.is_dir(),
+        is_link: entry.path_is_symlink(),
+        size_b: filesize_b,
+        size_mb: filesize_bm,
+        created_ts: to_timestamp(metadata.created(), log_path)?,
+        created_by: "".to_owned(),
+        changed_ts: to_timestamp(metadata.modified(), log_path)?,
         changed_age_sec: "".to_string(),
         changed_by: "".to_string(),
+        hash,
     }))
+    //TODO @mverleg: make sure all fields are filled
+}
+
+fn to_timestamp(result: io::Result<SystemTime>, log_path: &str) -> Result<u64, String> {
+    Ok(result
+        .map_err(|err| format!("fould not get created time for {log_path}, err: {err}"))?
+        .duration_since(UNIX_EPOCH)
+        .map_err(|err| format!("fould not get created time for {log_path}, err: {err}"))?
+        .as_secs())
 }
 
 #[cfg(test)]
@@ -111,7 +135,7 @@ mod tests {
     use super::*;
 
     #[async_std::test]
-    async fn shallow_list_files_per_line() {
+    async fn shallow_list_files_per_line_with_hash() {
         let dir_handle = tempfile::tempdir().unwrap();
         let dir_path = dir_handle.path();
         fs::write(dir_path.join("file1.txt"), "(no content)").unwrap();
@@ -125,6 +149,7 @@ mod tests {
             filter: None,
             on_error: ErrorHandling::Abort,
             root: dir_path.to_owned(),
+            hash: true,
         };
 
         let mut writer = CollectorWriter::new();
@@ -141,6 +166,7 @@ mod tests {
         assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"known-hash\"")).count(), 1);
     }
 
     #[async_std::test]
@@ -159,6 +185,7 @@ mod tests {
             filter: Some(Regex::new("^needle.*$").unwrap()),
             on_error: ErrorHandling::FailAtEnd,
             root: dir_path.to_owned(),
+            hash: false,
         };
 
         let mut writer = CollectorWriter::new();
@@ -175,5 +202,6 @@ mod tests {
         assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
+        assert!(!lines[1].contains("hash"));
     }
 }
