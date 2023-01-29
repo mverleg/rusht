@@ -1,11 +1,15 @@
-use std::io;
-use std::time::{SystemTime, UNIX_EPOCH};
+use ::std::io;
+use ::std::time::{SystemTime, UNIX_EPOCH};
+
+use ::async_std::fs;
 use ::log::debug;
 use ::regex::Regex;
+use ::sha2::Digest;
+use ::sha2::Sha256;
 use ::walkdir::DirEntry;
 use ::walkdir::WalkDir;
 
-use crate::common::LineWriter;
+use crate::common::{LineWriter, safe_filename};
 use crate::ExitStatus;
 use crate::find::jl_args::{ErrorHandling, JlArgs};
 use crate::find::jl_json_api::FSNode;
@@ -42,7 +46,7 @@ pub async fn list_files(
             eprintln!("line = {}", &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             line.clear();
         }
-        let node = match analyze_file(entry_res, &args.filter, args.hash) {
+        let node = match analyze_file(entry_res, &args.filter, args.hash).await {
             Ok(Some(node)) => node,
             Ok(None) => continue,
             Err(err) => {
@@ -70,7 +74,7 @@ pub async fn list_files(
     ExitStatus::ok()
 }
 
-fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>, do_hash: bool) -> Result<Option<FSNode>, String> {
+async fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>, do_hash: bool) -> Result<Option<FSNode>, String> {
     let entry = entry_res.map_err(|err| format!("failed to read file/dir, err: {err}"))?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
@@ -88,14 +92,17 @@ fn analyze_file(entry_res: walkdir::Result<DirEntry>, pattern: &Option<Regex>, d
     }
     let filesize_b = metadata.len();
     let filesize_bm = ((filesize_b as f64) / (1024. * 1024.)).round() as u64;
-    let hash = if do_hash {
-        Some("hash".to_owned())
+    let hash = if do_hash && metadata.is_file() {
+        let content: String = fs::read_to_string(path).await
+            .map_err(|err| format!("could not read file content for hashing for {log_path}, err {err}"))?;
+        Some(compute_hash(&content))
     } else {
         None
     };
 
     Ok(Some(FSNode {
         name: name.to_owned(),
+        safe_name: safe_filename(name),
         base_name: "".to_string(),
         extension: "".to_string(),
         rel_path: "".to_string(),
@@ -123,6 +130,21 @@ fn to_timestamp(result: io::Result<SystemTime>, log_path: &str) -> Result<u64, S
         .map_err(|err| format!("fould not get created time for {log_path}, err: {err}"))?
         .as_secs())
 }
+
+const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
+    base64::engine::fast_portable::FastPortable::from(
+        &base64::alphabet::URL_SAFE,
+        base64::engine::fast_portable::NO_PAD,
+    );
+
+fn compute_hash(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    let hash_out = hasher.finalize();
+    let encoded = base64::encode_engine(hash_out, &URL_SAFE_NO_PAD);
+    format!("sha256:{}", encoded.to_ascii_lowercase())
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -166,7 +188,8 @@ mod tests {
         assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("\"known-hash\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("\"safe_name\":\"file1_txt\"")).count(), 1);
+        assert_eq!(lines.iter().filter(|l| l.contains("fa82qlus4fyauj8k1bgq2qtnj3jqsc0t92yx_uboqsm")).count(), 1);
     }
 
     #[async_std::test]

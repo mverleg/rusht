@@ -5,6 +5,7 @@ use ::serde;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FSNode {
     pub name: String,
+    pub safe_name: String,
     pub base_name: String,
     pub extension: String,
     pub rel_path: String,
