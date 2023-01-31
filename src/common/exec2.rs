@@ -14,8 +14,8 @@ use ::itertools::Itertools;
 use ::log::debug;
 
 use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
-use crate::observe::mon_task;
 use crate::ExitStatus;
+use crate::observe::mon_task;
 
 #[derive(Debug)]
 pub struct ExecutionBuilder<'a, I, O, E>
@@ -80,7 +80,7 @@ where
     }
 
     /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_inp(&self) {
+    fn execution_start_borrower_inp(self) {
         match self.inp {
             Some(inp) => self.execution_start_borrower_out(inp),
             None => self.execution_start_borrower_out(&mut RejectStdin::new()),
@@ -88,7 +88,8 @@ where
     }
 
     /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_out(&self, inp: &mut I) {
+    fn execution_start_borrower_out<I2>(self, inp: &mut I2)
+            where I2: LineReader {
         match self.out {
             Some(out) => self.execution_start_borrower_err(inp, out),
             None => self.execution_start_borrower_err(inp, &mut StdWriter::stdout()),
@@ -96,7 +97,8 @@ where
     }
 
     /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_err(&self, inp: &mut I, out: &mut O) {
+    fn execution_start_borrower_err<I2, O2>(self, inp: &mut I2, out: &mut O2)
+            where I2: LineReader, O2: LineWriter {
         match self.err {
             Some(err) => self.execute_start(inp, out, err),
             None => self.execute_start(inp, out, &mut StdWriter::stderr()),
@@ -104,16 +106,18 @@ where
     }
 
     /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execute_start<I, O, E>(&self, inp: &mut I, out: &mut O, err: &mut E)
-            where I: LineReader, O: LineWriter, E: LineWriter {
+    fn execute_start<I2, O2, E2>(self, inp: &mut I2, out: &mut O2, err: &mut E2)
+            where I2: LineReader, O2: LineWriter, E2: LineWriter {
         todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::common::{FirstItemWriter, VecReader, VecWriter};
     //TODO @mverleg: move down?
+
+    use crate::common::{FirstItemWriter, VecReader};
+
     use super::*;
 
     #[test]
@@ -290,22 +294,4 @@ fn forward_out(stdout: impl aio::Read + Unpin, writer: &mut impl LineWriter) -> 
         }
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::common::read::RejectStdin;
-    use crate::common::VecWriter;
-
-    use super::*;
-
-    #[test]
-    fn build_exec() {
-        let task = Task::noop();
-        ExecutionBuilder::of(&task)
-            .inp(&mut RejectStdin::new())
-            .out(&mut VecWriter::new())
-            .err(&mut VecWriter::new())
-            .start();
-    }
 }

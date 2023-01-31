@@ -12,7 +12,7 @@ use ::futures::AsyncBufReadExt;
 use ::itertools::Itertools;
 use ::log::debug;
 
-use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
+use crate::common::{LineWriter, StdWriter, Task};
 use crate::observe::mon_task;
 use crate::ExitStatus;
 
