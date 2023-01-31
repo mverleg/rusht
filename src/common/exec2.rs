@@ -49,21 +49,21 @@ where
     O: LineWriter,
     E: LineWriter,
 {
-    pub fn inp<I2: LineReader>(self, inp: &'a mut I2) -> ExecutionBuilder<'a, I2, O, E> {
+    pub fn input<I2: LineReader>(self, inp: &'a mut I2) -> ExecutionBuilder<'a, I2, O, E> {
         ExecutionBuilder {
             inp: Some(inp),
             ..self
         }
     }
 
-    pub fn out<O2: LineWriter>(self, out: &'a mut O2) -> ExecutionBuilder<'a, I, O2, E> {
+    pub fn output<O2: LineWriter>(self, out: &'a mut O2) -> ExecutionBuilder<'a, I, O2, E> {
         ExecutionBuilder {
             out: Some(out),
             ..self
         }
     }
 
-    pub fn err<E2: LineWriter>(self, err: &'a mut E2) -> ExecutionBuilder<'a, I, O, E2> {
+    pub fn err_output<E2: LineWriter>(self, err: &'a mut E2) -> ExecutionBuilder<'a, I, O, E2> {
         ExecutionBuilder {
             err: Some(err),
             ..self
@@ -71,25 +71,43 @@ where
     }
 
     pub fn start(self) {
-        exec_open_inp(self.task, self.inp, self.out, self.err, self.monitor)
+        let inp = self.inp.unwrap_or_else(RejectStdin::new);
+        exec_open_out(task, inp, self.out, self.err)
     }
 }
 
-fn exec_open_inp<I, O, E>(
-    task: &Task,
-    inp: Option<&mut I>,
-    out: Option<&mut O>,
-    err: Option<&mut E>,
-    monitor: bool,
-) where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(inp) = inp {
-        exec_open_out(task, inp, out, err, monitor)
-    } else {
-        exec_open_out(task, &mut RejectStdin::new(), out, err, monitor)
+#[cfg(test)]
+mod tests {
+    use crate::common::{FirstItemWriter, VecReader, VecWriter};
+    //TODO @mverleg: move down?
+    use super::*;
+
+    #[test]
+    fn build_without_inourerr() {
+        let task = Task::new_in_cwd(
+            "sh".to_owned(), vec![
+                "-c".to_owned(),
+                "wc -l && echo error message >&2".to_owned(),
+            ]);
+        let exec = ExecutionBuilder::of(&task)
+            .start();
+    }
+
+    #[test]
+    fn build_with_inourerr() {
+        let mut reader = VecReader::new(vec!["line1", "line2"]);
+        let mut out_writer = FirstItemWriter::new();
+        let mut err_writer = FirstItemWriter::new();
+        let task = Task::new_in_cwd(
+            "sh".to_owned(), vec![
+                "-c".to_owned(),
+                "wc -l && echo error message >&2".to_owned(),
+            ]);
+        let exec = ExecutionBuilder::of(&task)
+            .input(&mut reader)
+            .output(&mut out_writer)
+            .err_output(&mut err_writer)
+            .start();
     }
 }
 
