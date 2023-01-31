@@ -16,6 +16,8 @@ use crate::common::{LineWriter, StdWriter, Task};
 use crate::observe::mon_task;
 use crate::ExitStatus;
 
+static USE_SHELL_ENV_NAME: &'static str = "RUSHT_SHELL_EXEC";
+
 impl Task {
     pub fn execute_sync(&self, monitor: bool) -> ExitStatus {
         let writer = &mut StdWriter::stdout();
@@ -51,14 +53,13 @@ impl Task {
         out_writer: &mut impl LineWriter,
         err_writer: &mut impl LineWriter,
     ) -> ExitStatus {
-        let use_shell_env = "RUSHT_SHELL_EXEC";
-        if env::var(use_shell_env).is_ok() {
-            debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
+        if env::var(USE_SHELL_ENV_NAME).is_ok() {
+            debug!("using shell execution mode (because {USE_SHELL_ENV_NAME} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
             let mut cmd = Command::new("sh");
             let joined_cmd = iter::once(format!("'{}'", self.cmd))
                 .chain(self.args.iter()
                     .inspect(|arg| if arg.contains('\'') {
-                        panic!("argument {} should not contain single quote in shell mode ({})", arg, use_shell_env)
+                        panic!("argument {} should not contain single quote in shell mode ({USE_SHELL_ENV_NAME})", arg)
                     })
                     .map(|arg| format!("'{}'", arg))
                 ).join(" ");
@@ -68,7 +69,7 @@ impl Task {
                 .unwrap()
             //TODO @mverleg: get rid of unwrap
         } else {
-            debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
+            debug!("not using shell execution mode (because {USE_SHELL_ENV_NAME} is not set); this is the safe way but may be slower");
             let mut cmd = Command::new(&self.cmd);
             cmd.args(&self.args);
             self.execute_cmd_with_outerr(cmd, out_writer, err_writer)

@@ -17,6 +17,8 @@ use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
 use crate::ExitStatus;
 use crate::observe::mon_task;
 
+static USE_SHELL_ENV_NAME: &'static str = "RUSHT_SHELL_EXEC";
+
 #[derive(Debug)]
 pub struct ExecutionBuilder<'a, I, O, E>
 where
@@ -69,31 +71,30 @@ where
         }
     }
 
-    pub fn start(self) {
+    pub async fn start(self) {
         let ExecutionBuilder { task, inp, out, err } = self;
         match (inp, out, err) {
-            (Some(inp), Some(out), Some(err)) => Self::execute_start(task, inp, out, err),
-            (Some(inp), Some(out), None) => Self::execute_start(task, inp, out, &mut StdWriter::stderr()),
-            (Some(inp), None, Some(err)) => Self::execute_start(task, inp, &mut StdWriter::stdout(), err),
-            (None, Some(out), Some(err)) => Self::execute_start(task, &mut RejectStdin::new(), out, err),
-            (Some(inp), None, None) => Self::execute_start(task, inp, &mut StdWriter::stdout(), &mut StdWriter::stderr()),
-            (None, None, Some(err)) => Self::execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), err),
-            (None, Some(out), None) => Self::execute_start(task, &mut RejectStdin::new(), out, &mut StdWriter::stderr()),
-            (None, None, None) => Self::execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()),
+            (Some(inp), Some(out), Some(err)) => execute_start(task, inp, out, err).await,
+            (Some(inp), Some(out), None) => execute_start(task, inp, out, &mut StdWriter::stderr()).await,
+            (Some(inp), None, Some(err)) => execute_start(task, inp, &mut StdWriter::stdout(), err).await,
+            (None, Some(out), Some(err)) => execute_start(task, &mut RejectStdin::new(), out, err).await,
+            (Some(inp), None, None) => execute_start(task, inp, &mut StdWriter::stdout(), &mut StdWriter::stderr()).await,
+            (None, None, Some(err)) => execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), err).await,
+            (None, Some(out), None) => execute_start(task, &mut RejectStdin::new(), out, &mut StdWriter::stderr()).await,
+            (None, None, None) => execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()).await,
         }
     }
 }
 
-fn execute_start<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
+async fn execute_start<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
         where I: LineReader, O: LineWriter, E: LineWriter {
-    let use_shell_env = "RUSHT_SHELL_EXEC";
-    if env::var(use_shell_env).is_ok() {
-        debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
-        execute_start_shell_mode(task, inp, out, err)
+    if env::var(USE_SHELL_ENV_NAME).is_ok() {
+        debug!("using shell execution mode (because {USE_SHELL_ENV_NAME} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
+        execute_start_shell_mode(task, inp, out, err).await
         //TODO @mverleg: get rid of unwrap
     } else {
-        debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
-        execute_start_direct_mode(task, inp, out, err)
+        debug!("not using shell execution mode (because {USE_SHELL_ENV_NAME} is not set); this is the safe way but may be slower");
+        execute_start_direct_mode(task, inp, out, err).await
     }
 }
 
@@ -101,8 +102,8 @@ fn execute_start<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
 async fn execute_start_shell_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
         where I: LineReader, O: LineWriter, E: LineWriter {
     let Task { cmd, args, working_dir, extra_envs } = task;
-    let joined_cmd = task.args.iter()
-        .inspect(reject_quotes)
+    let joined_cmd = iter::once(cmd).chain(args.iter())
+        .inspect(|arg| reject_quotes(arg))
         .map(|arg| format!("'{}'", arg))
         .join(" ");
     let command = Command::new("sh")
@@ -114,7 +115,6 @@ async fn execute_start_shell_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O
 /// Call directly without shell wrapper. Safe and allows quptes
 async fn execute_start_direct_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
         where I: LineReader, O: LineWriter, E: LineWriter {
-    //TODO @mverleg: extra_args
     let Task { cmd, args, working_dir, extra_envs } = task;
     let command = Command::new(cmd)
         .args(args)
@@ -122,11 +122,10 @@ async fn execute_start_direct_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut 
         .envs(extra_envs);
 }
 
-fn reject_quotes(text: &str) -> &str {
+fn reject_quotes(text: &str) {
     if text.contains('\'') {
-        panic!("argument {} should not contain single quote in shell mode ({})", arg, use_shell_env)
+        panic!("argument {} should not contain single quote in shell mode ({USE_SHELL_ENV_NAME})", text)
     }
-    text
 }
 
 #[cfg(test)]
@@ -201,14 +200,13 @@ impl Task {
         out_writer: &mut impl LineWriter,
         err_writer: &mut impl LineWriter,
     ) -> ExitStatus {
-        let use_shell_env = "RUSHT_SHELL_EXEC";
-        if env::var(use_shell_env).is_ok() {
-            debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
+        if env::var(USE_SHELL_ENV_NAME).is_ok() {
+            debug!("using shell execution mode (because {USE_SHELL_ENV_NAME} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
             let mut cmd = Command::new("sh");
             let joined_cmd = iter::once(format!("'{}'", self.cmd))
                 .chain(self.args.iter()
                     .inspect(|arg| if arg.contains('\'') {
-                        panic!("argument {} should not contain single quote in shell mode ({})", arg, use_shell_env)
+                        panic!("argument {} should not contain single quote in shell mode ({})", arg, USE_SHELL_ENV_NAME)
                     })
                     .map(|arg| format!("'{}'", arg))
                 ).join(" ");
@@ -218,7 +216,7 @@ impl Task {
                 .unwrap()
             //TODO @mverleg: get rid of unwrap
         } else {
-            debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
+            debug!("not using shell execution mode (because {USE_SHELL_ENV_NAME} is not set); this is the safe way but may be slower");
             let mut cmd = Command::new(&self.cmd);
             cmd.args(&self.args);
             self.execute_cmd_with_outerr2(cmd, out_writer, err_writer)
