@@ -71,8 +71,42 @@ where
     }
 
     pub fn start(self) {
-        let inp = self.inp.unwrap_or_else(RejectStdin::new);
-        exec_open_out(task, inp, self.out, self.err)
+        // execution_start_borrower_inp();
+        // let inp = self.inp.unwrap_or_else(RejectStdin::new);
+        // let out = self.out.unwrap_or_else(StdWriter::stdout);
+        // let err = self.err.unwrap_or_else(StdWriter::stderr);
+        // exec_open_err(task, inp, out, err, false)
+        self.execution_start_borrower_inp()
+    }
+
+    /// Part of pyramid to replace None with defaults with lifetimes.
+    fn execution_start_borrower_inp(&self) {
+        match self.inp {
+            Some(inp) => self.execution_start_borrower_out(inp),
+            None => self.execution_start_borrower_out(&mut RejectStdin::new()),
+        }
+    }
+
+    /// Part of pyramid to replace None with defaults with lifetimes.
+    fn execution_start_borrower_out(&self, inp: &mut I) {
+        match self.out {
+            Some(out) => self.execution_start_borrower_err(inp, out),
+            None => self.execution_start_borrower_err(inp, &mut StdWriter::stdout()),
+        }
+    }
+
+    /// Part of pyramid to replace None with defaults with lifetimes.
+    fn execution_start_borrower_err(&self, inp: &mut I, out: &mut O) {
+        match self.err {
+            Some(err) => self.execute_start(inp, out, err),
+            None => self.execute_start(inp, out, &mut StdWriter::stderr()),
+        }
+    }
+
+    /// Part of pyramid to replace None with defaults with lifetimes.
+    fn execute_start<I, O, E>(&self, inp: &mut I, out: &mut O, err: &mut E)
+            where I: LineReader, O: LineWriter, E: LineWriter {
+        todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
 }
 
@@ -108,24 +142,6 @@ mod tests {
             .output(&mut out_writer)
             .err_output(&mut err_writer)
             .start();
-    }
-}
-
-fn exec_open_out<I, O, E>(
-    task: &Task,
-    inp: &mut I,
-    out: Option<&mut O>,
-    err: Option<&mut E>,
-    monitor: bool,
-) where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(out) = out {
-        exec_open_err(task, inp, out, err, monitor)
-    } else {
-        exec_open_err(task, inp, &mut StdWriter::stdout(), err, monitor)
     }
 }
 
