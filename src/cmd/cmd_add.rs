@@ -74,9 +74,9 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         return;
     }
     let mut stored_tasks = if args.replace_existing {
-        read(args.namespace.clone())
-    } else {
         TaskStack::empty()
+    } else {
+        read(args.namespace.clone())
     };
     for task in new_tasks {
         if !args.quiet && !args.quiet_with_total {
