@@ -1,5 +1,3 @@
-#![allow(unused)] //TODO @mark: TEMPORARY! REMOVE THIS!
-
 use ::std::env;
 use ::std::io;
 use ::std::iter;
@@ -266,7 +264,6 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore] //TODO @mark: TEMPORARY! REMOVE THIS!
     fn build_exec() {
         let task = Task::noop();
         ExecutionBuilder::of(&task)

@@ -35,10 +35,12 @@ fn batch_add_drop() {
         AddArgs {
             namespace: namespace.to_string(),
             quiet: false,
+            quiet_with_total: false,
             end: false,
             lines: false,
             lines_with: Some("%".to_owned()),
             unique: true,
+            replace_existing: false,
             working_dir: None,
             cmd: CommandArgs::Cmd(vec!["print".to_owned(), "hello".to_owned(), "%".to_owned()]),
         },
@@ -80,14 +82,16 @@ fn add_one(namespace: &str, args: Vec<String>) {
         AddArgs {
             namespace: namespace.to_string(),
             quiet: false,
+            quiet_with_total: false,
             end: false,
             lines: false,
             lines_with: None,
             unique: false,
+            replace_existing: false,
             working_dir: None,
             cmd: CommandArgs::Cmd(args),
         },
-        std::vec::Vec::new,
+        Vec::new,
     );
 }
 
