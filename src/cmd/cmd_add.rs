@@ -25,6 +25,9 @@ pub struct AddArgs {
     #[arg(short = 'q', long)]
     /// Do not log the command.
     pub quiet: bool,
+    #[arg(short = 'Q', long, conflicts_with = "quiet")]
+    /// Do not log the commands, but log the count at the end.
+    pub quiet_with_total: bool,
     #[arg(short = 'e', long)]
     /// Add command at the end (last) instead of as the next.
     pub end: bool,
@@ -49,7 +52,7 @@ pub struct AddArgs {
 
 #[test]
 fn test_cli_args() {
-    AddArgs::try_parse_from(&["cmd", "-l", "-uD", "--", "ls", "{}"]).unwrap();
+    AddArgs::try_parse_from(&["cmd", "-l", "-Q", "-uD", "--", "ls", "{}"]).unwrap();
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
@@ -65,7 +68,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.unique,
     );
     if new_tasks.is_empty() {
-        if !args.quiet {
+        if !args.quiet && !args.quiet_with_total {
             eprintln!("no tasks found, was stdin empty?");
         }
         return;
@@ -76,7 +79,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         TaskStack::empty()
     };
     for task in new_tasks {
-        if !args.quiet {
+        if !args.quiet && !args.quiet_with_total {
             println!("{}", task.as_str());
         }
         if args.end {
@@ -85,7 +88,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
             stored_tasks.add(task);
         }
     }
-    if !args.quiet {
+    if args.quiet_with_total || !args.quiet {
         println!("{} command(s) pending", stored_tasks.len());
     }
     write(args.namespace, &stored_tasks);
