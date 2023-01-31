@@ -22,12 +22,12 @@ pub struct AddArgs {
     #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[arg(short = 'q', long)]
-    /// Do not log the command.
+    #[arg(short = 'Q', long)]
+    /// Do not log the command, but do log the total at the end.
     pub quiet: bool,
-    #[arg(short = 'Q', long, conflicts_with = "quiet")]
-    /// Do not log the commands, but log the count at the end.
-    pub quiet_with_total: bool,
+    #[arg(short = 'q', long, conflicts_with = "quiet")]
+    /// Do not log the commands, and also not the total at the end.
+    pub very_quiet: bool,
     #[arg(short = 'e', long)]
     /// Add command at the end (last) instead of as the next.
     pub end: bool,
@@ -68,7 +68,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.unique,
     );
     if new_tasks.is_empty() {
-        if !args.quiet && !args.quiet_with_total {
+        if !args.quiet && !args.very_quiet {
             eprintln!("no tasks found, was stdin empty?");
         }
         return;
@@ -79,7 +79,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         read(args.namespace.clone())
     };
     for task in new_tasks {
-        if !args.quiet && !args.quiet_with_total {
+        if !args.quiet && !args.very_quiet {
             println!("{}", task.as_str());
         }
         if args.end {
@@ -88,7 +88,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
             stored_tasks.add(task);
         }
     }
-    if args.quiet_with_total || !args.quiet {
+    if !args.very_quiet {
         println!("{} command(s) pending", stored_tasks.len());
     }
     write(args.namespace, &stored_tasks);

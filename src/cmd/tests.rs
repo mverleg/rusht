@@ -35,7 +35,7 @@ fn batch_add_drop() {
         AddArgs {
             namespace: namespace.to_string(),
             quiet: false,
-            quiet_with_total: false,
+            very_quiet: false,
             end: false,
             lines: false,
             lines_with: Some("%".to_owned()),
@@ -82,7 +82,7 @@ fn add_one(namespace: &str, args: Vec<String>) {
         AddArgs {
             namespace: namespace.to_string(),
             quiet: false,
-            quiet_with_total: false,
+            very_quiet: false,
             end: false,
             lines: false,
             lines_with: None,
