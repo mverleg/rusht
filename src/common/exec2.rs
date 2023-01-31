@@ -110,6 +110,7 @@ async fn execute_start_shell_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O
         .args(&["-c".to_owned(), joined_cmd])
         .current_dir(working_dir)
         .envs(extra_envs);
+    todo!()
 }
 
 /// Call directly without shell wrapper. Safe and allows quptes
@@ -120,6 +121,7 @@ async fn execute_start_direct_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut 
         .args(args)
         .current_dir(working_dir)
         .envs(extra_envs);
+    todo!()
 }
 
 fn reject_quotes(text: &str) {

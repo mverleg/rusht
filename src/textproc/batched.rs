@@ -41,7 +41,7 @@ mod tests {
     use super::*;
 
     #[async_std::test]
-    async fn test_batched() {
+    async fn batch_2_wcl() {
         let mut writer = CollectorWriter::new();
         let out_lines = writer.lines();
         let inp = vec!["a", "b", "c", "d", "e"];
