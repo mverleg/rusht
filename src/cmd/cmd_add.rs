@@ -105,9 +105,7 @@ pub fn create_tasks(
     let new_tasks = if let Some(templ) = lines_with {
         assert!(!templ.is_empty());
         let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
-        if !has_placeholder
-            && (working_dir.is_some() && working_dir.as_ref().unwrap().contains(&templ))
-        {
+        if !has_placeholder && working_dir.is_some() && working_dir.as_ref().unwrap().contains(&templ) {
             has_placeholder = true
         }
         if !has_placeholder {

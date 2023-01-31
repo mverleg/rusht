@@ -79,6 +79,10 @@ name = "piped"
 path = "src/observe/main_piped.rs"
 
 [[bin]]
+name = "batched"
+path = "src/textproc/main_batched.rs"
+
+[[bin]]
 name = "jl"
 path = "src/find/main_jl.rs"
 

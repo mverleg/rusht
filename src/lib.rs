@@ -17,3 +17,4 @@ pub mod java;
 pub mod observe;
 pub mod rsh;
 pub mod wait;
+pub mod textproc;

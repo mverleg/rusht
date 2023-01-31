@@ -22,6 +22,8 @@ use ::rusht::rsh::{handle_rsh, RshArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
 use rusht::find::handle_jl;
+use rusht::textproc::batched_args::BatchedArgs;
+use rusht::textproc::handle::handle_batched;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -50,6 +52,7 @@ enum SubCmd {
     Mvnw(MvnwArgs),
     Mon(MonArgs),
     Piped(PipedArgs),
+    Batched(BatchedArgs),
     Jl(JlArgs),
     Rsh(RshArgs),
 }
@@ -80,6 +83,7 @@ async fn main() -> ExitStatus {
         SubCmd::Mvnw(sub_args) => handle_mvnw(sub_args).await,
         SubCmd::Mon(sub_args) => handle_mon(sub_args).await,
         SubCmd::Piped(sub_args) => handle_piped(sub_args).await,
+        SubCmd::Batched(sub_args) => handle_batched(sub_args).await,
         SubCmd::Jl(sub_args) => handle_jl(sub_args).await,
         SubCmd::Rsh(sub_args) => handle_rsh(sub_args),
     }
