@@ -16,64 +16,6 @@ use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
 use crate::observe::mon_task;
 use crate::ExitStatus;
 
-fn exec_open_inp<I, O, E>(
-    task: &Task,
-    inp: Option<&mut I>,
-    out: Option<&mut O>,
-    err: Option<&mut E>,
-    monitor: bool,
-) where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(inp) = inp {
-        exec_open_out(task, inp, out, err, monitor)
-    } else {
-        exec_open_out(task, &mut RejectStdin::new(), out, err, monitor)
-    }
-}
-
-fn exec_open_out<I, O, E>(
-    task: &Task,
-    inp: &mut I,
-    out: Option<&mut O>,
-    err: Option<&mut E>,
-    monitor: bool,
-) where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(out) = out {
-        exec_open_err(task, inp, out, err, monitor)
-    } else {
-        exec_open_err(task, inp, &mut StdWriter::stdout(), err, monitor)
-    }
-}
-
-fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mut E>, monitor: bool)
-where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(err) = err {
-        exec_ioe(task, inp, out, err, monitor)
-    } else {
-        exec_ioe(task, inp, out, &mut StdWriter::stderr(), monitor)
-    }
-}
-
-fn exec_ioe<I, O, E>(_task: &Task, _inp: &mut I, _out: &mut O, _err: &mut E, _monitor: bool)
-where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
-}
-
 impl Task {
     pub fn execute_sync(&self, monitor: bool) -> ExitStatus {
         let writer = &mut StdWriter::stdout();

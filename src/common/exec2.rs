@@ -134,12 +134,12 @@ where
 }
 
 impl Task {
-    pub fn execute_sync(&self, monitor: bool) -> ExitStatus {
+    pub fn execute_sync2(&self, monitor: bool) -> ExitStatus {
         let writer = &mut StdWriter::stdout();
         block_on(self.execute_with_stdout(monitor, writer))
     }
 
-    pub async fn execute_with_stdout(
+    pub async fn execute_with_stdout2(
         &self,
         monitor: bool,
         out_writer: &mut impl LineWriter,
@@ -149,7 +149,7 @@ impl Task {
             .await
     }
 
-    pub async fn execute_with_outerr(
+    pub async fn execute_with_outerr2(
         &self,
         monitor: bool,
         out_writer: &mut impl LineWriter,
@@ -163,7 +163,7 @@ impl Task {
         }
     }
 
-    pub async fn execute_with_stdout_nomonitor(
+    pub async fn execute_with_stdout_nomonitor2(
         &self,
         out_writer: &mut impl LineWriter,
         err_writer: &mut impl LineWriter,
@@ -180,7 +180,7 @@ impl Task {
                     .map(|arg| format!("'{}'", arg))
                 ).join(" ");
             cmd.args(&["-c".to_owned(), joined_cmd]);
-            self.execute_cmd_with_outerr(cmd, out_writer, err_writer)
+            self.execute_cmd_with_outerr2(cmd, out_writer, err_writer)
                 .await
                 .unwrap()
             //TODO @mverleg: get rid of unwrap
@@ -188,14 +188,14 @@ impl Task {
             debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
             let mut cmd = Command::new(&self.cmd);
             cmd.args(&self.args);
-            self.execute_cmd_with_outerr(cmd, out_writer, err_writer)
+            self.execute_cmd_with_outerr2(cmd, out_writer, err_writer)
                 .await
                 .unwrap()
             //TODO @mverleg: get rid of unwrap
         }
     }
 
-    async fn execute_cmd_with_outerr(
+    async fn execute_cmd_with_outerr2(
         &self,
         mut base_cmd: Command,
         out_writer: &mut impl LineWriter,

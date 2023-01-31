@@ -31,5 +31,23 @@ pub async fn batched(
 
 async fn run_batch(batch: &[String], task: &Task, writer: &mut impl LineWriter) -> Result<(), String> {
     let res = task.execute_with_stdout_nomonitor(writer, &mut StdWriter::stderr()).await;
+    todo!("waiting for exec2 code");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::common::{CollectorWriter, CommandArgs, VecReader};
+    use super::*;
+
+    #[async_std::test]
+    async fn test_batched() {
+        let mut writer = CollectorWriter::new();
+        let out_lines = writer.lines();
+        let inp = vec!["a", "b", "c", "d", "e"];
+        let args = BatchedArgs { batch_size: 2, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
+        let res = batched(args, &mut VecReader::new(inp), &mut writer).await;
+        assert!(res.is_err());
+        assert_eq!(*out_lines.snapshot().await, vec!["2".to_owned(), "2".to_owned(), "1".to_owned()]);
+    }
 }
