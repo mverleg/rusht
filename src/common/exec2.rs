@@ -1,6 +1,7 @@
-//TODO @mverleg: possibly to be replaced by `exec2`
+//TODO @mverleg: potential new replacement for `exec`
 
 use ::std::env;
+use ::std::io;
 use ::std::iter;
 use ::std::thread;
 
@@ -15,6 +16,64 @@ use ::log::debug;
 use crate::common::{LineReader, LineWriter, RejectStdin, StdWriter, Task};
 use crate::observe::mon_task;
 use crate::ExitStatus;
+
+#[derive(Debug)]
+pub struct ExecutionBuilder<'a, I, O, E>
+where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
+    task: &'a Task,
+    inp: Option<&'a mut I>,
+    out: Option<&'a mut O>,
+    err: Option<&'a mut E>,
+    monitor: bool,
+}
+
+impl<'a> ExecutionBuilder<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
+    pub fn of(task: &'a Task) -> Self {
+        ExecutionBuilder {
+            task,
+            inp: None,
+            out: None,
+            err: None,
+            monitor: false,
+        }
+    }
+}
+
+impl<'a, I, O, E> ExecutionBuilder<'a, I, O, E>
+where
+    I: LineReader,
+    O: LineWriter,
+    E: LineWriter,
+{
+    pub fn inp<I2: LineReader>(self, inp: &'a mut I2) -> ExecutionBuilder<'a, I2, O, E> {
+        ExecutionBuilder {
+            inp: Some(inp),
+            ..self
+        }
+    }
+
+    pub fn out<O2: LineWriter>(self, out: &'a mut O2) -> ExecutionBuilder<'a, I, O2, E> {
+        ExecutionBuilder {
+            out: Some(out),
+            ..self
+        }
+    }
+
+    pub fn err<E2: LineWriter>(self, err: &'a mut E2) -> ExecutionBuilder<'a, I, O, E2> {
+        ExecutionBuilder {
+            err: Some(err),
+            ..self
+        }
+    }
+
+    pub fn start(self) {
+        exec_open_inp(self.task, self.inp, self.out, self.err, self.monitor)
+    }
+}
 
 fn exec_open_inp<I, O, E>(
     task: &Task,
@@ -197,4 +256,22 @@ fn forward_out(stdout: impl aio::Read + Unpin, writer: &mut impl LineWriter) -> 
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::common::read::RejectStdin;
+    use crate::common::VecWriter;
+
+    use super::*;
+
+    #[test]
+    fn build_exec() {
+        let task = Task::noop();
+        ExecutionBuilder::of(&task)
+            .inp(&mut RejectStdin::new())
+            .out(&mut VecWriter::new())
+            .err(&mut VecWriter::new())
+            .start();
+    }
 }

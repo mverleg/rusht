@@ -1,9 +1,6 @@
-use std::future::join;
 use ::log::debug;
 
 use crate::common::{LineReader, LineWriter, StdWriter, Task};
-use crate::ExitStatus;
-use crate::observe::chained;
 use crate::textproc::batched_args::BatchedArgs;
 
 pub async fn batched(
