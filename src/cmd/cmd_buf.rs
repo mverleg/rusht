@@ -9,7 +9,7 @@ use crate::ExitStatus;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmbuf",
-    about = "Read input, build commands and buffer them, then run them all. Somewhat xargs."
+    about = "Read input, build commands and buffer them, then run them all. Somewhat like xargs."
 )]
 pub struct BufArgs {
     // #[structopt(short = 'e', long)]

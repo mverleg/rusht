@@ -10,6 +10,7 @@ use ::log::debug;
 
 use crate::cmd::cmd_io::read;
 use crate::cmd::cmd_io::write;
+use crate::cmd::cmd_type::TaskStack;
 use crate::common::{fail, CommandArgs, Task};
 
 #[derive(Parser, Debug)]
@@ -36,6 +37,9 @@ pub struct AddArgs {
     #[arg(short = 'u', long)]
     /// With --lines or --lines-with, skip any duplicate placeholders.
     pub unique: bool,
+    #[arg(short = 'D', long)]
+    /// Drop all entries before adding new ones.
+    pub replace_existing: bool,
     #[arg(short = 'P', long)]
     /// Working directory when running the command. Can use placeholder with -l/-L.
     pub working_dir: Option<String>,
@@ -45,7 +49,7 @@ pub struct AddArgs {
 
 #[test]
 fn test_cli_args() {
-    AddArgs::try_parse_from(&["cmd", "-l", "-u", "--", "ls", "{}"]).unwrap();
+    AddArgs::try_parse_from(&["cmd", "-l", "-uD", "--", "ls", "{}"]).unwrap();
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
@@ -66,7 +70,11 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         }
         return;
     }
-    let mut stored_tasks = read(args.namespace.clone());
+    let mut stored_tasks = if args.replace_existing {
+        read(args.namespace.clone())
+    } else {
+        TaskStack::empty()
+    };
     for task in new_tasks {
         if !args.quiet {
             println!("{}", task.as_str());
