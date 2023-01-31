@@ -70,11 +70,6 @@ where
     }
 
     pub fn start(self) {
-        // execution_start_borrower_inp();
-        // let inp = self.inp.unwrap_or_else(RejectStdin::new);
-        // let out = self.out.unwrap_or_else(StdWriter::stdout);
-        // let err = self.err.unwrap_or_else(StdWriter::stderr);
-        // exec_open_err(task, inp, out, err, false)
         let ExecutionBuilder { task, inp, out, err } = self;
         match (inp, out, err) {
             (Some(inp), Some(out), Some(err)) => Self::execute_start(task, inp, out, err),
@@ -87,12 +82,51 @@ where
             (None, None, None) => Self::execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()),
         }
     }
+}
 
-    /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execute_start<I2, O2, E2>(task: &Task, inp: &mut I2, out: &mut O2, err: &mut E2)
-            where I2: LineReader, O2: LineWriter, E2: LineWriter {
-        todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
+fn execute_start<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
+        where I: LineReader, O: LineWriter, E: LineWriter {
+    let use_shell_env = "RUSHT_SHELL_EXEC";
+    if env::var(use_shell_env).is_ok() {
+        debug!("using shell execution mode (because {use_shell_env} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
+        execute_start_shell_mode(task, inp, out, err)
+        //TODO @mverleg: get rid of unwrap
+    } else {
+        debug!("not using shell execution mode (because {use_shell_env} is not set); this is the safe way but may be slower");
+        execute_start_direct_mode(task, inp, out, err)
     }
+}
+
+/// Wrap in a command that is passed to a shell. Faster somehow.
+async fn execute_start_shell_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
+        where I: LineReader, O: LineWriter, E: LineWriter {
+    let Task { cmd, args, working_dir, extra_envs } = task;
+    let joined_cmd = task.args.iter()
+        .inspect(reject_quotes)
+        .map(|arg| format!("'{}'", arg))
+        .join(" ");
+    let command = Command::new("sh")
+        .args(&["-c".to_owned(), joined_cmd])
+        .current_dir(working_dir)
+        .envs(extra_envs);
+}
+
+/// Call directly without shell wrapper. Safe and allows quptes
+async fn execute_start_direct_mode<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E)
+        where I: LineReader, O: LineWriter, E: LineWriter {
+    //TODO @mverleg: extra_args
+    let Task { cmd, args, working_dir, extra_envs } = task;
+    let command = Command::new(cmd)
+        .args(args)
+        .current_dir(working_dir)
+        .envs(extra_envs);
+}
+
+fn reject_quotes(text: &str) -> &str {
+    if text.contains('\'') {
+        panic!("argument {} should not contain single quote in shell mode ({})", arg, use_shell_env)
+    }
+    text
 }
 
 #[cfg(test)]
@@ -130,28 +164,6 @@ mod tests {
             .err_output(&mut err_writer)
             .start();
     }
-}
-
-fn exec_open_err<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: Option<&mut E>, monitor: bool)
-where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    if let Some(err) = err {
-        exec_ioe(task, inp, out, err, monitor)
-    } else {
-        exec_ioe(task, inp, out, &mut StdWriter::stderr(), monitor)
-    }
-}
-
-fn exec_ioe<I, O, E>(_task: &Task, _inp: &mut I, _out: &mut O, _err: &mut E, _monitor: bool)
-where
-    I: LineReader,
-    O: LineWriter,
-    E: LineWriter,
-{
-    todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
 }
 
 impl Task {
