@@ -28,7 +28,7 @@ where
     inp: Option<&'a mut I>,
     out: Option<&'a mut O>,
     err: Option<&'a mut E>,
-    monitor: bool,
+    // monitor: bool,
 }
 
 impl<'a> ExecutionBuilder<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
@@ -38,7 +38,6 @@ impl<'a> ExecutionBuilder<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::
             inp: None,
             out: None,
             err: None,
-            monitor: false,
         }
     }
 }
@@ -76,37 +75,21 @@ where
         // let out = self.out.unwrap_or_else(StdWriter::stdout);
         // let err = self.err.unwrap_or_else(StdWriter::stderr);
         // exec_open_err(task, inp, out, err, false)
-        self.execution_start_borrower_inp()
-    }
-
-    /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_inp(self) {
-        match self.inp {
-            Some(inp) => self.execution_start_borrower_out(inp),
-            None => self.execution_start_borrower_out(&mut RejectStdin::new()),
+        let ExecutionBuilder { task, inp, out, err } = self;
+        match (inp, out, err) {
+            (Some(inp), Some(out), Some(err)) => Self::execute_start(task, inp, out, err),
+            (Some(inp), Some(out), None) => Self::execute_start(task, inp, out, &mut StdWriter::stderr()),
+            (Some(inp), None, Some(err)) => Self::execute_start(task, inp, &mut StdWriter::stdout(), err),
+            (None, Some(out), Some(err)) => Self::execute_start(task, &mut RejectStdin::new(), out, err),
+            (Some(inp), None, None) => Self::execute_start(task, inp, &mut StdWriter::stdout(), &mut StdWriter::stderr()),
+            (None, None, Some(err)) => Self::execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), err),
+            (None, Some(out), None) => Self::execute_start(task, &mut RejectStdin::new(), out, &mut StdWriter::stderr()),
+            (None, None, None) => Self::execute_start(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()),
         }
     }
 
     /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_out<I2>(self, inp: &mut I2)
-            where I2: LineReader {
-        match self.out {
-            Some(out) => self.execution_start_borrower_err(inp, out),
-            None => self.execution_start_borrower_err(inp, &mut StdWriter::stdout()),
-        }
-    }
-
-    /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execution_start_borrower_err<I2, O2>(self, inp: &mut I2, out: &mut O2)
-            where I2: LineReader, O2: LineWriter {
-        match self.err {
-            Some(err) => self.execute_start(inp, out, err),
-            None => self.execute_start(inp, out, &mut StdWriter::stderr()),
-        }
-    }
-
-    /// Part of pyramid to replace None with defaults with lifetimes.
-    fn execute_start<I2, O2, E2>(self, inp: &mut I2, out: &mut O2, err: &mut E2)
+    fn execute_start<I2, O2, E2>(task: &Task, inp: &mut I2, out: &mut O2, err: &mut E2)
             where I2: LineReader, O2: LineWriter, E2: LineWriter {
         todo!() //TODO @mverleg: TEMPORARY! REMOVE THIS!
     }
