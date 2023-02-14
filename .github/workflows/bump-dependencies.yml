@@ -34,17 +34,17 @@ jobs:
       - name: Get date
         id: date
         run: |
-          echo "::set-output name=DATE_CODE::$(date +'%Y-%m-%d')"
-          echo "::set-output name=DATE_NAME::$(date +'%Oe %B %Y')"
+          echo "DATE_CODE=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+          echo "DATE_NAME=$(date +'%Oe %B %Y')" >> "$GITHUB_OUTPUT"
       - name: Ensure config file exists
         run: |
           if [ ! -e ci-conf.json ]; then curl --silent 'https://raw.githubusercontent.com/mverleg/ci_util/main/github_action/ci-conf-example.json' --output './ci-conf.json'; fi
       - name: Check conditions
         id: conf
         run: |
-          if [ $(jq .bump_dependencies.ci -r ci-conf.json) != false ]; then echo ::set-output name=ci::1; fi
-          if [ $(jq .bump_dependencies.dockerfile -r ci-conf.json) != false ]; then echo ::set-output name=dockerfile::1; fi
-          if [ $(jq .bump_dependencies.cargo -r ci-conf.json) != false ]; then echo ::set-output name=cargo::1; fi
+          if [ $(jq .bump_dependencies.ci -r ci-conf.json) != false ]; then echo ci=1 >> "$GITHUB_OUTPUT"; fi
+          if [ $(jq .bump_dependencies.dockerfile -r ci-conf.json) != false ]; then echo dockerfile=1 >> "$GITHUB_OUTPUT"; fi
+          if [ $(jq .bump_dependencies.cargo -r ci-conf.json) != false ]; then echo cargo=1 >> "$GITHUB_OUTPUT"; fi
       - name: Self-update bumper action
         if: steps.conf.outputs.ci == 1
         run: |
@@ -68,7 +68,7 @@ jobs:
           if ! git diff --exit-code Cargo.* ci/*.Dockerfile
           then
               echo "CHANGED!"
-              echo "::set-output name=IS_CHANGED::1"
+              echo "IS_CHANGED=1" >> "$GITHUB_OUTPUT"
           else
               echo "not changed"
           fi

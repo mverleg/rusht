@@ -8,7 +8,8 @@ COPY ./ ./
 
 # Build (for test)
 ARG TEST=1
-RUN find . -name target -prune -o -type f &&\
+RUN echo "TEST=$TEST" &&\
+    find . -name target -prune -o -type f &&\
     touch -c build.rs src/main.rs src/lib.rs &&\
     if [ "$TEST" != 0 ] ; then \
         cargo build --all-features --tests --locked; \
@@ -26,7 +27,8 @@ RUN if [ "$TEST" != 0 ] ; then  \
 # Lint
 ARG LINT=1
 ARG STRICT=1
-RUN if [ "$LINT" != 0 ] ; then  \
+RUN echo "LINT=$LINT STRICT=$STRICT" &&\
+    if [ "$LINT" != 0 ] ; then  \
         if [ "$STRICT" != 0 ] ; then  \
             cargo --offline clippy --all-features --tests -- -D warnings;  \
         else  \
@@ -38,7 +40,8 @@ RUN if [ "$LINT" != 0 ] ; then  \
 
 # Style
 ARG FMT=1
-RUN if [ "$FMT" != 0 ] ; then  \
+RUN echo "FMT=$FMT" &&\
+    if [ "$FMT" != 0 ] ; then  \
         cargo --offline fmt --all -- --check;  \
     else  \
         echo SKIPPED;  \

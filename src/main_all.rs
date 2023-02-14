@@ -21,9 +21,9 @@ use ::rusht::observe::{handle_piped, PipedArgs};
 use ::rusht::rsh::{handle_rsh, RshArgs};
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
-use rusht::find::handle_jl;
-use rusht::textproc::batched_args::BatchedArgs;
-use rusht::textproc::handle::handle_batched;
+use ::rusht::find::handle_jl;
+use ::rusht::textproc::batched_args::BatchedArgs;
+use ::rusht::textproc::handle::handle_batched;
 
 #[derive(Parser, Debug)]
 #[command(

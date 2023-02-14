@@ -18,14 +18,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Read config
+        id: conf
+        run: |
+          echo "STRICT::$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint_strict' -r ci-conf.json)" != false ] && echo 1 || echo 0)" | tee -a  $GITHUB_OUTPUT
+          echo "TEST::$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.test' -r ci-conf.json)" != false ] && echo 1 || echo 0)" | tee -a  $GITHUB_OUTPUT
+          echo "LINT::$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint' -r ci-conf.json)" != false ] && echo 1 || echo 0)" | tee -a  $GITHUB_OUTPUT
+          echo "FMT::$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.fmt' -r ci-conf.json)" != false ] && echo 1 || echo 0)" | tee -a  $GITHUB_OUTPUT
       - name: Run test, lint, fmt
         uses: docker/build-push-action@v2
         with:
           file: ./ci/test-lint.Dockerfile
           context: .
           build-args: |
-            STRICT=$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint_strict' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            TEST=$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.test' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            LINT=$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.lint' -r ci-conf.json)" != false ] && echo 1 || echo 0)
-            FMT=$([ "$(jq '.test_lint' -r ci-conf.json)" != false ] && [ "$(jq '.test_lint.fmt' -r ci-conf.json)" != false ] && echo 1 || echo 0)
+            STRICT=${{ steps.conf.outputs.STRICT }}
+            TEST=${{ steps.conf.outputs.TEST }}
+            LINT=${{ steps.conf.outputs.LINT }}
+            FMT=${{ steps.conf.outputs.FMT }}
           push: false

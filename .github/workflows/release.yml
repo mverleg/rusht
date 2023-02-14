@@ -39,7 +39,7 @@ jobs:
           git fetch --tags
           PREV_VER="$({ printf 'v0.0.0\n'; git tag --list; } | grep -E '^v[0-9]+\.[0-9]+\.[0-9]$' | cut -c2- | sort --reverse --version-sort --field-separator=. | head -n1)"
           echo "current (soon to be previous) version: v$PREV_VER"
-          echo ::set-output name=previous_version::"$PREV_VER"
+          echo previous_version="$PREV_VER" >> "$GITHUB_OUTPUT"
       - name: Get next version
         id: next_ver
         run: |
@@ -47,7 +47,7 @@ jobs:
           echo "going to bump ${{ github.event.inputs.bump }} of v${{ steps.prev_ver.outputs.previous_version }}"
           NEXT_VER="$(curl -f https://next.tryin.top/${{ github.event.inputs.bump }}/${{ steps.prev_ver.outputs.previous_version }})"
           echo "next (soon to be current) version: v$NEXT_VER"
-          echo ::set-output name=next_version::"$NEXT_VER"
+          echo next_version="$NEXT_VER" >> "$GITHUB_OUTPUT"
       - name: Bump Cargo.toml
         run: |
           sed -Ei 's/^version\s+=\s+"[^"]*"/version = "${{ steps.next_ver.outputs.next_version }}"/' Cargo.toml
@@ -60,14 +60,14 @@ jobs:
           echo "$MSG1\n$MSG2"
           git config user.name 'Mark release bot'
           git config user.email 'mverleg.noreply@gmail.com'
-          echo ::set-output name=branch::"$(git rev-parse --abbrev-ref HEAD)"
+          echo branch="$(git rev-parse --abbrev-ref HEAD)" >> "$GITHUB_OUTPUT"
           git branch -D release-workflow || true
           git checkout -b release-workflow
           git add :/ --all
           echo 'Create special branch for now, to keep this commit out of main'
           git commit --allow-empty -m "Version ${{ steps.next_ver.outputs.next_version }}" -m "$MSG1" -m "$MSG2"
           git push --force origin release-workflow
-          echo ::set-output name=bump_draft_ref::"$(git rev-parse HEAD)"
+          echo bump_draft_ref="$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   create_matrix:
     name: Make matrix
@@ -85,10 +85,10 @@ jobs:
         id: conf
         run: |
           set -x
-          echo ::set-output name=do_artifact::1;
-          if [ "$(jq .release.artifact -r ci-conf.json)" = false ] || [ "$(jq .release.artifact -r ci-conf.json)" = null ]; then echo 'skipping because no release artifact config'; echo ::set-output name=artifact::0; fi
-          if [ "$(jq .release.artifact.targets -r ci-conf.json)" = false ]; then echo 'skipping because no targets'; echo ::set-output name=artifact::0; fi
-          if [ "$(jq .release.artifact.bins -r ci-conf.json)" = false ]; then echo 'skipping because no binaries'; echo ::set-output name=artifact::0; fi
+          echo do_artifact=1 >> "$GITHUB_OUTPUT";
+          if [ "$(jq .release.artifact -r ci-conf.json)" = false ] || [ "$(jq .release.artifact -r ci-conf.json)" = null ]; then echo 'skipping because no release artifact config'; echo artifact=0 >> "$GITHUB_OUTPUT"; fi
+          if [ "$(jq .release.artifact.targets -r ci-conf.json)" = false ]; then echo 'skipping because no targets'; echo artifact=0 >> "$GITHUB_OUTPUT"; fi
+          if [ "$(jq .release.artifact.bins -r ci-conf.json)" = false ]; then echo 'skipping because no binaries'; echo artifact=0 >> "$GITHUB_OUTPUT"; fi
       - name: Generate matrix
         id: generate_matrix
         if: steps.conf.outputs.do_artifact == 1
@@ -101,7 +101,7 @@ jobs:
               jq -sc '{"include":.}')"
           asset_list="$(jq -r '.include[] | .asset_name' <<< "$mat")"
           echo $mat | jq
-          echo ::set-output name=bin_targets::"$mat"
+          echo bin_targets="$mat" >> "$GITHUB_OUTPUT"
 
   matrix_compile:
     name: Build binaries
@@ -193,7 +193,7 @@ jobs:
           git push origin ${{ needs.next_version.outputs.branch }}
           git push --tags
           git push origin --delete release-workflow
-          echo ::set-output name=bump_main_ref::"$(git rev-parse HEAD)"
+          echo bump_main_ref="$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Create metadata
         run: |
           set -ux
