@@ -21,6 +21,10 @@ function update() (
 
 mkdir -p ./.github/workflows ./ci
 
+if [ ! -e ci-conf.json ]; then
+    curl --silent 'https://raw.githubusercontent.com/mverleg/ci_util/main/github_action/ci-conf-example.json' --output './ci-conf.json'
+fi
+
 update bump_dependencies 'bump-dependencies.yml' './.github/workflows/bump-dependencies.yml' &
 update bump_dependencies 'bump-dependencies.Dockerfile' './ci/bump-dependencies.Dockerfile' &
 update bump_dependencies 'bump-dependencies.sh' './ci/bump-dependencies.sh' &

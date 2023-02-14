@@ -48,7 +48,7 @@ jobs:
       - name: Self-update bumper action
         if: steps.conf.outputs.ci == 1
         run: |
-          bash github_action/bump-dependencies.sh
+          test -f github_action/bump-dependencies.sh && bash github_action/bump-dependencies.sh || bash ci/bump-dependencies.sh
       - name: Docker bump
         #TODO @mark:
         if: hashFiles('ci/upgrade_docker_base.sh') != '' && steps.conf.outputs.dockerfile == 1
