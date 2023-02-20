@@ -314,7 +314,7 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
         "curl".to_owned(),
         vec![
             "-L".to_owned(),
-            format!("https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.1/checkstyle-{}-all.jar", version),
+            format!("https://github.com/checkstyle/checkstyle/releases/download/checkstyle-{version}/checkstyle-{version}-all.jar"),
             "--silent".to_owned(),
             "--output".to_owned(),
             checkstyle_jar_pth.to_str().unwrap().to_owned(),
