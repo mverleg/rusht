@@ -2,6 +2,7 @@ use std::cmp::max;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use ::log::debug;
+use async_std::stream::Extend;
 use itertools::Itertools;
 use regex::Regex;
 
@@ -136,6 +137,30 @@ fn batched_together(
     batch_size: usize
 ) -> Vec<Vec<String>> {
     let mut batches = Vec::with_capacity(max(8, groups.len()));
+    for mut group in groups {
+        // If the group is too big for a batch, create new batches
+        while group.len() > batch_size {
+            let mut batch = Vec::with_capacity(batch_size);
+            for _ in 0..batch_size {
+                batch.push(group.pop().unwrap());
+            }
+            batch.reverse();
+            batches.push(batch)
+        }
+        // Insert into the first group that has enough space
+        for batch in &mut batches {
+            if group.len() < batch_size - batch.len() {
+                for line in group.drain(..) {
+                    batch.push(line);
+                }
+                break
+            }
+        }
+        // Any remainder goes into a new batch
+        if ! group.is_empty() {
+            batches.push(group);
+        }
+    }
 
     todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     batches

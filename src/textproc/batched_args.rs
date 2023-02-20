@@ -13,7 +13,7 @@ pub struct BatchedArgs {
     /// Maximum number of items per batch (may be smaller, e.g. for last one, or due to filtering).
     #[arg(short = 'c', long, value_parser = clap::value_parser!(u32).range(2..))]
     pub batch_size: u32,
-    /// Items having the same value for this regex are put in the same batch (up to the maximum size).
+    /// Items having the same value for this regex are put in the same batch (up to the maximum size). Multiple values may be in the same batch.
     #[arg(long)]
     pub together: Option<Regex>,
     /// Items having the same value for this regex are put in separate batches (creating extra batches as necessary).
