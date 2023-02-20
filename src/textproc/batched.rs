@@ -14,19 +14,14 @@ pub async fn batched(
     reader: &mut impl LineReader,
     writer: &mut impl LineWriter,
 ) -> Result<(), String> {
-    if let Some(_) = args.together {
-        unimplemented!("--together not supported")
-    }
-    if let Some(_) = args.apart {
-        unimplemented!("--apart not supported")
-    }
     let batch_size: usize = args.batch_size.try_into().expect("usize too small");
     let task = args.cmd.into_task();
     let grouping = args.together.as_ref().map(|pattern| (Grouping::Together, pattern))
         .or_else(|| args.together.as_ref().map(|pattern| (Grouping::Apart, pattern)));
     if let Some((strategy, pattern)) = grouping {
-        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size).await?;
+        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size, args.mixed_groups).await?;
     } else {
+        assert!(!args.mixed_groups, "--mixed-groups not applicable without grouping");
         batched_unfiltered(task, reader, writer, batch_size).await?;
     }
     Ok(())
@@ -65,7 +60,8 @@ async fn batched_filtered_io(
     grouping: Grouping,
     reader: &mut impl LineReader,
     writer: &mut impl LineWriter,
-    batch_size: usize
+    batch_size: usize,
+    mixed_groups: bool,
 ) -> Result<(), String> {
     let mut lines = Vec::new();
     while let Some(line) = reader.read_line().await {
@@ -77,8 +73,8 @@ async fn batched_filtered_io(
         .sorted_by_key(|v| usize::MAX - v.len())
         .collect();
     let batches = match grouping {
-        Grouping::Together => batched_together(groups, remainder, batch_size),
-        Grouping::Apart => batched_apart(groups, remainder, batch_size),
+        Grouping::Together => batched_together(groups, remainder, batch_size, mixed_groups),
+        Grouping::Apart => batched_apart(groups, remainder, batch_size, mixed_groups),
     };
     for (batch_nr, batch) in batches.into_iter().enumerate() {
         debug!("handling batch #{} of size {}, grouped {:?} by {}", batch_nr, batch.len(), grouping, pattern);
@@ -134,7 +130,8 @@ fn group_lines_by_regex(
 fn batched_together(
     groups: Vec<Vec<String>>,
     remainder: Vec<String>,
-    batch_size: usize
+    batch_size: usize,
+    mixed_groups: bool
 ) -> Vec<Vec<String>> {
     let mut batches = Vec::with_capacity(max(8, groups.len()));
     for mut group in groups {
@@ -147,13 +144,15 @@ fn batched_together(
             batch.reverse();
             batches.push(batch)
         }
-        // Insert into the first group that has enough space
-        for batch in &mut batches {
-            if group.len() < batch_size - batch.len() {
-                for line in group.drain(..) {
-                    batch.push(line);
+        if mixed_groups {
+            // Insert into the first group that has enough space
+            for batch in &mut batches {
+                if group.len() < batch_size - batch.len() {
+                    for line in group.drain(..) {
+                        batch.push(line);
+                    }
+                    break
                 }
-                break
             }
         }
         // Any remainder goes into a new batch
@@ -161,16 +160,39 @@ fn batched_together(
             batches.push(group);
         }
     }
-
-    todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    let mut remainder = remainder;
+    remainder.reverse();
+    if mixed_groups {
+        for batch in &mut batches {
+            while batch.len() < batch_size {
+                let Some(line) = remainder.pop() else {
+                    break  // ideally two levels, but whatever
+                };
+                batch.push(line)
+            }
+        }
+    }
+    while ! remainder.is_empty() {
+        let mut batch = Vec::with_capacity(batch_size);
+        for _ in 0..batch_size {
+            let Some(line) = remainder.pop() else {
+                break
+            };
+            batch.push(line)
+        }
+        batch.reverse();
+        batches.push(batch)
+    }
     batches
 }
 
 fn batched_apart(
     groups: Vec<Vec<String>>,
     remainder: Vec<String>,
-    batch_size: usize
+    batch_size: usize,
+    mixed_groups: bool
 ) -> Vec<Vec<String>> {
+    assert!(mixed_groups);
     let mut batches = Vec::new();
 
     todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
@@ -193,7 +215,7 @@ mod tests {
         let mut writer = CollectorWriter::new();
         let out_lines = writer.lines();
         let inp = vec!["a", "b", "c", "d", "e"];
-        let args = BatchedArgs { batch_size: 2, together: None, apart: None, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
+        let args = BatchedArgs { batch_size: 2, together: None, apart: None, mixed_groups: false, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
         let res = batched(args, &mut VecReader::new(inp), &mut writer).await;
         assert!(res.is_err());
         assert_eq!(*out_lines.snapshot().await, vec!["2".to_owned(), "2".to_owned(), "1".to_owned()]);

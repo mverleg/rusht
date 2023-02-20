@@ -19,6 +19,8 @@ pub struct BatchedArgs {
     /// Items having the same value for this regex are put in separate batches (creating extra batches as necessary).
     #[arg(long, conflicts_with = "together")]
     pub apart: Option<Regex>,
+    #[arg(long)]
+    pub mixed_groups: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
@@ -26,6 +28,6 @@ pub struct BatchedArgs {
 #[test]
 fn test_cli_args() {
     BatchedArgs::try_parse_from(&["batched", "-c=2", "wc", "-l",]).unwrap();
-    BatchedArgs::try_parse_from(&["batched", "-c=2", "--apart", "nr([0-9]+)", "implode",]).unwrap();
+    BatchedArgs::try_parse_from(&["batched", "-c=2", "--apart", "nr([0-9]+)", "--mixed-groups", "implode",]).unwrap();
     BatchedArgs::try_parse_from(&["batched", "-c=2", "--together", "^\\w+", "implode",]).unwrap();
 }
