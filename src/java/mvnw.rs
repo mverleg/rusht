@@ -208,7 +208,7 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         modules,
         tests: args.test(),
         lint: !args.no_lint,
-        checkstyle_version: "10.6".to_string(),
+        checkstyle_version: "10.6.0".to_string(),
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
