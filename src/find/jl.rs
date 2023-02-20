@@ -55,12 +55,12 @@ pub async fn list_files(
         };
         if is_first {
             is_first = false;
-            line.push(' ');
         } else {
             if ! args.entry_per_lines {
                 line.push(',');
             }
             writer.write_line(&line).await;
+            line.push(' ');
             line.clear();
         }
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
