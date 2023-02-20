@@ -135,13 +135,13 @@ fn batched_together(
 ) -> Vec<Vec<String>> {
     let mut batches = Vec::with_capacity(max(8, groups.len()));
     for mut group in groups {
+        group.reverse();
         // If the group is too big for a batch, create new batches
         while group.len() > batch_size {
             let mut batch = Vec::with_capacity(batch_size);
             for _ in 0..batch_size {
                 batch.push(group.pop().unwrap());
             }
-            batch.reverse();
             batches.push(batch)
         }
         if mixed_groups {
@@ -157,6 +157,7 @@ fn batched_together(
         }
         // Any remainder goes into a new batch
         if ! group.is_empty() {
+            group.reverse();
             batches.push(group);
         }
     }
@@ -180,7 +181,6 @@ fn batched_together(
             };
             batch.push(line)
         }
-        batch.reverse();
         batches.push(batch)
     }
     batches
@@ -256,32 +256,33 @@ mod tests {
     #[test]
     fn together_pure() {
         let batches = batched_together(
-            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned()]],
-            vec!["e".to_owned(), "f".to_owned(), "g".to_owned(), "h".to_owned(), "i".to_owned()],
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
             false,
         );
         assert_eq!(batches, vec![
             vec!["a".to_owned(), "b".to_owned()],
-            vec!["c".to_owned(), "d".to_owned()],
-            vec!["e".to_owned(), "f".to_owned(), "g".to_owned()],
-            vec!["h".to_owned(), "i".to_owned()],
+            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
+            vec!["f".to_owned()],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned()],
+            vec!["j".to_owned(), "k".to_owned()],
         ]);
     }
 
     #[test]
     fn together_mixed() {
         let batches = batched_together(
-            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned()]],
-            vec!["e".to_owned(), "f".to_owned(), "g".to_owned(), "h".to_owned(), "i".to_owned()],
-            2,
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
+            3,
             true,
         );
         assert_eq!(batches, vec![
-            vec!["a".to_owned(), "b".to_owned(), "e".to_owned()],
-            vec!["c".to_owned(), "d".to_owned(), "f".to_owned()],
-            vec!["g".to_owned(), "h".to_owned()],
-            vec!["i".to_owned()],
+            vec!["a".to_owned(), "b".to_owned(), "g".to_owned()],
+            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
+            vec!["f".to_owned(), "h".to_owned(), "i".to_owned()],
+            vec!["j".to_owned(), "k".to_owned()],
         ]);
     }
 }
