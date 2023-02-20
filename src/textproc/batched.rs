@@ -17,17 +17,22 @@ pub async fn batched(
     }
     let batch_size: usize = args.batch_size.try_into().expect("usize too small");
     let task = args.cmd.into_task();
-    let grouping = args.together.as_ref().map(|pattern| (Grouping::TOGETHER, pattern))
-        .or_else(|| args.together.as_ref().map(|pattern| (Grouping::APART, pattern)));
+    let grouping = args.together.as_ref().map(|pattern| (Grouping::Together, pattern))
+        .or_else(|| args.together.as_ref().map(|pattern| (Grouping::Apart, pattern)));
     if let Some((strategy, pattern)) = grouping {
-        batched_filtered_io(task, reader, writer, batch_size).await;
+        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size).await;
     } else {
         batched_unfiltered(task, reader, writer, batch_size).await;
     }
     Ok(())
 }
 
-async fn batched_unfiltered(task: Task, reader: &mut impl LineReader, writer: &mut impl LineWriter, batch_size: usize) {
+async fn batched_unfiltered(
+    task: Task, reader:
+    &mut impl LineReader, writer:
+    &mut impl LineWriter,
+    batch_size: usize
+) -> Result<(), String> {
     let mut batch = Vec::with_capacity(batch_size);
     let mut batch_nr = 0;
     while let Some(line) = reader.read_line().await {
@@ -44,12 +49,38 @@ async fn batched_unfiltered(task: Task, reader: &mut impl LineReader, writer: &m
         debug!("handling last batch #{} of size {} (limit {})", batch_nr, batch.len(), batch_size);
         run_batch(&batch, &task, writer).await?;
     }
+    Ok(())
 }
 
-enum Grouping { TOGETHER, APART }
+#[derive(Debug)]
+enum Grouping { Together, Apart }
 
-async fn batched_filtered(task: Task, pattern: &Regex, grouping: Grouping, batch_size: usize) -> Vec<Vec<String>> {
-    //TODO @mverleg:
+async fn batched_filtered_io(
+    task: Task, pattern: &Regex,
+    grouping: Grouping,
+    reader: &mut impl LineReader,
+    writer: &mut impl LineWriter,
+    batch_size: usize
+) -> Result<(), String> {
+    let mut lines = Vec::new();
+    while let Some(line) = reader.read_line().await {
+        lines.push(line.to_owned())
+    }
+    let batches = batched_filtered(lines, pattern, grouping, batch_size);
+    for (batch_nr, batch) in batches.into_iter().enumerate() {
+        debug!("handling batch #{} of size {}, grouped {:?} by {}", batch_nr, batch.len(), grouping, pattern);
+        run_batch(&batch, &task, writer).await?;
+    }
+    Ok(())
+}
+
+fn batched_filtered(
+    lines: Vec<String>,
+    pattern: &Regex,
+    grouping: Grouping,
+    batch_size: usize
+) -> Vec<Vec<String>> {
+    todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
 
     // let mut batch = Vec::with_capacity(batch_size);
     // let mut batch_nr = 0;
