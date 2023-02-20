@@ -1,6 +1,8 @@
+use std::cmp::max;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use ::log::debug;
+use itertools::Itertools;
 use regex::Regex;
 
 use crate::common::{LineReader, LineWriter, StdWriter, Task};
@@ -68,10 +70,14 @@ async fn batched_filtered_io(
     while let Some(line) = reader.read_line().await {
         lines.push(line.to_owned())
     }
-    let groups = group_lines_by_regex(lines, pattern);
+    let (groups, remainder) = group_lines_by_regex(lines, pattern);
+    let groups = groups.into_iter()
+        .map(|(k, v)| v)
+        .sorted_by_key(|v| usize::MAX - v.len())
+        .collect();
     let batches = match grouping {
-        Grouping::Together => batched_together(groups.0, groups.1, batch_size),
-        Grouping::Apart => batched_apart(groups.0, groups.1, batch_size),
+        Grouping::Together => batched_together(groups, remainder, batch_size),
+        Grouping::Apart => batched_apart(groups, remainder, batch_size),
     };
     for (batch_nr, batch) in batches.into_iter().enumerate() {
         debug!("handling batch #{} of size {}, grouped {:?} by {}", batch_nr, batch.len(), grouping, pattern);
@@ -125,19 +131,25 @@ fn group_lines_by_regex(
 }
 
 fn batched_together(
-    groups: HashMap<String, Vec<String>>,
+    groups: Vec<Vec<String>>,
     remainder: Vec<String>,
     batch_size: usize
 ) -> Vec<Vec<String>> {
+    let mut batches = Vec::with_capacity(max(8, groups.len()));
+
     todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    batches
 }
 
 fn batched_apart(
-    groups: HashMap<String, Vec<String>>,
+    groups: Vec<Vec<String>>,
     remainder: Vec<String>,
     batch_size: usize
 ) -> Vec<Vec<String>> {
+    let mut batches = Vec::new();
+
     todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    batches
 }
 
 async fn run_batch(batch: &[String], task: &Task, writer: &mut impl LineWriter) -> Result<(), String> {
