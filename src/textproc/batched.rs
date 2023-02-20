@@ -19,7 +19,7 @@ pub async fn batched(
     let grouping = args.together.as_ref().map(|pattern| (Grouping::Together, pattern))
         .or_else(|| args.together.as_ref().map(|pattern| (Grouping::Apart, pattern)));
     if let Some((strategy, pattern)) = grouping {
-        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size, args.mixed_groups).await?;
+        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size, args.mixed_groups, args.drop_unmatched).await?;
     } else {
         assert!(!args.mixed_groups, "--mixed-groups not applicable without grouping");
         batched_unfiltered(task, reader, writer, batch_size).await?;
@@ -62,16 +62,22 @@ async fn batched_filtered_io(
     writer: &mut impl LineWriter,
     batch_size: usize,
     mixed_groups: bool,
+    drop_unmatched: bool,
 ) -> Result<(), String> {
     let mut lines = Vec::new();
     while let Some(line) = reader.read_line().await {
         lines.push(line.to_owned())
     }
-    let (groups, remainder) = group_lines_by_regex(lines, pattern);
+    let (groups, mut remainder) = group_lines_by_regex(lines, pattern);
     let groups = groups.into_iter()
         .map(|(k, v)| v)
         .sorted_by_key(|v| usize::MAX - v.len())
         .collect();
+    if drop_unmatched && ! remainder.is_empty() {
+        debug!("dropping {} remaining items", remainder.len());
+        remainder.clear();
+
+    }
     let batches = match grouping {
         Grouping::Together => batched_together(groups, remainder, batch_size, mixed_groups),
         Grouping::Apart => batched_apart(groups, remainder, batch_size, mixed_groups),

@@ -19,8 +19,12 @@ pub struct BatchedArgs {
     /// Items having the same value for this regex are put in separate batches (creating extra batches as necessary).
     #[arg(long, conflicts_with = "together")]
     pub apart: Option<Regex>,
+    /// Allow different groups and remaining items in the same batch, if it can be done without extra splitting.
     #[arg(long)]
     pub mixed_groups: bool,
+    /// Drop any items that do not match the regex, they are not included in any batch.
+    #[arg(long)]
+    pub drop_unmatched: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
