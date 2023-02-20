@@ -2,7 +2,6 @@ use std::cmp::max;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use ::log::debug;
-use async_std::stream::Extend;
 use itertools::Itertools;
 use regex::Regex;
 
@@ -70,7 +69,7 @@ async fn batched_filtered_io(
     }
     let (groups, mut remainder) = group_lines_by_regex(lines, pattern);
     let groups = groups.into_iter()
-        .map(|(k, v)| v)
+        .map(|(_, val)| val)
         .sorted_by_key(|v| usize::MAX - v.len())
         .collect();
     if drop_unmatched && ! remainder.is_empty() {
@@ -228,7 +227,7 @@ fn batched_apart(
             }
         }
     }
-    while let Some(line) = remainder.pop() {
+    while ! remainder.is_empty() {
         let mut batch = Vec::with_capacity(batch_size);
         while batch.len() < batch_size {
             let Some(line) = remainder.pop() else {
@@ -300,6 +299,7 @@ mod tests {
     #[test]
     fn together_pure() {
         let batches = batched_together(
+            // groups would actually appear in decreasing order of length, but this order is useful for test
             vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
@@ -317,6 +317,7 @@ mod tests {
     #[test]
     fn together_mixed() {
         let batches = batched_together(
+            // groups would actually appear in decreasing order of length, but this order is useful for test
             vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
@@ -333,14 +334,16 @@ mod tests {
     #[test]
     fn apart_pure() {
         let batches = batched_apart(
+            // groups would actually appear in decreasing order of length, but this order is useful for test
             vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
             false,
         );
         assert_eq!(batches, vec![
-            vec!["a".to_owned(), "b".to_owned()],
-            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
+            vec!["a".to_owned(), "c".to_owned()],
+            vec!["b".to_owned(), "d".to_owned()],
+            vec!["e".to_owned()],
             vec!["f".to_owned()],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned()],
             vec!["j".to_owned(), "k".to_owned()],
@@ -350,16 +353,17 @@ mod tests {
     #[test]
     fn apart_mixed() {
         let batches = batched_apart(
+            // groups would actually appear in decreasing order of length, but this order is useful for test
             vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
             true,
         );
         assert_eq!(batches, vec![
-            vec!["a".to_owned(), "b".to_owned(), "g".to_owned()],
-            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
-            vec!["f".to_owned(), "h".to_owned(), "i".to_owned()],
-            vec!["j".to_owned(), "k".to_owned()],
+            vec!["a".to_owned(), "c".to_owned(), "g".to_owned()],
+            vec!["b".to_owned(), "d".to_owned(), "h".to_owned()],
+            vec!["e".to_owned(), "i".to_owned(), "j".to_owned()],
+            vec!["f".to_owned(), "k".to_owned()],
         ]);
     }
 }
