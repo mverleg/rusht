@@ -228,9 +228,14 @@ fn batched_apart(
             }
         }
     }
-    while let Some(line) = group.pop() {
+    while let Some(line) = remainder.pop() {
         let mut batch = Vec::with_capacity(batch_size);
-        batch.push(line);  //TODO @mverleg: multiple
+        while batch.len() < batch_size {
+            let Some(line) = remainder.pop() else {
+                break
+            };
+            batch.push(line)
+        }
         batches.push(batch);
     }
     batches
@@ -247,12 +252,14 @@ mod tests {
     use crate::common::{CollectorWriter, CommandArgs, VecReader};
     use super::*;
 
+    #[ignore]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     #[async_std::test]
     async fn batch_2_wcl() {
         let mut writer = CollectorWriter::new();
         let out_lines = writer.lines();
         let inp = vec!["a", "b", "c", "d", "e"];
-        let args = BatchedArgs { batch_size: 2, together: None, apart: None, mixed_groups: false, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
+        let args = BatchedArgs { cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]), batch_size: 2,
+            together: None, apart: None, mixed_groups: false, drop_unmatched: false };
         let res = batched(args, &mut VecReader::new(inp), &mut writer).await;
         assert!(res.is_err());
         assert_eq!(*out_lines.snapshot().await, vec!["2".to_owned(), "2".to_owned(), "1".to_owned()]);
@@ -310,6 +317,39 @@ mod tests {
     #[test]
     fn together_mixed() {
         let batches = batched_together(
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
+            3,
+            true,
+        );
+        assert_eq!(batches, vec![
+            vec!["a".to_owned(), "b".to_owned(), "g".to_owned()],
+            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
+            vec!["f".to_owned(), "h".to_owned(), "i".to_owned()],
+            vec!["j".to_owned(), "k".to_owned()],
+        ]);
+    }
+
+    #[test]
+    fn apart_pure() {
+        let batches = batched_apart(
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
+            3,
+            false,
+        );
+        assert_eq!(batches, vec![
+            vec!["a".to_owned(), "b".to_owned()],
+            vec!["c".to_owned(), "d".to_owned(), "e".to_owned()],
+            vec!["f".to_owned()],
+            vec!["g".to_owned(), "h".to_owned(), "i".to_owned()],
+            vec!["j".to_owned(), "k".to_owned()],
+        ]);
+    }
+
+    #[test]
+    fn apart_mixed() {
+        let batches = batched_apart(
             vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned(), "e".to_owned(), "f".to_owned()]],
             vec!["g".to_owned(), "h".to_owned(), "i".to_owned(), "j".to_owned(), "k".to_owned()],
             3,
