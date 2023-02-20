@@ -164,10 +164,10 @@ fn batched_together(
     let mut remainder = remainder;
     remainder.reverse();
     if mixed_groups {
-        for batch in &mut batches {
+        'outer: for batch in &mut batches {
             while batch.len() < batch_size {
                 let Some(line) = remainder.pop() else {
-                    break  // ideally two levels, but whatever
+                    break 'outer
                 };
                 batch.push(line)
             }
@@ -192,10 +192,41 @@ fn batched_apart(
     batch_size: usize,
     mixed_groups: bool
 ) -> Vec<Vec<String>> {
-    assert!(mixed_groups);
-    let mut batches = Vec::new();
-
-    todo!();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+    let capacity = max(remainder.len(), groups.get(0).map(|g| g.len()).unwrap_or(1));
+    let mut batches: Vec<Vec<String>> = Vec::with_capacity(capacity);
+    'outer: for mut group in groups {
+        group.reverse();
+        for batch in &mut batches {
+            if batch.len() < batch_size {
+                let Some(line) = group.pop() else {
+                    break 'outer
+                };
+                batch.push(line)
+            }
+        }
+        while let Some(line) = group.pop() {
+            let mut batch = Vec::with_capacity(batch_size);
+            batch.push(line);
+            batches.push(batch);
+        }
+    }
+    let mut remainder = remainder;
+    remainder.reverse();
+    if mixed_groups {
+        for batch in &mut batches {
+            while batch.len() < batch_size {
+                let Some(line) = remainder.pop() else {
+                    break
+                };
+                batch.push(line)
+            }
+        }
+    }
+    while let Some(line) = group.pop() {
+        let mut batch = Vec::with_capacity(batch_size);
+        batch.push(line);  //TODO @mverleg: multiple
+        batches.push(batch);
+    }
     batches
 }
 
