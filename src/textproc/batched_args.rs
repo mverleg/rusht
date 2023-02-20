@@ -26,6 +26,6 @@ pub struct BatchedArgs {
 #[test]
 fn test_cli_args() {
     BatchedArgs::try_parse_from(&["batched", "-c=2", "wc", "-l",]).unwrap();
-    BatchedArgs::try_parse_from(&["batched", "-c=2", "--apart", "[0-9]+", "implode",]).unwrap();
+    BatchedArgs::try_parse_from(&["batched", "-c=2", "--apart", "nr([0-9]+)", "implode",]).unwrap();
     BatchedArgs::try_parse_from(&["batched", "-c=2", "--together", "^\\w+", "implode",]).unwrap();
 }
