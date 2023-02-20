@@ -252,4 +252,36 @@ mod tests {
             "  ".to_owned(),
         ]
     }
+
+    #[test]
+    fn together_pure() {
+        let batches = batched_together(
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned()]],
+            vec!["e".to_owned(), "f".to_owned(), "g".to_owned(), "h".to_owned(), "i".to_owned()],
+            3,
+            false,
+        );
+        assert_eq!(batches, vec![
+            vec!["a".to_owned(), "b".to_owned()],
+            vec!["c".to_owned(), "d".to_owned()],
+            vec!["e".to_owned(), "f".to_owned(), "g".to_owned()],
+            vec!["h".to_owned(), "i".to_owned()],
+        ]);
+    }
+
+    #[test]
+    fn together_mixed() {
+        let batches = batched_together(
+            vec![vec!["a".to_owned(), "b".to_owned()], vec!["c".to_owned(), "d".to_owned()]],
+            vec!["e".to_owned(), "f".to_owned(), "g".to_owned(), "h".to_owned(), "i".to_owned()],
+            2,
+            true,
+        );
+        assert_eq!(batches, vec![
+            vec!["a".to_owned(), "b".to_owned(), "e".to_owned()],
+            vec!["c".to_owned(), "d".to_owned(), "f".to_owned()],
+            vec!["g".to_owned(), "h".to_owned()],
+            vec!["i".to_owned()],
+        ]);
+    }
 }
