@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use ::log::debug;
-use regex::{Match, Regex};
+use regex::Regex;
 
 use crate::common::{LineReader, LineWriter, StdWriter, Task};
 use crate::textproc::batched_args::BatchedArgs;
@@ -22,9 +22,9 @@ pub async fn batched(
     let grouping = args.together.as_ref().map(|pattern| (Grouping::Together, pattern))
         .or_else(|| args.together.as_ref().map(|pattern| (Grouping::Apart, pattern)));
     if let Some((strategy, pattern)) = grouping {
-        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size).await;
+        batched_filtered_io(task, pattern, strategy, reader, writer, batch_size).await?;
     } else {
-        batched_unfiltered(task, reader, writer, batch_size).await;
+        batched_unfiltered(task, reader, writer, batch_size).await?;
     }
     Ok(())
 }
@@ -118,46 +118,8 @@ fn group_lines_by_regex(
         };
         match groups.entry(group) {
             Entry::Occupied(mut existing) => existing.get_mut().push(line),
-            Entry::Vacant(mut new) => new.insert(vec![line]),
+            Entry::Vacant(new) => { new.insert(vec![line]); },
         }
-        // let Some(matches) =  pattern.captures(&line) else {
-        //     // not matched, add complete line to remainder
-        //     remainder.push(line);
-        //     continue
-        // };
-        // let key = matches.iter().next().expect("first group is full match, exists")
-        // for matc in matches.iter().take(2) {
-        //
-        // }
-        // let Some(first_match) = matches.iter().next() else {
-        //     // not groups, use full regex match as a group
-        //     groups.entry(matches.unwrap().unwrap().as_str().to_owned());
-        //     continue
-        // };
-        //
-        // for captures in pattern.captures(&line) {
-        //     any_matches = true;
-        //     let mut caps = captures.iter();
-        //     let full_match = caps.next().unwrap().unwrap().as_str().to_owned();
-        //     let mut any_groups = false;
-        //     // Within a pattern match, iterate over the capture groups
-        //     for mtch_opt in caps {
-        //         any_groups = true;
-        //         if let Some(mtch) = mtch_opt {
-        //             writer.write_line(mtch.as_str()).await;
-        //             match_cnt += 1
-        //         }
-        //         if first_capture_only {
-        //             break;
-        //         }
-        //     }
-        //     if !any_groups {
-        //         writer.write_line(full_match).await;
-        //     }
-        //     if first_match_only {
-        //         break;
-        //     }
-        // }
     }
     (groups, remainder)
 }
@@ -198,5 +160,21 @@ mod tests {
         let res = batched(args, &mut VecReader::new(inp), &mut writer).await;
         assert!(res.is_err());
         assert_eq!(*out_lines.snapshot().await, vec!["2".to_owned(), "2".to_owned(), "1".to_owned()]);
+    }
+
+    #[test]
+    fn group_by_re() {
+        let lines = vec![
+            "hello world".to_owned(),
+            "hello moon".to_owned(),
+            "good night moon".to_owned(),
+            "  ".to_owned(),
+        ];
+        let re = Regex::new("^\\w+").unwrap();
+        let (groups, remainder) = group_lines_by_regex(lines, &re);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups.get("hello").unwrap(), &["hello world".to_owned(), "hello moon".to_owned()]);
+        assert_eq!(groups.get("good").unwrap(), &["good night moon".to_owned()]);
+        assert_eq!(remainder, vec!["  ".to_owned()]);
     }
 }
