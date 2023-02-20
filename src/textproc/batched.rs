@@ -8,6 +8,12 @@ pub async fn batched(
     reader: &mut impl LineReader,
     writer: &mut impl LineWriter,
 ) -> Result<(), String> {
+    if let Some(_) = args.together {
+        unimplemented!("--together not supported")
+    }
+    if let Some(_) = args.apart {
+        unimplemented!("--apart not supported")
+    }
     let batch_size: usize = args.batch_size.try_into().expect("usize too small");
     let mut batch = Vec::with_capacity(batch_size);
     let task = args.cmd.into_task();
@@ -45,7 +51,7 @@ mod tests {
         let mut writer = CollectorWriter::new();
         let out_lines = writer.lines();
         let inp = vec!["a", "b", "c", "d", "e"];
-        let args = BatchedArgs { batch_size: 2, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
+        let args = BatchedArgs { batch_size: 2, together: None, apart: None, cmd: CommandArgs::Cmd(vec!["wc".to_owned(), "-l".to_owned()]) };
         let res = batched(args, &mut VecReader::new(inp), &mut writer).await;
         assert!(res.is_err());
         assert_eq!(*out_lines.snapshot().await, vec!["2".to_owned(), "2".to_owned(), "1".to_owned()]);
