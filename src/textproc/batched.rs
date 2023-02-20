@@ -164,17 +164,33 @@ mod tests {
 
     #[test]
     fn group_by_re() {
-        let lines = vec![
-            "hello world".to_owned(),
-            "hello moon".to_owned(),
-            "good night moon".to_owned(),
-            "  ".to_owned(),
-        ];
+        let lines = make_test_lines();
         let re = Regex::new("^\\w+").unwrap();
         let (groups, remainder) = group_lines_by_regex(lines, &re);
         assert_eq!(groups.len(), 2);
         assert_eq!(groups.get("hello").unwrap(), &["hello world".to_owned(), "hello moon".to_owned()]);
-        assert_eq!(groups.get("good").unwrap(), &["good night moon".to_owned()]);
+        assert_eq!(groups.get("good").unwrap(), &["good night moon".to_owned(), "good".to_owned()]);
         assert_eq!(remainder, vec!["  ".to_owned()]);
+    }
+
+    #[test]
+    fn group_by_re_group() {
+        let lines = make_test_lines();
+        let re = Regex::new("^\\w+.* (\\w+)$").unwrap();
+        let (groups, remainder) = group_lines_by_regex(lines, &re);
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups.get("world").unwrap(), &["hello world".to_owned()]);
+        assert_eq!(groups.get("moon").unwrap(), &["hello moon".to_owned(), "good night moon".to_owned(),]);
+        assert_eq!(remainder, vec!["good".to_owned(), "  ".to_owned()]);
+    }
+
+    fn make_test_lines() -> Vec<String> {
+        vec![
+            "hello world".to_owned(),
+            "hello moon".to_owned(),
+            "good night moon".to_owned(),
+            "good".to_owned(),
+            "  ".to_owned(),
+        ]
     }
 }
