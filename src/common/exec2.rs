@@ -71,24 +71,80 @@ where
         }
     }
 
-    pub async fn start(self) {
+    pub async fn build(self) -> Execution<'a, I, O, E> {
         let ExecutionBuilder { task, inp, out, err } = self;
-        let command = match (inp, out, err) {
-            (Some(inp), Some(out), Some(err)) => create_proc_command(task, inp, out, err).await,
-            (Some(inp), Some(out), None) => create_proc_command(task, inp, out, &mut StdWriter::stderr()).await,
-            (Some(inp), None, Some(err)) => create_proc_command(task, inp, &mut StdWriter::stdout(), err).await,
-            (None, Some(out), Some(err)) => create_proc_command(task, &mut RejectStdin::new(), out, err).await,
-            (Some(inp), None, None) => create_proc_command(task, inp, &mut StdWriter::stdout(), &mut StdWriter::stderr()).await,
-            (None, None, Some(err)) => create_proc_command(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), err).await,
-            (None, Some(out), None) => create_proc_command(task, &mut RejectStdin::new(), out, &mut StdWriter::stderr()).await,
-            (None, None, None) => create_proc_command(task, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()).await,
+        let cmd = create_proc_command(task, inp.is_some(), out.is_some(), err.is_some());
+        let execution = match (inp, out, err) {
+            (Some(inp), Some(out), Some(err)) => Execution { cmd, inp, out, err },
+            (Some(inp), Some(out), None) => Execution { cmd, inp, out, err: &mut StdWriter::stderr() },
+            (Some(inp), None, Some(err)) => Execution { cmd, inp, out: &mut StdWriter::stdout(), err },
+            (None, Some(out), Some(err)) => Execution { cmd, inp: &mut RejectStdin::new(), out, err },
+            (Some(inp), None, None) => Execution { cmd, inp, out: &mut StdWriter::stdout(), err: &mut StdWriter::stderr() },
+            (None, None, Some(err)) => Execution { cmd, inp: &mut RejectStdin::new(), out: &mut StdWriter::stdout(), err },
+            (None, Some(out), None) => Execution { cmd, inp: &mut RejectStdin::new(), out, err: &mut StdWriter::stderr() },
+            (None, None, None) => Execution { cmd, inp: &mut RejectStdin::new(), out: &mut StdWriter::stdout(), err: &mut StdWriter::stderr() },
         };
-        todo!()
+        execution
     }
 }
 
-async fn create_proc_command<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err: &mut E) -> Command
-        where I: LineReader, O: LineWriter, E: LineWriter {
+#[derive(Debug)]
+pub struct Execution<'a, I, O, E>
+    where
+        I: LineReader,
+        O: LineWriter,
+        E: LineWriter,
+{
+    cmd: Command,
+    inp: &'a mut I,
+    out: &'a mut O,
+    err: &'a mut E,
+}
+
+impl<'a> Execution<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::Stderr>> {
+    async fn run(self) -> Result<ExitStatus, String> {
+        let Execution { mut cmd, inp, out, err } = self;
+        cmd.spawn();
+        //
+        // // note: cannot log with async_std because it does not expose getters on Command
+        // // debug!("command to run: '{}' {}", base_cmd.get_program().to_string_lossy(),
+        // //     base_cmd.get_args().map(|a| format!("\"{}\"", a.to_string_lossy())).join(" "));
+        // let mut child = base_cmd
+        //     .current_dir(&self.working_dir)
+        //     .envs(&self.extra_envs)
+        //     .stdout(Stdio::piped())
+        //     .stderr(Stdio::piped())
+        //     .spawn()
+        //     .map_err(|err| {
+        //         format!(
+        //             "failed to start command '{}', error {}",
+        //             self.as_cmd_str(),
+        //             err
+        //         )
+        //     })?;
+        //
+        // // This uses threads because async_std spawn did not have scoped tasks, so writer needs to be 'static, which it is not
+        // thread::scope(move |scope| {
+        //     let proc_out = child.stdout.take().unwrap();
+        //     let proc_err = child.stderr.take().unwrap();
+        //     let out_task = scope.spawn(move || forward_out(proc_out, out_writer));
+        //     let err_task = scope.spawn(move || forward_out(proc_err, err_writer));
+        //     //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
+        //     let status = block_on(child.status()).map_err(|err| {
+        //         format!(
+        //             "failed to finish command '{}', error {}",
+        //             self.as_cmd_str(),
+        //             err
+        //         )
+        //     })?;
+        //     out_task.join().expect("thread panic")?;
+        //     err_task.join().expect("thread panic")?;
+        //     Ok(ExitStatus::of_code(status.code()))
+        // })
+    }
+}
+
+fn create_proc_command(task: &Task, capture_inp: bool, capture_out: bool, capture_err: bool) -> Command {
     let Task { cmd, args, working_dir, extra_envs } = task;
     let mut command = if env::var(USE_SHELL_ENV_NAME).is_ok() {
         debug!("using shell execution mode (because {USE_SHELL_ENV_NAME} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
@@ -97,7 +153,7 @@ async fn create_proc_command<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err
             .map(|arg| format!("'{}'", arg))
             .join(" ");
         let mut c = Command::new("sh");
-        c.args(&["-c".to_owned(), joined_cmd])
+        c.args(&["-c".to_owned(), joined_cmd]);
         c
     } else {
         debug!("not using shell execution mode (because {USE_SHELL_ENV_NAME} is not set); this is the safe way but may be slower");
@@ -107,10 +163,16 @@ async fn create_proc_command<I, O, E>(task: &Task, inp: &mut I, out: &mut O, err
     };
     command
         .current_dir(working_dir)
-        .envs(extra_envs)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .envs(extra_envs);
+    if capture_inp {
+        command.stdin(Stdio::piped())
+    }
+    if capture_out {
+        command.stdout(Stdio::piped())
+    }
+    if capture_err {
+        command.stderr(Stdio::piped());
+    }
     command
 }
 
@@ -260,7 +322,7 @@ mod tests {
                 "wc -l && echo error message >&2".to_owned(),
             ]);
         let exec = ExecutionBuilder::of(&task)
-            .start();
+            .build();
     }
 
     #[test]
@@ -277,6 +339,6 @@ mod tests {
             .input(&mut reader)
             .output(&mut out_writer)
             .err_output(&mut err_writer)
-            .start();
+            .build();
     }
 }
