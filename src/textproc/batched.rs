@@ -251,7 +251,6 @@ mod tests {
     use crate::common::{CollectorWriter, CommandArgs, VecReader};
     use super::*;
 
-    #[ignore]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     #[async_std::test]
     async fn batch_2_wcl() {
         let mut writer = CollectorWriter::new();
