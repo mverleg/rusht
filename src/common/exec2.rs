@@ -71,20 +71,20 @@ where
         }
     }
 
-    pub async fn build(self) -> Execution<'a, I, O, E> {
+    pub async fn start(self) -> Execution<'a, I, O, E> {
         let ExecutionBuilder { task, inp, out, err } = self;
-        let cmd = create_proc_command(task, inp.is_some(), out.is_some(), err.is_some());
-        let execution = match (inp, out, err) {
-            (Some(inp), Some(out), Some(err)) => Execution { cmd, inp, out, err },
-            (Some(inp), Some(out), None) => Execution { cmd, inp, out, err: &mut StdWriter::stderr() },
-            (Some(inp), None, Some(err)) => Execution { cmd, inp, out: &mut StdWriter::stdout(), err },
-            (None, Some(out), Some(err)) => Execution { cmd, inp: &mut RejectStdin::new(), out, err },
-            (Some(inp), None, None) => Execution { cmd, inp, out: &mut StdWriter::stdout(), err: &mut StdWriter::stderr() },
-            (None, None, Some(err)) => Execution { cmd, inp: &mut RejectStdin::new(), out: &mut StdWriter::stdout(), err },
-            (None, Some(out), None) => Execution { cmd, inp: &mut RejectStdin::new(), out, err: &mut StdWriter::stderr() },
-            (None, None, None) => Execution { cmd, inp: &mut RejectStdin::new(), out: &mut StdWriter::stdout(), err: &mut StdWriter::stderr() },
+        let cmd = create_proc_command(task);
+        match (inp, out, err) {
+            (Some(inp), Some(out), Some(err)) => run_proc_command(cmd, inp, out, err),
+            (Some(inp), Some(out), None) => run_proc_command(cmd, inp, out, &mut StdWriter::stderr()),
+            (Some(inp), None, Some(err)) => run_proc_command(cmd, inp, &mut StdWriter::stdout(), err),
+            (None, Some(out), Some(err)) => run_proc_command(cmd, &mut RejectStdin::new(), out, err),
+            (Some(inp), None, None) => run_proc_command(cmd, inp, &mut StdWriter::stdout(), &mut StdWriter::stderr()),
+            (None, None, Some(err)) => run_proc_command(cmd, &mut RejectStdin::new(), &mut StdWriter::stdout(), err),
+            (None, Some(out), None) => run_proc_command(cmd, &mut RejectStdin::new(), out, &mut StdWriter::stderr()),
+            (None, None, None) => run_proc_command(cmd, &mut RejectStdin::new(), &mut StdWriter::stdout(), &mut StdWriter::stderr()),
         };
-        execution
+        todo!()
     }
 }
 
@@ -144,7 +144,7 @@ impl<'a> Execution<'a, RejectStdin, StdWriter<io::Stdout>, StdWriter<io::Stderr>
     }
 }
 
-fn create_proc_command(task: &Task, capture_inp: bool, capture_out: bool, capture_err: bool) -> Command {
+fn create_proc_command(task: &Task) -> Command {
     let Task { cmd, args, working_dir, extra_envs } = task;
     let mut command = if env::var(USE_SHELL_ENV_NAME).is_ok() {
         debug!("using shell execution mode (because {USE_SHELL_ENV_NAME} is set); this is inexplicably much faster for mvn, but may cause escaping issues");
@@ -163,16 +163,10 @@ fn create_proc_command(task: &Task, capture_inp: bool, capture_out: bool, captur
     };
     command
         .current_dir(working_dir)
-        .envs(extra_envs);
-    if capture_inp {
-        command.stdin(Stdio::piped())
-    }
-    if capture_out {
-        command.stdout(Stdio::piped())
-    }
-    if capture_err {
-        command.stderr(Stdio::piped());
-    }
+        .envs(extra_envs)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     command
 }
 
@@ -305,40 +299,3 @@ fn reject_quotes(text: &str) {
 //     }
 //     Ok(())
 // }
-
-#[cfg(test)]
-mod tests {
-    //TODO @mverleg: move down?
-
-    use crate::common::{FirstItemWriter, VecReader};
-
-    use super::*;
-
-    #[test]
-    fn build_without_inouterr() {
-        let task = Task::new_in_cwd(
-            "sh".to_owned(), vec![
-                "-c".to_owned(),
-                "wc -l && echo error message >&2".to_owned(),
-            ]);
-        let exec = ExecutionBuilder::of(&task)
-            .build();
-    }
-
-    #[test]
-    fn build_with_inouterr() {
-        let mut reader = VecReader::new(vec!["line1", "line2"]);
-        let mut out_writer = FirstItemWriter::new();
-        let mut err_writer = FirstItemWriter::new();
-        let task = Task::new_in_cwd(
-            "sh".to_owned(), vec![
-                "-c".to_owned(),
-                "wc -l && echo error message >&2".to_owned(),
-            ]);
-        let exec = ExecutionBuilder::of(&task)
-            .input(&mut reader)
-            .output(&mut out_writer)
-            .err_output(&mut err_writer)
-            .build();
-    }
-}
