@@ -31,7 +31,7 @@ mod cmd_args;
 mod dependent;
 mod err;
 mod exec;
-mod exec2;
+//mod exec2;  //TODO @mverleg: ENABLE
 mod git;
 mod re;
 mod read;

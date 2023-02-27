@@ -7,12 +7,13 @@ use super::CachedArgs;
 
 pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
     let verbose = args.verbose;
+    let exit_code = args.exit_code;
     let show_cached_output = !args.no_cached_output;
     let mut writer = StdWriter::stdout();
     match cached(args, &mut writer).await {
         Ok(status) => match status {
             CacheStatus::RanSuccessfully => {
-                if args.exit_code {
+                if exit_code {
                     if verbose {
                         eprintln!("successfully ran, but --exit-code was provided, so failing exit code")
                     }
