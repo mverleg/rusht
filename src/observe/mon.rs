@@ -60,19 +60,19 @@ pub async fn mon_task(
                 // approximate for non-ascii
                 writer
                     .write_line(format!(
-                        "took {} ms to run {}...",
+                        "success: took {} ms to run {}...",
                         duration,
                         cmd_str.chars().take(256).collect::<String>()
                     ))
                     .await;
             } else {
                 writer
-                    .write_line(format!("took {} ms to run {}", duration, cmd_str))
+                    .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
                     .await;
             }
         } else {
             eprintln!(
-                "command {} FAILED in {} ms (code {})",
+                "FAILED command {} in {} ms (code {})",
                 cmd_str,
                 duration,
                 status.code()

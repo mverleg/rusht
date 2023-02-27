@@ -12,11 +12,17 @@ pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
     match cached(args, &mut writer).await {
         Ok(status) => match status {
             CacheStatus::RanSuccessfully => {
-                if verbose {
-                    eprintln!("successfully ran")
-                    //TODO @mverleg: better msg?
+                if args.exit_code {
+                    if verbose {
+                        eprintln!("successfully ran, but --exit-code was provided, so failing exit code")
+                    }
+                    ExitStatus::err()
+                } else {
+                    if verbose {
+                        eprintln!("successfully ran")
+                    }
+                    ExitStatus::ok()
                 }
-                ExitStatus::ok()
             }
             CacheStatus::FromCache(out) => {
                 if show_cached_output && !out.is_empty() {

@@ -31,6 +31,9 @@ pub struct CachedArgs {
     /// When loading from cache, do not show the previous output.
     #[arg(short = 's', long)]
     pub no_cached_output: bool,
+    /// Use exit code 0 if the command is cached, and exit code 255 if it ran successfully.
+    #[arg(short = 'e', long)]
+    pub exit_code: bool,
     #[arg(short = 'v', long)]
     pub verbose: bool,
     #[command(subcommand)]
