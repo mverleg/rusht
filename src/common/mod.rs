@@ -19,6 +19,7 @@ pub use self::stdin::stdin_lines;
 pub use self::task::Task;
 pub use self::which::resolve_executable;
 pub use self::write::CollectorWriter;
+pub use self::write::DiscardWriter;
 pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
 pub use self::write::RegexWatcherWriter;

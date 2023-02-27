@@ -26,6 +26,9 @@ pub struct GrabArgs {
     /// Maximum number of matching lines
     #[arg(short = 'n', long)]
     pub max_lines: Option<u32>,
+    /// Exit with code 1 if there is no match, and suppress output
+    #[arg(short = 'e', long)]
+    pub exit_code: bool,
 }
 
 impl Default for GrabArgs {
@@ -36,6 +39,7 @@ impl Default for GrabArgs {
             first_capture_only: false,
             keep_unmatched: false,
             max_lines: None,
+            exit_code: false,
         }
     }
 }

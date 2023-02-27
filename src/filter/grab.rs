@@ -7,7 +7,7 @@ pub async fn grab(
     args: GrabArgs,
     mut reader: impl LineReader,
     mut writer: impl LineWriter,
-) -> Result<(), String> {
+) -> Result<u32, String> {
     if let Some(max) = args.max_lines {
         assert!(max > 0);
     }
@@ -32,7 +32,7 @@ pub async fn grab(
             }
         }
     }
-    Ok(())
+    Ok(match_cnt)
 }
 
 #[cfg(test)]
@@ -248,6 +248,7 @@ mod tests {
                 first_match_only: true,
                 first_capture_only: true,
                 max_lines: None,
+                exit_code: false,
             },
             input,
             expected,

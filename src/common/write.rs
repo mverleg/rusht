@@ -174,6 +174,28 @@ impl LineWriter for FirstItemWriter {
     }
 }
 
+#[derive(Debug)]
+pub struct DiscardWriter();
+
+impl DiscardWriter {
+    pub fn new() -> Self {
+        DiscardWriter()
+    }
+}
+
+impl Default for DiscardWriter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl LineWriter for DiscardWriter {
+    async fn write_line(&mut self, _line: impl AsRef<str> + Send) {
+        // drop line
+    }
+}
+
 /// For every line written, send it to two other writers.
 #[derive(Debug)]
 pub struct TeeWriter<'a, W1: LineWriter, W2: LineWriter> {
