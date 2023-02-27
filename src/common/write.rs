@@ -56,22 +56,9 @@ impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();
-        let nr = DEBUG_NR.fetch_add(1, Ordering::AcqRel); //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        debug!(
-            "{} before writing {} bytes to async std (out?): {}",
-            nr,
-            bytes.len(),
-            line.as_ref()
-        ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let write_len = self.writer.write(bytes).unwrap();
-        debug!(
-            "{} after writing {} bytes to async std (out?): {}",
-            nr,
-            bytes.len(),
-            line.as_ref()
-        ); //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(expected, write_len);
-        assert_eq!(1, self.writer.write(&[b'\n']).unwrap()); //TODO @mverleg: more efficient way with single await?
+        self.writer.write(&[b'\n']).unwrap();
     }
 }
 
