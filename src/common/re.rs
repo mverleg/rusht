@@ -30,6 +30,7 @@ pub async fn get_matches(
         }
         if !any_groups {
             writer.write_line(full_match).await;
+            match_cnt += 1
         }
         if first_match_only {
             break;
