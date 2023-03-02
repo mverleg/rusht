@@ -34,6 +34,7 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
                 }
                 return;
             }
+            writer.write_line(line).await;
             i += 1;
         }
         debug!("reached end of input in 'between' before finding end match after line #{i}");
@@ -69,6 +70,7 @@ mod tests {
 
     #[async_std::test]
     async fn start_match() {
+        env_logger::init();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let res = check_between(vec!["before", "start", "middle"]).await;
         assert_eq!(res, vec!["start", "middle"]);
     }
