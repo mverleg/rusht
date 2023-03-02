@@ -7,9 +7,10 @@ use crate::filter::BetweenArgs;
 
 pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
     // Search start point
-    let mut i = 0;
+    let mut i = 1;
     let mut found_start = false;
     while let Some(line) = reader.read_line().await {
+        eprintln!("{} - {}", &args.from, &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         if args.from.is_match(line) {
             debug!("found a 'between' start match at line #{i}, handling={}", args.from_handling);
             found_start = true;
@@ -21,7 +22,7 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
         i += 1;
     }
     if ! found_start {
-        debug!("reached end of input in 'between' before finding start match; stopping");
+        debug!("reached end of input in 'between' after {i} lines before finding start match; stopping");
         return
     }
     if let Some(end_re) = &args.to {
@@ -32,10 +33,11 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
                 if args.to_handling == MatchHandling::Include {
                     writer.write_line(line);
                 }
-                break;
+                return;
             }
             i += 1;
         }
+        debug!("reached end of input in 'between' before finding end match after line #{i}");
     } else {
         debug!("no end pattern in 'between', returning all remaining lines from line #{i}");
         while let Some(line) = reader.read_line().await {
@@ -62,12 +64,17 @@ mod tests {
             from_handling: MatchHandling::Include,
             to_handling: MatchHandling::Exclude,
         };
-        between(args, &mut VecReader::new(lines), &mut writer);
+        let mut r = VecReader::new(lines);
+        while let Some(line) = r.read_line().await {  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+            eprintln!("line={line}")  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        }
+        // between(args, &mut VecReader::new(lines), &mut writer);
         writer.lines().snapshot().await.clone()
     }
 
     #[async_std::test]
     async fn start_match() {
+        env_logger::init();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let res = check_between(vec!["before", "start", "middle"]).await;
         assert_eq!(res, vec!["start", "middle"]);
     }

@@ -10,7 +10,7 @@ use ::regex::Regex;
     about = "Select all lines between two matches"
 )]
 pub struct BetweenArgs {
-    #[arg(short = 'f', long, default_value = ".")]
+    #[arg(short = 'f', long, default_value = "^")]
     /// Start collecting lines when this expression matches
     pub from: Regex,
     #[arg(short = 't', long)]
