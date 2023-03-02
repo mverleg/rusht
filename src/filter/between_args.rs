@@ -1,3 +1,5 @@
+use std::fmt;
+use std::fmt::Formatter;
 use std::str::FromStr;
 use ::clap::Parser;
 
@@ -12,9 +14,9 @@ pub struct BetweenArgs {
     #[arg(short = 'f', long, default_value = ".")]
     /// Start collecting lines when this expression matches
     pub from: Regex,
-    #[arg(short = 't', long, default_value = "\0")]
+    #[arg(short = 't', long)]
     /// Stop collecting lines when this expression matches
-    pub to: Regex,
+    pub to: Option<Regex>,
     #[arg(short = 'F', long, default_value = "include")]
     /// How to handle the matched --from line, include [i] of exclude [e]
     pub from_handling: MatchHandling,
@@ -25,8 +27,8 @@ pub struct BetweenArgs {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MatchHandling {
-    Inclusive,
-    Exclusive,
+    Include,
+    Exclude,
 }
 
 impl FromStr for MatchHandling {
@@ -34,9 +36,18 @@ impl FromStr for MatchHandling {
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
         Ok(match text.to_lowercase().as_str() {
-            "include" | "i" => MatchHandling::Inclusive,
-            "skip" | "s" | "exclude" | "e" => MatchHandling::Exclusive,
+            "include" | "i" => MatchHandling::Include,
+            "skip" | "s" | "exclude" | "e" => MatchHandling::Exclude,
             other => return Err(format!("unknown match handling mode: {}", other)),
+        })
+    }
+}
+
+impl fmt::Display for MatchHandling {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
+            MatchHandling::Include => "include",
+            MatchHandling::Exclude => "exclude",
         })
     }
 }
