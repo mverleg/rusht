@@ -1,8 +1,7 @@
-use std::fmt;
-use std::fmt::Formatter;
-use std::str::FromStr;
-use ::clap::Parser;
+use ::std::fmt;
+use ::std::str::FromStr;
 
+use ::clap::Parser;
 use ::regex::Regex;
 
 #[derive(Parser, Debug)]

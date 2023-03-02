@@ -1,7 +1,7 @@
 use ::std::future::join;
 use ::std::io;
 use ::std::io::Write;
-use ::std::sync::atomic::{AtomicU64, Ordering}; // using async caused deadlocks in concurrent mvn commands
+use ::std::sync::atomic::AtomicU64; // using async caused deadlocks in concurrent mvn commands
 
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
