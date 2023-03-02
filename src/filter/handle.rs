@@ -46,6 +46,11 @@ pub async fn handle_filter(args: FilterArgs) -> ExitStatus {
 }
 
 pub async fn handle_between(args: BetweenArgs) -> ExitStatus {
-    between(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await;
-    ExitStatus::ok()
+    match between(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await {
+        Ok(()) => ExitStatus::ok(),
+        Err(err) => {
+            eprintln!("{}", err);
+            ExitStatus::err()
+        }
+    }
 }
