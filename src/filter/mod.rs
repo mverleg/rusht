@@ -4,6 +4,7 @@ pub use self::filter_args::FilterArgs;
 pub use self::filtering::filter;
 pub use self::grab::grab;
 pub use self::grab_args::GrabArgs;
+pub use self::handle::handle_between;
 pub use self::handle::handle_filter;
 pub use self::handle::handle_grab;
 pub use self::handle::handle_unique;

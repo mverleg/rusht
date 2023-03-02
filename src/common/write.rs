@@ -1,11 +1,9 @@
+use ::std::fmt;
 // using async caused deadlocks in concurrent mvn commands
 use ::std::fmt::Debug;
 use ::std::future::join;
 use ::std::io;
 use ::std::io::Write;
-use ::std::sync::atomic::AtomicU64;
-use std::fmt;
-use std::fmt::Formatter;
 
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
@@ -14,8 +12,6 @@ use ::async_trait::async_trait;
 use ::log::debug;
 use ::regex::Regex;
 use ::smallvec::SmallVec;
-
-static DEBUG_NR: AtomicU64 = AtomicU64::new(0); //TODO @mverleg:
 
 #[async_trait]
 pub trait LineWriter: Debug + Send {

@@ -9,14 +9,12 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
     // Search start point
     let mut i = 1;
     let mut found_start = false;
-    dbg!(&reader);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     while let Some(line) = reader.read_line().await {
-        eprintln!("line {} - {}", &args.from, &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         if args.from.is_match(line) {
             debug!("found a 'between' start match at line #{i}, handling={}", args.from_handling);
             found_start = true;
             if args.from_handling == MatchHandling::Include {
-                writer.write_line(line);
+                writer.write_line(line).await;
             }
             break;
         }
@@ -32,7 +30,7 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
             if end_re.is_match(line) {
                 debug!("found a 'between' end match at line #{i}, handling={}", args.to_handling);
                 if args.to_handling == MatchHandling::Include {
-                    writer.write_line(line);
+                    writer.write_line(line).await;
                 }
                 return;
             }
@@ -42,7 +40,7 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
     } else {
         debug!("no end pattern in 'between', returning all remaining lines from line #{i}");
         while let Some(line) = reader.read_line().await {
-            writer.write_line(line);
+            writer.write_line(line).await;
             i += 1;
         }
     }
@@ -65,7 +63,7 @@ mod tests {
             from_handling: MatchHandling::Include,
             to_handling: MatchHandling::Exclude,
         };
-        between(args, &mut VecReader::new(lines), &mut writer);
+        between(args, &mut VecReader::new(lines), &mut writer).await;
         writer.lines().snapshot().await.clone()
     }
 
