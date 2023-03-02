@@ -9,8 +9,9 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
     // Search start point
     let mut i = 1;
     let mut found_start = false;
+    dbg!(&reader);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
     while let Some(line) = reader.read_line().await {
-        eprintln!("{} - {}", &args.from, &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
+        eprintln!("line {} - {}", &args.from, &line);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         if args.from.is_match(line) {
             debug!("found a 'between' start match at line #{i}, handling={}", args.from_handling);
             found_start = true;
@@ -64,17 +65,12 @@ mod tests {
             from_handling: MatchHandling::Include,
             to_handling: MatchHandling::Exclude,
         };
-        let mut r = VecReader::new(lines);
-        while let Some(line) = r.read_line().await {  //TODO @mverleg: TEMPORARY! REMOVE THIS!
-            eprintln!("line={line}")  //TODO @mverleg: TEMPORARY! REMOVE THIS!
-        }
-        // between(args, &mut VecReader::new(lines), &mut writer);
+        between(args, &mut VecReader::new(lines), &mut writer);
         writer.lines().snapshot().await.clone()
     }
 
     #[async_std::test]
     async fn start_match() {
-        env_logger::init();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let res = check_between(vec!["before", "start", "middle"]).await;
         assert_eq!(res, vec!["start", "middle"]);
     }

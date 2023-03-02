@@ -1,7 +1,11 @@
+// using async caused deadlocks in concurrent mvn commands
+use ::std::fmt::Debug;
 use ::std::future::join;
 use ::std::io;
 use ::std::io::Write;
-use ::std::sync::atomic::AtomicU64; // using async caused deadlocks in concurrent mvn commands
+use ::std::sync::atomic::AtomicU64;
+use std::fmt;
+use std::fmt::Formatter;
 
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
@@ -14,7 +18,7 @@ use ::smallvec::SmallVec;
 static DEBUG_NR: AtomicU64 = AtomicU64::new(0); //TODO @mverleg:
 
 #[async_trait]
-pub trait LineWriter: Send {
+pub trait LineWriter: Debug + Send {
     async fn write_line(&mut self, line: impl AsRef<str> + Send);
 
     async fn write_all_lines<S: AsRef<str> + Send>(
@@ -52,7 +56,7 @@ impl StdWriter<io::Stderr> {
 }
 
 #[async_trait]
-impl<W: Write + Unpin + Send> LineWriter for StdWriter<W> {
+impl<W: Write + Unpin + Send + Debug> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
         let expected = bytes.len();
@@ -241,10 +245,15 @@ impl<'a, W: LineWriter> LineWriter for FunnelWriter<'a, W> {
 }
 
 /// For every line written, send it to two other writers.
-#[derive(Debug)]
 pub struct RegexWatcherWriter<F: Fn(&str) + Send> {
     patterns: SmallVec<[Regex; 1]>,
     action: F,
+}
+
+impl <F: Fn(&str) + Send> fmt::Debug for RegexWatcherWriter<F> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "RegexWatcherWriter{{patterns={:?},action=fn}}", self.patterns)
+    }
 }
 
 impl<F: Fn(&str) + Send> RegexWatcherWriter<F> {

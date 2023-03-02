@@ -1,5 +1,6 @@
+use ::std::fmt::Debug;
+use ::std::io::{BufReader, stdin, Stdin};
 use ::std::io::BufRead;
-use ::std::io::{stdin, BufReader, Stdin};
 use ::std::process::exit;
 
 use ::async_std::prelude::FutureExt as AltExt;
@@ -10,7 +11,7 @@ use ::log::debug;
 use crate::common::async_gate::AsyncGate;
 
 #[async_trait]
-pub trait LineReader: Send {
+pub trait LineReader: Debug + Send {
     async fn read_line(&mut self) -> Option<&str>;
 
     async fn collect_all(&mut self) -> Vec<String> {
