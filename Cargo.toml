@@ -87,6 +87,10 @@ name = "jl"
 path = "src/find/main_jl.rs"
 
 [[bin]]
+name = "between"
+path = "src/filter/main_between.rs"
+
+[[bin]]
 name = "rsh"
 path = "src/rsh/main_rsh.rs"
 

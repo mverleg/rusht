@@ -2,6 +2,8 @@ use ::log::debug;
 
 use crate::common::{DiscardWriter, StdinReader, StdWriter};
 use crate::ExitStatus;
+use crate::filter::BetweenArgs;
+use crate::filter::between;
 use crate::filter::filter;
 use crate::filter::FilterArgs;
 use crate::filter::unique;
@@ -40,5 +42,10 @@ pub async fn handle_unique(args: UniqueArgs) -> ExitStatus {
 
 pub async fn handle_filter(args: FilterArgs) -> ExitStatus {
     filter(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await;
+    ExitStatus::ok()
+}
+
+pub async fn handle_between(args: BetweenArgs) -> ExitStatus {
+    between(args, &mut StdinReader::new(), &mut StdWriter::stdout()).await;
     ExitStatus::ok()
 }
