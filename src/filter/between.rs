@@ -3,9 +3,13 @@ use log::debug;
 use crate::common::LineReader;
 use crate::common::LineWriter;
 use crate::filter::between_args::MatchHandling;
+use crate::filter::between_args::FROM_DEFAULT;
 use crate::filter::BetweenArgs;
 
 pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
+    if args.from.as_str() == FROM_DEFAULT && args.to.is_none() {
+        panic!("between: at least one of --from or --to should be provided")
+    }
     // Search start point
     let mut i = 1;
     let mut found_start = false;
@@ -56,21 +60,24 @@ mod tests {
 
     use super::*;
 
-    async fn check_between<L: Into<String>>(lines: Vec<L>) -> Vec<String> {
+    async fn check_between_args<L: Into<String>>(args: BetweenArgs, lines: Vec<L>) -> Vec<String> {
         let mut writer = CollectorWriter::new();
+        between(args, &mut VecReader::new(lines), &mut writer).await;
+        writer.lines().snapshot().await.clone()
+    }
+
+    async fn check_between<L: Into<String>>(lines: Vec<L>) -> Vec<String> {
         let args = BetweenArgs {
             from: Regex::new("start").unwrap(),
             to: Some(Regex::new("end").unwrap()),
             from_handling: MatchHandling::Include,
             to_handling: MatchHandling::Exclude,
         };
-        between(args, &mut VecReader::new(lines), &mut writer).await;
-        writer.lines().snapshot().await.clone()
+        check_between_args(args, lines).await
     }
 
     #[async_std::test]
     async fn start_match() {
-        env_logger::init();  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         let res = check_between(vec!["before", "start", "middle"]).await;
         assert_eq!(res, vec!["start", "middle"]);
     }
@@ -94,9 +101,58 @@ mod tests {
     }
 
     #[async_std::test]
+    async fn start_and_end_match_rev_handling() {
+        let args = BetweenArgs {
+            from: Regex::new("start").unwrap(),
+            to: Some(Regex::new("end").unwrap()),
+            from_handling: MatchHandling::Exclude,
+            to_handling: MatchHandling::Include,
+        };
+        let res = check_between_args(args, vec!["before", "start", "middle", "end", "after"]).await;
+        assert_eq!(res, vec!["middle", "end"]);
+    }
+
+    #[async_std::test]
     async fn start_and_end_same_line_match() {
         // For now the behaviour is that this does not detect end, mostly because it is easier
         let res = check_between(vec!["before", "start end", "after"]).await;
         assert_eq!(res, vec!["start end", "after"]);
+    }
+
+    #[async_std::test]
+    async fn no_start_pattern() {
+        let args = BetweenArgs {
+            from: Regex::new("^").unwrap(),
+            to: Some(Regex::new("end").unwrap()),
+            from_handling: MatchHandling::Include,
+            to_handling: MatchHandling::Include,
+        };
+        let res = check_between_args(args, vec!["before", "start", "middle", "end", "after"]).await;
+        assert_eq!(res, vec!["before", "start", "middle", "end"]);
+    }
+
+    #[async_std::test]
+    async fn no_end_pattern() {
+        let args = BetweenArgs {
+            from: Regex::new("start").unwrap(),
+            to: None,
+            from_handling: MatchHandling::Exclude,
+            to_handling: MatchHandling::Exclude,
+        };
+        let res = check_between_args(args, vec!["before", "start", "middle", "end", "after"]).await;
+        assert_eq!(res, vec!["middle", "end", "after"]);
+    }
+
+    #[should_panic]
+    #[async_std::test]
+    async fn no_patterns() {
+        let args = BetweenArgs {
+            from: Regex::new("start").unwrap(),
+            to: None,
+            from_handling: MatchHandling::Exclude,
+            to_handling: MatchHandling::Exclude,
+        };
+        let res = check_between_args(args, vec!["before", "start", "middle", "end", "after"]).await;
+        assert_eq!(res, vec!["middle", "end", "after"]);
     }
 }

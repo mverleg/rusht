@@ -4,13 +4,15 @@ use ::std::str::FromStr;
 use ::clap::Parser;
 use ::regex::Regex;
 
+pub const FROM_DEFAULT: &'static str = "^";
+
 #[derive(Parser, Debug)]
 #[command(
     name = "between",
     about = "Select all lines between two matches"
 )]
 pub struct BetweenArgs {
-    #[arg(short = 'f', long, default_value = "^")]
+    #[arg(short = 'f', long, default_value = FROM_DEFAULT)]
     /// Start collecting lines when this expression matches
     pub from: Regex,
     #[arg(short = 't', long)]
