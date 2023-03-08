@@ -8,6 +8,7 @@ use ::lazy_static::lazy_static;
 use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use dirs::home_dir;
 
 use crate::common::resolve_executable;
 
@@ -68,7 +69,17 @@ impl Task {
     }
 
     pub fn as_cmd_str(&self) -> String {
-        let mut txt = String::from(&self.cmd);
+        let mut txt = String::new();
+        if let Some(home) = home_dir() {
+            let cmd = PathBuf::from(&self.cmd);
+            if let Ok(rel_pth) = cmd.strip_prefix(&home) {
+                txt.push_str("~/");
+                txt.push_str(rel_pth.to_str().expect("path should be utf8"))
+            }
+        }
+        if txt.is_empty() {
+            txt.push_str(&self.cmd)
+        }
         for arg in &self.args {
             if SAFE_ARG_RE.is_match(arg) {
                 write!(txt, " {}", arg).unwrap()
