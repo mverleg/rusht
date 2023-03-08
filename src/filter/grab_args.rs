@@ -46,7 +46,8 @@ impl Default for GrabArgs {
             first_capture_only: false,
             keep_unmatched: false,
             max_lines: None,
-            exit_code: false,
+            expect_match: false,
+            expect_no_match: false,
             quiet: false,
         }
     }

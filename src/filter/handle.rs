@@ -13,8 +13,12 @@ use super::{grab, GrabArgs};
 
 pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     let quiet = args.quiet;
-    let exit_code = args.exit_code;
-    assert!(exit_code || !quiet, "grab: --quiet only usable when --exit-code");
+    let expect_match = args.expect_match;
+    let expect_no_match = args.expect_no_match;
+    assert!(!(expect_match && expect_no_match), "cannot combine -expect-match and --expect-no-match");
+    if quiet {
+        assert!(expect_match || expect_no_match, "grab: --quiet only usable when --expect-match or --expect-no-match");
+    }
     let grab_res = if quiet {
         grab(args, StdinReader::new(), DiscardWriter::new()).await
     } else {
@@ -22,18 +26,37 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     };
     match grab_res {
         Ok(match_cnt) => {
-            if exit_code && match_cnt == 0 {
-                debug!("grab failing because of no results and --exit-code was requested");
-                ExitStatus::err()
-            } else {
-                ExitStatus::ok()
-            }
+            exit_from_match(match_cnt, expect_match, expect_no_match)
         },
         Err(err) => {
             eprintln!("{}", err);
             ExitStatus::err()
         }
     }
+}
+
+fn exit_from_match(match_cnt: u32, expect_match: bool, expect_no_match: bool) -> ExitStatus {
+    if expect_match {
+        return if match_cnt == 0 {
+            debug!("grab failed because --expect-match but no results");
+            ExitStatus::err()
+        } else {
+            debug!("grab succeeded because --expect-match and {} results", match_cnt);
+            ExitStatus::ok()
+        }
+    }
+    if expect_no_match {
+        return if match_cnt == 0 {
+            debug!("grab succeeded because --expect-no-match with no results");
+            ExitStatus::ok()
+
+        } else {
+            debug!("grab failed because --expect-no-match but {} results", match_cnt);
+            ExitStatus::err()
+        }
+    }
+    debug!("grab succeeded with {} results because no --expect-match or --expect-no-match", match_cnt);
+    ExitStatus::ok()
 }
 
 pub async fn handle_unique(args: UniqueArgs) -> ExitStatus {

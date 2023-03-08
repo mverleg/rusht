@@ -105,7 +105,8 @@ mod tests {
             first_capture_only: true,
             keep_unmatched: true,
             max_lines: None,
-            exit_code: false,
+            expect_match: false,
+            expect_no_match: false,
             quiet: false,
         };
 
