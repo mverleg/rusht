@@ -8,6 +8,7 @@ use ::regex::Regex;
 )]
 pub struct GrabArgs {
     /// Regular expression to match. Returns the capture group if any, or the whole match otherwise.
+    /// For case-insensitive matching, prefix `(?i)`.
     #[arg()]
     pub pattern: Regex,
     #[arg(short = 'f', long = "first-match-only")]
