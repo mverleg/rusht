@@ -67,30 +67,34 @@ pub async fn mon_task(
         status
     };
     let duration = t0.elapsed().as_millis();
-    if timing {
-        if status.is_ok() {
-            if cmd_str.len() > 256 {
-                // approximate for non-ascii
-                monitor_writer
-                    .write_line(format!(
-                        "success: took {} ms to run {}...",
-                        duration,
-                        cmd_str.chars().take(256).collect::<String>()
-                    ))
-                    .await;
-            } else {
-                monitor_writer
-                    .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
-                    .await;
-            }
+    if timing && status.is_ok() {
+        if cmd_str.len() > 256 {
+            // approximate for non-ascii
+            monitor_writer
+                .write_line(format!(
+                    "success: took {} ms to run {}...",
+                    duration,
+                    cmd_str.chars().take(256).collect::<String>()
+                ))
+                .await;
         } else {
-            eprintln!(
-                "FAILED command {} in {} ms (code {})",
-                cmd_str,
-                duration,
-                status.code()
-            );
+            monitor_writer
+                .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
+                .await;
         }
+    } else if timing && !status.is_ok() {
+        eprintln!(
+            "FAILED command {} in {} ms (code {})",
+            cmd_str,
+            duration,
+            status.code()
+        );
+    } else if !timing && !status.is_ok() {
+        eprintln!(
+            "FAILED command {} (code {})",
+            cmd_str,
+            status.code()
+        );
     }
     if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()) {
         eprintln!("notification sound problem: {}", err);

@@ -11,10 +11,10 @@ pub struct MonArgs {
     /// Do not show the command before running it.
     #[arg(short = 'c', long = "no-print-cmd")]
     pub no_print_cmd: bool,
-    /// Only print output if the command fails.
+    /// Only print command output if the command fails.
     #[arg(short = 'b', long = "no-output-on-success")]
     pub no_output_on_success: bool,
-    /// Do not show timing and exit status of the command.
+    /// Do not report timing, and suppress status line when successful.
     #[arg(short = 't', long)]
     pub no_timing: bool,
     /// Play a sound when the command succeeds.
