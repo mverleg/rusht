@@ -13,8 +13,9 @@ use ::itertools::Itertools;
 use ::log::debug;
 
 use crate::common::{LineWriter, StdWriter, Task};
-use crate::observe::mon_task;
+use crate::common::write::FunnelFactory;
 use crate::ExitStatus;
+use crate::observe::mon_task;
 
 static USE_SHELL_ENV_NAME: &'static str = "RUSHT_SHELL_EXEC";
 
@@ -41,7 +42,8 @@ impl Task {
         err_writer: &mut impl LineWriter,
     ) -> ExitStatus {
         if monitor {
-            mon_task(self, out_writer, true, true, true, false, true).await
+            let funnel = FunnelFactory::new(out_writer);
+            mon_task(self, &mut funnel.writer("out"), &mut funnel.writer("mon"), true, true, true, false, true).await
         } else {
             self.execute_with_stdout_nomonitor(out_writer, err_writer)
                 .await
