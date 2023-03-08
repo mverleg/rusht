@@ -7,7 +7,7 @@ use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
 
-pub async fn mon(args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn mon(args: MonArgs, output_writer: &mut impl LineWriter, minitor_writer: &mut impl LineWriter) -> ExitStatus {
     let task = args.cmd.clone().into_task();
     if let Some(mut prefix) = args.prefix.clone() {
         assert!(!prefix.contains("%{date}"), "placeholders not supported yet for mon --prefix");
@@ -23,7 +23,8 @@ pub async fn mon(args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
 pub async fn mon_task_with_writer(task: &Task, args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
     mon_task(
         &task,
-        writer,
+        output_writer,
+        minitor_writer,
         !args.no_print_cmd,
         !args.no_output_on_success,
         !args.no_timing,
@@ -34,7 +35,8 @@ pub async fn mon_task_with_writer(task: &Task, args: MonArgs, writer: &mut impl 
 
 pub async fn mon_task(
     task: &Task,
-    writer: &mut impl LineWriter,
+    output_writer: &mut impl LineWriter,
+    monitor_writer: &mut impl LineWriter,
     print_cmd: bool,
     output_on_success: bool,
     timing: bool,
@@ -44,12 +46,12 @@ pub async fn mon_task(
     debug!("print_cmd={print_cmd} output_on_success={output_on_success} timing={timing} sound_success={sound_success} sound_failure={sound_failure} for task {}", task.as_str());
     let cmd_str = task.as_str();
     if print_cmd {
-        writer.write_line(format!("going to run {}", cmd_str)).await;
+        monitor_writer.write_line(format!("going to run {}", cmd_str)).await;
     }
     let t0 = Instant::now();
     let status = if output_on_success {
         let mut err_writer = StdWriter::stderr();
-        task.execute_with_stdout_nomonitor(writer, &mut err_writer)
+        task.execute_with_stdout_nomonitor(output_writer, &mut err_writer)
             .await
     } else {
         debug!("mon buffering output, will show on error");
@@ -60,7 +62,7 @@ pub async fn mon_task(
             .await;
         if status.is_err() {
             eprintln!("printing all output because process failed");
-            writer.write_all_lines(out_buffer.get().iter()).await;
+            output_writer.write_all_lines(out_buffer.get().iter()).await;
         }
         status
     };
@@ -69,7 +71,7 @@ pub async fn mon_task(
         if status.is_ok() {
             if cmd_str.len() > 256 {
                 // approximate for non-ascii
-                writer
+                monitor_writer
                     .write_line(format!(
                         "success: took {} ms to run {}...",
                         duration,
@@ -77,7 +79,7 @@ pub async fn mon_task(
                     ))
                     .await;
             } else {
-                writer
+                monitor_writer
                     .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
                     .await;
             }
