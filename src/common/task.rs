@@ -1,11 +1,13 @@
 use ::std::collections::HashMap;
 use ::std::env;
+use ::std::fmt::Write;
 use ::std::path::PathBuf;
 
-use crate::common::resolve_executable;
 use ::itertools::Itertools;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+
+use crate::common::resolve_executable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
@@ -60,11 +62,15 @@ impl Task {
     }
 
     pub fn as_cmd_str(&self) -> String {
-        if self.args.is_empty() {
-            self.cmd.to_string()
-        } else {
-            format!("{} {}", self.cmd, self.args.join(" "))
+        let mut txt = String::from(&self.cmd);
+        for arg in &self.args {
+            if arg.contains(' ') {
+                write!(txt, " '{}'", arg).unwrap()
+            } else {
+                write!(txt, " {}", arg).unwrap()
+            }
         }
+        txt
     }
 
     pub fn as_str(&self) -> String {
