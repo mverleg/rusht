@@ -23,10 +23,12 @@ pub struct MonArgs {
     /// Play a sound when the command fails.
     #[arg(short = 'S', long = "fail-sound")]
     pub sound_failure: bool,
+    /// Prefix each line. Can use '%{date}' and '%{time}' placeholders.
+    #[arg(short = 'p', long)]
+    pub prefix: Option<String>,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
-//TODO @mverleg: implement all that ^
 
 #[test]
 fn test_cli_args() {

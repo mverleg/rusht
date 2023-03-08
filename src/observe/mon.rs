@@ -1,14 +1,26 @@
 use ::std::time::Instant;
 
-use crate::common::{LineWriter, StdWriter, Task, VecWriter};
+use ::log::debug;
+
+use crate::common::{LineWriter, PrefixWriter, StdWriter, Task, VecWriter};
+use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
-use crate::ExitStatus;
-
-use ::log::debug;
 
 pub async fn mon(args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
     let task = args.cmd.clone().into_task();
+    if let Some(mut prefix) = args.prefix.clone() {
+        assert!(!prefix.contains("%{date}"), "placeholders not supported yet for mon --prefix");
+        assert!(!prefix.contains("%{time}"), "placeholders not supported yet for mon --prefix");
+        prefix.push(' ');
+        mon_task_with_writer(&task, args, &mut PrefixWriter::new(writer, prefix)).await
+    } else {
+        mon_task_with_writer(&task, args, writer).await
+    }
+
+}
+
+pub async fn mon_task_with_writer(task: &Task, args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
     mon_task(
         &task,
         writer,
@@ -17,8 +29,7 @@ pub async fn mon(args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
         !args.no_timing,
         args.sound_success,
         args.sound_failure,
-    )
-    .await
+    ).await
 }
 
 pub async fn mon_task(
