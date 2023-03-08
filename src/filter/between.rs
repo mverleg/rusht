@@ -55,9 +55,7 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
 
 #[cfg(test)]
 mod tests {
-    use std::panic;
     use ::regex::Regex;
-    use futures::executor::block_on;
 
     use crate::common::{CollectorWriter, VecReader};
 

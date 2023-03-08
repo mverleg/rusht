@@ -4,10 +4,16 @@ use ::std::fmt::Write;
 use ::std::path::PathBuf;
 
 use ::itertools::Itertools;
+use ::lazy_static::lazy_static;
+use ::regex::Regex;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 
 use crate::common::resolve_executable;
+
+lazy_static! {
+    static ref SAFE_ARG_RE: Regex = Regex::new(r"^[\p{L}0-9_\-\.,@/:]$").unwrap();
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
@@ -64,10 +70,10 @@ impl Task {
     pub fn as_cmd_str(&self) -> String {
         let mut txt = String::from(&self.cmd);
         for arg in &self.args {
-            if arg.contains(' ') {
-                write!(txt, " '{}'", arg).unwrap()
-            } else {
+            if SAFE_ARG_RE.is_match(arg) {
                 write!(txt, " {}", arg).unwrap()
+            } else {
+                write!(txt, " '{}'", arg).unwrap()
             }
         }
         txt
