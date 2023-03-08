@@ -106,6 +106,7 @@ mod tests {
             keep_unmatched: true,
             max_lines: None,
             exit_code: false,
+            quiet: false,
         };
 
         let mut out2 = CollectorWriter::new();

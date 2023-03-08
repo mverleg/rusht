@@ -248,6 +248,7 @@ mod tests {
                 first_capture_only: true,
                 max_lines: None,
                 exit_code: false,
+                quiet: false,
             },
             input,
             expected,

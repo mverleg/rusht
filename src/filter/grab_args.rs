@@ -33,6 +33,9 @@ pub struct GrabArgs {
     /// Exit with code 1 if there are any matches
     #[arg(short = 'E', long)]
     pub expect_no_match: bool,
+    /// Do not show output.
+    #[arg(short = 'q', long)]
+    pub quiet: bool,
 }
 
 impl Default for GrabArgs {
@@ -44,6 +47,7 @@ impl Default for GrabArgs {
             keep_unmatched: false,
             max_lines: None,
             exit_code: false,
+            quiet: false,
         }
     }
 }

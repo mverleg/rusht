@@ -12,8 +12,9 @@ use crate::filter::UniqueArgs;
 use super::{grab, GrabArgs};
 
 pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
-    let quiet = args.exit_code;
+    let quiet = args.quiet;
     let exit_code = args.exit_code;
+    assert!(exit_code || !quiet, "grab: --quiet only usable when --exit-code");
     let grab_res = if quiet {
         grab(args, StdinReader::new(), DiscardWriter::new()).await
     } else {
