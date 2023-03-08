@@ -22,6 +22,7 @@ pub use self::write::CollectorWriter;
 pub use self::write::DiscardWriter;
 pub use self::write::FirstItemWriter;
 pub use self::write::LineWriter;
+pub use self::write::PrefixWriter;
 pub use self::write::RegexWatcherWriter;
 pub use self::write::StdWriter;
 pub use self::write::TeeWriter;

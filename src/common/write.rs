@@ -274,6 +274,27 @@ impl<F: Fn(&str) + Send> LineWriter for RegexWatcherWriter<F> {
     }
 }
 
+#[derive(Debug)]
+pub struct PrefixWriter<'a, W: LineWriter> {
+    delegate: &'a mut W,
+    prefix: String,
+}
+
+impl<'a, W: LineWriter> PrefixWriter<'a, W> {
+    pub fn new(delegate: &'a mut W, prefix: String) -> Self {
+        PrefixWriter { delegate, prefix }
+    }
+}
+
+#[async_trait]
+impl<'a, W: LineWriter> LineWriter for PrefixWriter<'a, W> {
+    async fn write_line(&mut self, line: impl AsRef<str> + Send) {
+        let mut prefixed_line = line.as_ref().to_owned();
+        prefixed_line.insert_str(0, &self.prefix);
+        self.delegate.write_line(&prefixed_line).await
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
