@@ -12,7 +12,7 @@ use ::serde::Serialize;
 use crate::common::resolve_executable;
 
 lazy_static! {
-    static ref SAFE_ARG_RE: Regex = Regex::new(r"^[\p{L}0-9_\-\.,@/:]$").unwrap();
+    static ref SAFE_ARG_RE: Regex = Regex::new(r"^[\p{L}0-9_\-\.,@/:]+$").unwrap();
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
