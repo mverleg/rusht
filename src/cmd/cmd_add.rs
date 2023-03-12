@@ -162,7 +162,7 @@ fn task_from_template(
             .expect("failed to get absolute path for working directory"),
         None => current_dir().unwrap(),
     };
-    Task::new_split(parts, working_dir, stdin)
+    Task::new_split(parts, working_dir, stdin.map(String::to_owned))
 }
 
 fn stdin_ignored_warning() {

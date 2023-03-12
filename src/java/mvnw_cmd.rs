@@ -119,7 +119,7 @@ impl MvnCmdConfig {
                         })
                         .collect::<Vec<_>>(),
                 );
-                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone()));
+                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone(), None));
             } else {
                 warn!(
                     "skipping checkstyle because config was not found at '{}'",
@@ -270,7 +270,7 @@ impl MvnCmdConfig {
                 self.profiles.iter().join(",")
             ));
         }
-        Task::new_with_env(exe.into(), args, self.cwd.to_owned(), extra_env)
+        Task::new_with_env(exe.into(), args, self.cwd.to_owned(), None, extra_env)
     }
 
     fn add_opt_args(&self, args: &mut Vec<String>) {
@@ -320,7 +320,9 @@ fn ensure_checkstyle_jar_exists(version: &str) -> (Option<Task>, PathBuf) {
             "--fail".to_owned(),
             "--output".to_owned(),
             checkstyle_jar_pth.to_str().unwrap().to_owned(),
-        ], cache_dir
+        ],
+        cache_dir,
+        None
     );
     debug!(
         "creating task to download checkstyle jar: {}",

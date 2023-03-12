@@ -22,22 +22,25 @@ pub struct Task {
     pub args: Vec<String>,
     pub working_dir: PathBuf,
     #[serde(default)]
+    pub stdin: Option<String>,
+    #[serde(default)]
     pub extra_envs: HashMap<String, String>,
 }
 
 impl Task {
-    pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf) -> Self {
-        Task::new_with_env(cmd, args, working_dir, HashMap::new())
+    pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf, stdin: Option<String>) -> Self {
+        Task::new_with_env(cmd, args, working_dir, stdin, HashMap::new())
     }
 
-    pub fn new_in_cwd(cmd: String, args: Vec<String>) -> Self {
-        Task::new(cmd, args, env::current_dir().unwrap())
+    pub fn new_in_cwd(cmd: String, stdin: Option<String>, args: Vec<String>) -> Self {
+        Task::new(cmd, args, env::current_dir().unwrap(), stdin)
     }
 
     pub fn new_with_env(
         cmd: String,
         args: Vec<String>,
         working_dir: PathBuf,
+        stdin: Option<String>,
         extra_envs: HashMap<String, String>,
     ) -> Self {
         let full_cmd = resolve_executable(cmd);
@@ -45,23 +48,24 @@ impl Task {
             cmd: full_cmd,
             args,
             working_dir,
+            stdin,
             extra_envs,
         }
     }
 
     pub fn new_split_in_cwd(parts: Vec<String>) -> Self {
         let (cmd, args) = parts.split_first().unwrap();
-        Task::new(cmd.to_owned(), args.to_vec(), env::current_dir().unwrap())
+        Task::new(cmd.to_owned(), args.to_vec(), env::current_dir().unwrap(), None)
     }
 
-    pub fn new_split(parts: Vec<String>, working_dir: PathBuf) -> Self {
+    pub fn new_split(parts: Vec<String>, working_dir: PathBuf, stdin: Option<String>) -> Self {
         let (cmd, args) = parts.split_first().unwrap();
-        Task::new(cmd.to_owned(), args.to_vec(), working_dir)
+        Task::new(cmd.to_owned(), args.to_vec(), working_dir, stdin)
     }
 
     #[cfg(test)]
     pub fn noop() -> Self {
-        Task::new("true".to_owned(), vec![], env::current_dir().unwrap())
+        Task::new("true".to_owned(), vec![], env::current_dir().unwrap(), None)
     }
 
     pub fn push_arg(&mut self, extra_arg: &str) {
