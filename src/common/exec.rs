@@ -11,6 +11,7 @@ use ::async_std::task::block_on;
 use ::futures::AsyncBufReadExt;
 use ::itertools::Itertools;
 use ::log::debug;
+use futures::AsyncWriteExt;
 
 use crate::common::{LineWriter, StdWriter, Task};
 use crate::common::write::FunnelFactory;
@@ -93,6 +94,7 @@ impl Task {
         let mut child = base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
+            .stdin(if self.stdin.is_some() { Stdio::piped() } else { Stdio::null() })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -110,6 +112,12 @@ impl Task {
             let proc_err = child.stderr.take().unwrap();
             let out_task = scope.spawn(move || forward_out(proc_out, out_writer));
             let err_task = scope.spawn(move || forward_out(proc_err, err_writer));
+            let in_task = if let Some(sin) = &self.stdin {
+                let mut proc_in = child.stdin.take().expect("child should have stdin piped");
+                Some(scope.spawn(move || block_on(proc_in.write_all(sin.as_bytes())).expect("failed to send stdin")))
+            } else {
+                None
+            };
             //TODO @mverleg: only do status() after stdin is closed, otherwise it closes it
             let status = block_on(child.status()).map_err(|err| {
                 format!(
@@ -120,6 +128,7 @@ impl Task {
             })?;
             out_task.join().expect("thread panic")?;
             err_task.join().expect("thread panic")?;
+            in_task.map(|it| it.join().expect("thread panic"));
             Ok(ExitStatus::of_code(status.code()))
         })
     }

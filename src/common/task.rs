@@ -95,10 +95,13 @@ impl Task {
     }
 
     pub fn as_str(&self) -> String {
-        let cmd_str = if self.working_dir == env::current_dir().unwrap() {
-            "".to_owned()
+        let mut cmd_str = if let Some(sin) = &self.stdin {
+            format!(" <{}b", sin.len())
         } else {
-            format!(" @ {}", self.working_dir.to_string_lossy())
+            "".to_owned()
+        };
+        if self.working_dir != env::current_dir().unwrap() {
+            write!(cmd_str, " @ {}", self.working_dir.to_string_lossy()).unwrap()
         };
         let env_str = if self.extra_envs.is_empty() {
             "".to_owned()

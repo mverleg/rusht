@@ -15,7 +15,7 @@ pub struct ListArgs {
     #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one
     pub namespace: String,
-    #[arg(short = 'p', long)]
+    #[arg(short = 'p', long, hide_short_help = true)]
     /// Show the path to the stack file, instead of commands
     pub file_path: bool,
     #[arg(short = 'c', long, conflicts_with = "file_path")]
