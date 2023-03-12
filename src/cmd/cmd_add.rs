@@ -37,6 +37,9 @@ pub struct AddArgs {
     #[arg(short = 'L', long, conflicts_with = "lines")]
     /// Like --lines, but use given replacement placeholder instead of '{}'.
     pub lines_with: Option<String>,
+    #[arg(short = 'i', long, conflicts_with = "lines,lines_with")]
+    /// Add command for each line of stdin, replacing '{}' by the line.
+    pub as_stdin: bool,
     #[arg(short = 'u', long)]
     /// With --lines or --lines-with, skip any duplicate placeholders.
     pub unique: bool,
