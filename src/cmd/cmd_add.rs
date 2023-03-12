@@ -68,6 +68,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.cmd,
         args.working_dir,
         args.lines_with,
+        args.as_stdin,
         args.unique,
     );
     if new_tasks.is_empty() {
@@ -102,10 +103,12 @@ pub fn create_tasks(
     base_cmd: CommandArgs,
     working_dir: Option<String>,
     lines_with: Option<String>,
+    as_stdin: bool,
     unique: bool,
 ) -> Vec<Task> {
     let cmd = base_cmd.unpack();
     let new_tasks = if let Some(templ) = lines_with {
+        assert!(!as_stdin);
         assert!(!templ.is_empty());
         let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
         if !has_placeholder && working_dir.is_some() && working_dir.as_ref().unwrap().contains(&templ) {
@@ -119,12 +122,29 @@ pub fn create_tasks(
                 &working_dir,
             ))
         }
-        debug!("going to read stdin lines");
+        debug!("going to read stdin lines (to fill placeholders)");
         let mut seen: HashSet<&String> = HashSet::new();
-        line_reader()
-            .iter()
+        line_reader().iter()
             .filter(|line| !unique || seen.insert(line))
             .map(|input| task_from_template(&cmd, input, &templ, &working_dir))
+            .collect()
+    } else if as_stdin {
+        debug!("going to read stdin lines (to pass to subcommand stdin)");
+        let working_dir = working_dir
+            .map(PathBuf::from)
+            .unwrap_or_else(|| current_dir().unwrap());
+        let mut seen: HashSet<&String> = HashSet::new();
+        line_reader().iter()
+            .filter(|line| !unique || seen.insert(line))
+            .map(|input| {
+                // let working_dir2 = match &working_dir {
+                //     Some(dir) => PathBuf::from(dir.replace(templ, input))
+                //         .canonicalize()
+                //         .expect("failed to get absolute path for working directory"),
+                //     None1 => current_dir().unwrap(),
+                // };
+                vec![Task::new_split(cmd, working_dir)]
+            })
             .collect()
     } else {
         spawn(stdin_ignored_warning);
