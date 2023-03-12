@@ -26,9 +26,9 @@ pub struct MonArgs {
     /// Prefix each line. Can use '%{date}' and '%{time}' placeholders.
     #[arg(short = 'p', long)]
     pub prefix: Option<String>,
-    /// Log to stderr instead of stdout
+    /// Log command and timing to stdout instead of stderr
     #[arg(short = 'x', long)]
-    pub use_stderr: bool,
+    pub use_stdout: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
