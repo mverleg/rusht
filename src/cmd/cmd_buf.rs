@@ -58,6 +58,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         args.cmd,
         args.working_dir,
         args.lines_with.or_else(|| Some("{}".to_owned())),
+        args.stdin,
         args.unique,
     );
     let mut task_stack = TaskStack::from(tasks.into_iter().map(TaskType::Pending).collect());
