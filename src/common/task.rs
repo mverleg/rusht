@@ -21,7 +21,6 @@ pub struct Task {
     pub cmd: String,
     pub args: Vec<String>,
     pub working_dir: PathBuf,
-    pub stdin: Option<String>,
     #[serde(default)]
     pub extra_envs: HashMap<String, String>,
 }
