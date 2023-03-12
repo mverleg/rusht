@@ -7,24 +7,24 @@ use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
 
-pub async fn mon(args: MonArgs, output_writer: &mut impl LineWriter, minitor_writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn mon(args: MonArgs, output_writer: &mut impl LineWriter, monitor_writer: &mut impl LineWriter) -> ExitStatus {
     let task = args.cmd.clone().into_task();
     if let Some(mut prefix) = args.prefix.clone() {
         assert!(!prefix.contains("%{date}"), "placeholders not supported yet for mon --prefix");
         assert!(!prefix.contains("%{time}"), "placeholders not supported yet for mon --prefix");
         prefix.push(' ');
-        mon_task_with_writer(&task, args, &mut PrefixWriter::new(writer, prefix)).await
+        mon_task_with_writer(&task, args, &mut PrefixWriter::new(output_writer, prefix), monitor_writer).await
     } else {
-        mon_task_with_writer(&task, args, writer).await
+        mon_task_with_writer(&task, args, output_writer, monitor_writer).await
     }
 
 }
 
-pub async fn mon_task_with_writer(task: &Task, args: MonArgs, writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn mon_task_with_writer(task: &Task, args: MonArgs, output_writer: &mut impl LineWriter, monitor_writer: &mut impl LineWriter) -> ExitStatus {
     mon_task(
         &task,
         output_writer,
-        minitor_writer,
+        monitor_writer,
         !args.no_print_cmd,
         !args.no_output_on_success,
         !args.no_timing,
