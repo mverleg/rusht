@@ -18,6 +18,9 @@ pub struct BufArgs {
     #[arg(short = 'L', long)]
     /// Give a replacement placeholder for each line, instead of '{}'.
     pub lines_with: Option<String>,
+    #[arg(short = 'i', long, conflicts_with = "lines_with")]
+    /// Instead of replacing a pattern (like {}) by a line, send the line as stdin.
+    pub as_stdin: bool,
     #[arg(short = 'u', long)]
     /// Skip any duplicate placeholders.
     pub unique: bool,

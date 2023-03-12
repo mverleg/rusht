@@ -37,8 +37,8 @@ pub struct AddArgs {
     #[arg(short = 'L', long, conflicts_with = "lines")]
     /// Like --lines, but use given replacement placeholder instead of '{}'.
     pub lines_with: Option<String>,
-    #[arg(short = 'i', long, conflicts_with = "lines,lines_with")]
-    /// Add command for each line of stdin, replacing '{}' by the line.
+    #[arg(short = 'i', long, conflicts_with_all = ["lines", "lines_with"])]
+    /// Instead of replacing a pattern (like {}) by a line, send the line as stdin.
     pub as_stdin: bool,
     #[arg(short = 'u', long)]
     /// With --lines or --lines-with, skip any duplicate placeholders.
@@ -59,10 +59,10 @@ fn test_cli_args() {
 }
 
 pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
-    assert!(
-        !args.unique || args.lines_with.is_some(),
-        "--unique can only be used with --lines or --lines-with"
-    );
+    if args.unique {
+        assert!(args.lines_with.is_some() || args.as_stdin,
+                "--unique can only be used with --lines, --lines-with, or --as-stdin");
+    }
     let new_tasks = create_tasks(
         line_reader,
         args.cmd,
