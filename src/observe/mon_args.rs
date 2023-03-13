@@ -23,7 +23,7 @@ pub struct MonArgs {
     /// Play a sound when the command fails.
     #[arg(short = 'S', long = "fail-sound")]
     pub sound_failure: bool,
-    /// Prefix each line. Can use '%{date}' and '%{time}' placeholders.
+    /// Prefix each line. Can use '%{date}', '%{time}' and '%{nr}' placeholders.
     #[arg(short = 'p', long)]
     pub prefix: Option<String>,
     /// Log command and timing to stdout instead of stderr

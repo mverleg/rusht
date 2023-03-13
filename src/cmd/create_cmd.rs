@@ -77,7 +77,12 @@ fn task_from_template(
             .expect("failed to get absolute path for working directory"),
         None => current_dir().unwrap(),
     };
-    Task::new_split(parts, working_dir, stdin.map(String::to_owned))
+    let stdin = if let Some(sin) = stdin {
+        Some(sin.replace(templ, input))
+    } else {
+        None
+    };
+    Task::new_split(parts, working_dir, stdin)
 }
 
 fn stdin_ignored_warning() {
