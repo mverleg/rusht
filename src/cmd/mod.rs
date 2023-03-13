@@ -21,6 +21,7 @@ mod cmd_drop;
 mod cmd_io;
 mod cmd_list;
 mod cmd_type;
+mod create_cmd;
 mod handle;
 #[cfg(test)]
 mod tests;

@@ -1,7 +1,7 @@
 use ::clap::Parser;
 
-use ::rusht::cmd::handle_add;
 use ::rusht::cmd::AddArgs;
+use ::rusht::cmd::handle_add;
 use ::rusht::ExitStatus;
 
 //TODO: option to deduplicate tasks

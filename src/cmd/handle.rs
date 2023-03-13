@@ -1,14 +1,14 @@
 use crate::cmd::cmd_buf::{buf_cmd, BufArgs};
-use crate::common::stdin_lines;
 use crate::common::EmptyLineHandling;
+use crate::common::stdin_lines;
 use crate::ExitStatus;
 
-use super::list_cmds;
-use super::ListArgs;
-use super::ListErr;
 use super::{add_cmd, AddArgs};
 use super::{do_cmd, DoArgs};
 use super::{drop_cmd, DropArgs};
+use super::list_cmds;
+use super::ListArgs;
+use super::ListErr;
 
 pub fn handle_add(mut args: AddArgs) -> ExitStatus {
     if args.lines {

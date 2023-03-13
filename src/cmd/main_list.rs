@@ -1,4 +1,5 @@
 use ::clap::Parser;
+
 use ::rusht::cmd::handle_list;
 use ::rusht::cmd::ListArgs;
 use ::rusht::ExitStatus;
