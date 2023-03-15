@@ -32,13 +32,16 @@ pub struct NamesafeArgs {
     #[arg(short = 'E', long = "keep-tail")]
     pub keep_tail: bool,
     /// Do not fail if there are no input lines.
-    #[arg(short = '0', long = "allow-empty")]
+    #[arg(short = '0', long = "allow-empty", conflicts_with = "input")]
     pub allow_empty: bool,
     /// Allow dashes and underscores at the start or end of names
     #[arg(short = 'C', long)]
     pub allow_outer_connector: bool,
+    #[arg(short = 'i', long)]
+    /// If this string is provided, do matching on that and ignore stdin.
+    pub input: Option<String>,
     /// Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty.
-    #[arg(short = '1', long = "single")]
+    #[arg(short = '1', long = "single", conflicts_with = "input")]
     pub single_line: bool,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)

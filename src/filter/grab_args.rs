@@ -14,7 +14,6 @@ pub struct GrabArgs {
     #[arg(short = 'i', long)]
     /// If this string is provided, do matching on that and ignore stdin.
     pub input: Option<String>,
-    //TODO @mverleg: ^ impl
     #[arg(short = 'f', long = "first-match-only")]
     /// Only print the first match of the pattern per line, even if it matches multiple times.
     ///
