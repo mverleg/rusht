@@ -6,6 +6,7 @@ use ::regex::Regex;
 
 pub const FROM_DEFAULT: &'static str = "^";
 
+//TODO @mverleg: add as subcommand to `rusht`
 #[derive(Parser, Debug)]
 #[command(
     name = "between",

@@ -93,3 +93,25 @@ pub async fn handle_between(args: BetweenArgs) -> ExitStatus {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use regex::Regex;
+    use super::*;
+
+    #[async_std::test]
+    async fn grab_input() {
+        let res = handle_grab(GrabArgs {
+            pattern: Regex::new("bc").unwrap(),
+            input: Some("abcd-abcd\nabcd".to_owned()),
+            first_match_only: true,
+            first_capture_only: true,
+            keep_unmatched: false,
+            max_lines: Some(1),
+            expect_match: true,
+            expect_no_match: false,
+            quiet: true,
+        }).await;
+        assert!(res.is_ok())
+    }
+}
