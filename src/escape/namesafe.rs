@@ -6,7 +6,7 @@ use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 
-use crate::common::LineReader;
+use crate::common::{LineReader, LineWriter};
 
 use super::NamesafeArgs;
 
@@ -19,7 +19,7 @@ const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
 pub async fn namesafe(
     mut args: NamesafeArgs,
     reader: &mut impl LineReader,
-    mut out_line_handler: impl FnMut(&str),
+    writer: &mut impl LineWriter,
 ) -> Result<(), String> {
     if args.max_length < 8 {
         debug!("maximum length too low ({}), setting to 8", args.max_length);
@@ -31,7 +31,7 @@ pub async fn namesafe(
         if args.single_line && any_line {
             return Err("namesafe failed because it received more than one line, and --single was requested".to_owned());
         };
-        out_line_handler(&newline);
+        writer.write_line(&newline).await;
         any_line = true;
     }
     if args.allow_empty || any_line {
