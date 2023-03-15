@@ -46,7 +46,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     assert!(!args.keep_extension, "keeping extension not yet supported"); //TODO @mverleg:
     let mut count = 0;
     let max_length = max(8, args.max_length as usize);
-    let mut is_prev_special = true;
+    let mut is_prev_special = if args.allow_outer_connector { false } else { true };
     let mut filtered = original
         .chars()
         .map(|c| if args.charset.is_allowed(c) { c } else { '_' })
@@ -55,14 +55,16 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .collect::<String>();
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
-    let do_hash = filtered.len() < 2 || args.hash_policy.should_hash(was_changed, was_too_long);
+    let do_hash = filtered.is_empty() || args.hash_policy.should_hash(was_changed, was_too_long);
     debug!(
         "for line {original}: was_changed={was_changed}, was_too_long={was_too_long}, \
             count={count}, max_length={max_length}, do_hash={do_hash}, hash_policy={0:?}",
         args.hash_policy
     );
-    while filtered.ends_with('_') || filtered.ends_with('-') {
-        filtered.pop();
+    if ! args.allow_outer_connector {
+        while filtered.ends_with('_') || filtered.ends_with('-') {
+            filtered.pop();
+        }
     }
     if !do_hash {
         return shorten(&filtered, count, max_length, args.keep_tail);

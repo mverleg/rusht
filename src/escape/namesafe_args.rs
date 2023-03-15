@@ -34,6 +34,9 @@ pub struct NamesafeArgs {
     /// Do not fail if there are no input lines.
     #[arg(short = '0', long = "allow-empty")]
     pub allow_empty: bool,
+    /// Allow dashes and underscores at the start or end of names
+    #[arg(short = 'C', long)]
+    pub allow_outer_connector: bool,
     /// Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty.
     #[arg(short = '1', long = "single")]
     pub single_line: bool,
@@ -118,6 +121,7 @@ impl Default for NamesafeArgs {
             keep_extension: false,
             keep_tail: false,
             allow_empty: false,
+            allow_outer_connector: false,
             single_line: false,
         }
     }
