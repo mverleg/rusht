@@ -11,10 +11,12 @@ use crate::filter::UniqueArgs;
 
 use super::{grab, GrabArgs};
 
+//TODO @mverleg: too much code in handle, should be inside grab?
 pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     let quiet = args.quiet;
     let expect_match = args.expect_match;
     let expect_no_match = args.expect_no_match;
+    let pattern_str = args.pattern.as_str().to_owned();
     assert!(!(expect_match && expect_no_match), "cannot combine -expect-match and --expect-no-match");
     if quiet {
         assert!(expect_match || expect_no_match, "grab: --quiet only usable when --expect-match or --expect-no-match");
@@ -41,7 +43,7 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     };
     match grab_res {
         Ok(match_cnt) => {
-            exit_from_match(match_cnt, expect_match, expect_no_match)
+            exit_from_match(match_cnt, expect_match, expect_no_match, &pattern_str, quiet)
         },
         Err(err) => {
             eprintln!("{}", err);
@@ -50,10 +52,13 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     }
 }
 
-fn exit_from_match(match_cnt: u32, expect_match: bool, expect_no_match: bool) -> ExitStatus {
+fn exit_from_match(match_cnt: u32, expect_match: bool, expect_no_match: bool, pattern: &str, quiet: bool) -> ExitStatus {
     if expect_match {
         return if match_cnt == 0 {
             debug!("grab failed because --expect-match but no results");
+            if !quiet {
+                eprintln!("grab expected result for '{pattern}' but did not find");
+            }
             ExitStatus::err()
         } else {
             debug!("grab succeeded because --expect-match and {} results", match_cnt);
@@ -64,9 +69,11 @@ fn exit_from_match(match_cnt: u32, expect_match: bool, expect_no_match: bool) ->
         return if match_cnt == 0 {
             debug!("grab succeeded because --expect-no-match with no results");
             ExitStatus::ok()
-
         } else {
             debug!("grab failed because --expect-no-match but {} results", match_cnt);
+            if !quiet {
+                eprintln!("grab expected no result for '{pattern}' but found {match_cnt}");
+            }
             ExitStatus::err()
         }
     }
