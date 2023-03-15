@@ -125,6 +125,7 @@ impl Default for NamesafeArgs {
             keep_tail: false,
             allow_empty: false,
             allow_outer_connector: false,
+            input: None,
             single_line: false,
         }
     }

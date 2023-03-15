@@ -6,17 +6,19 @@ use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
 
+use crate::common::LineReader;
+
+use super::NamesafeArgs;
+
 const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
     base64::engine::fast_portable::FastPortable::from(
         &base64::alphabet::URL_SAFE,
         base64::engine::fast_portable::NO_PAD,
     );
 
-use super::NamesafeArgs;
-
-pub fn namesafe(
+pub async fn namesafe(
     mut args: NamesafeArgs,
-    mut line_supplier: impl FnMut() -> Option<io::Result<String>>,
+    reader: &mut impl LineReader,
     mut out_line_handler: impl FnMut(&str),
 ) -> Result<(), String> {
     if args.max_length < 8 {
@@ -24,8 +26,7 @@ pub fn namesafe(
         args.max_length = 8
     }
     let mut any_line = false;
-    while let Some(line_res) = line_supplier() {
-        let oldline = line_res.map_err(|err| format!("failed to read line, {}", err))?;
+    while let Some(oldline) = reader.read_line().await {
         let newline = namesafe_line(&oldline, &args);
         if args.single_line && any_line {
             return Err("namesafe failed because it received more than one line, and --single was requested".to_owned());
@@ -111,8 +112,9 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::escape::HashPolicy;
     use ::clap::Parser;
+
+    use crate::escape::HashPolicy;
 
     use super::*;
 

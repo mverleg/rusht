@@ -79,7 +79,7 @@ async fn main() -> ExitStatus {
         SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
         SubCmd::Filter(sub_args) => handle_filter(sub_args).await,
         SubCmd::Locked(sub_args) => handle_locked(sub_args),
-        SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args),
+        SubCmd::Namesafe(sub_args) => handle_namesafe(sub_args).await,
         SubCmd::Mvnw(sub_args) => handle_mvnw(sub_args).await,
         SubCmd::Mon(sub_args) => handle_mon(sub_args).await,
         SubCmd::Piped(sub_args) => handle_piped(sub_args).await,
