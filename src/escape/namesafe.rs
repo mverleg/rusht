@@ -1,6 +1,5 @@
 use ::std::cmp::max;
 use ::std::cmp::min;
-use ::std::io;
 
 use ::log::debug;
 use ::sha2::Digest;

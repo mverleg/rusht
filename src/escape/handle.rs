@@ -1,5 +1,4 @@
 use crate::ExitStatus;
-use ::std::io::{stdin, BufRead, BufReader};
 use log::debug;
 use crate::common::{StdinReader, StdWriter, VecReader};
 

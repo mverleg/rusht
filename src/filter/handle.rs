@@ -1,6 +1,6 @@
 use ::log::debug;
 
-use crate::common::{DiscardWriter, RejectStdin, StdinReader, StdWriter, VecReader};
+use crate::common::{DiscardWriter, StdinReader, StdWriter, VecReader};
 use crate::ExitStatus;
 use crate::filter::BetweenArgs;
 use crate::filter::between;

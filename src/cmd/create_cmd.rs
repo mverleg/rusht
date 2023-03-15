@@ -5,13 +5,9 @@ use ::std::io::stdin;
 use ::std::path::PathBuf;
 use ::std::thread::spawn;
 
-use ::clap::Parser;
 use ::log::debug;
 use log::warn;
 
-use crate::cmd::cmd_io::read;
-use crate::cmd::cmd_io::write;
-use crate::cmd::cmd_type::TaskStack;
 use crate::common::{CommandArgs, fail, Task};
 
 pub fn create_tasks(
