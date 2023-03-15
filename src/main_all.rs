@@ -14,16 +14,18 @@ use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::filter::{GrabArgs, UniqueArgs};
 use ::rusht::find::DirWithArgs;
 use ::rusht::find::handle_dir_with;
+use ::rusht::find::handle_jl;
 use ::rusht::find::JlArgs;
 use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::observe::{handle_mon, MonArgs};
 use ::rusht::observe::{handle_piped, PipedArgs};
 use ::rusht::rsh::{handle_rsh, RshArgs};
-use ::rusht::wait::handle_locked;
-use ::rusht::wait::LockedArgs;
-use ::rusht::find::handle_jl;
 use ::rusht::textproc::batched_args::BatchedArgs;
 use ::rusht::textproc::handle::handle_batched;
+use ::rusht::wait::handle_locked;
+use ::rusht::wait::LockedArgs;
+use rusht::cmd::{BufArgs, handle_buf};
+use rusht::filter::{BetweenArgs, handle_between};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -42,7 +44,7 @@ enum SubCmd {
     Cmdo(DoArgs),
     Cmlist(ListArgs),
     Cmdrop(DropArgs),
-    //TODO @mverleg: get this to use dir_with
+    CmBuf(BufArgs),
     DirWith(DirWithArgs),
     Grab(GrabArgs),
     Unique(UniqueArgs),
@@ -54,6 +56,7 @@ enum SubCmd {
     Piped(PipedArgs),
     Batched(BatchedArgs),
     Jl(JlArgs),
+    Between(BetweenArgs),
     Rsh(RshArgs),
 }
 
@@ -74,6 +77,7 @@ async fn main() -> ExitStatus {
         SubCmd::Cmdo(sub_args) => handle_do(sub_args),
         SubCmd::Cmlist(sub_args) => handle_list(sub_args),
         SubCmd::Cmdrop(sub_args) => handle_drop(sub_args),
+        SubCmd::CmBuf(sub_args) => handle_buf(sub_args),
         SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
         SubCmd::Grab(sub_args) => handle_grab(sub_args).await,
         SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
@@ -86,5 +90,6 @@ async fn main() -> ExitStatus {
         SubCmd::Batched(sub_args) => handle_batched(sub_args).await,
         SubCmd::Jl(sub_args) => handle_jl(sub_args).await,
         SubCmd::Rsh(sub_args) => handle_rsh(sub_args),
+        SubCmd::Between(sub_args) => handle_between(sub_args).await,
     }
 }
