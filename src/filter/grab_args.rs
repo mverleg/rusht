@@ -11,6 +11,10 @@ pub struct GrabArgs {
     /// For case-insensitive matching, prefix `(?i)`.
     #[arg()]
     pub pattern: Regex,
+    #[arg(short = 'i', long)]
+    /// If this string is provided, do matching on that and ignore stdin.
+    pub input: Option<String>,
+    //TODO @mverleg: ^ impl
     #[arg(short = 'f', long = "first-match-only")]
     /// Only print the first match of the pattern per line, even if it matches multiple times.
     ///
@@ -42,6 +46,7 @@ impl Default for GrabArgs {
     fn default() -> Self {
         GrabArgs {
             pattern: Regex::new(".*").unwrap(),
+            input: None,
             first_match_only: false,
             first_capture_only: false,
             keep_unmatched: false,

@@ -1,6 +1,6 @@
 use ::log::debug;
 
-use crate::common::{DiscardWriter, StdinReader, StdWriter};
+use crate::common::{DiscardWriter, StdinReader, StdWriter, VecReader};
 use crate::ExitStatus;
 use crate::filter::BetweenArgs;
 use crate::filter::between;
@@ -19,10 +19,11 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     if quiet {
         assert!(expect_match || expect_no_match, "grab: --quiet only usable when --expect-match or --expect-no-match");
     }
-    let grab_res = if quiet {
-        grab(args, StdinReader::new(), DiscardWriter::new()).await
-    } else {
-        grab(args, StdinReader::new(), StdWriter::stdout()).await
+    let grab_res = match (args.input.clone(), quiet) {
+        (Some(inp), true) => grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await,
+        (Some(inp), false) => grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await,
+        (None, true) => grab(args, StdinReader::new(), DiscardWriter::new()).await,
+        (None, false) => grab(args, StdinReader::new(), StdWriter::stdout()).await,
     };
     match grab_res {
         Ok(match_cnt) => {

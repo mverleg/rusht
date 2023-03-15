@@ -7,7 +7,7 @@ use ::regex::Regex;
 #[derive(Parser, Debug)]
 #[command(name = "jl", about = "A mix of ls and find that outputs json (use jq)")]
 pub struct JlArgs {
-    #[arg(short = 'd', long, default_value = "1")]
+    #[arg(short = 'n', long, default_value = "1")]
     /// Maximum directory depth to recurse into
     pub max_depth: u32,
     #[arg(short = 'P', long)]

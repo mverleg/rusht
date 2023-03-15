@@ -243,6 +243,7 @@ mod tests {
         test_grab_arg(
             GrabArgs {
                 pattern: Regex::new("(a+)b(c{2})").unwrap(),
+                input: None,
                 keep_unmatched: true,
                 first_match_only: true,
                 first_capture_only: true,

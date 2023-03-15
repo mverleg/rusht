@@ -101,6 +101,7 @@ mod tests {
 
         let grab_args = GrabArgs {
             pattern: Regex::new("^hello (.*)").unwrap(),
+            input: None,
             first_match_only: true,
             first_capture_only: true,
             keep_unmatched: true,
