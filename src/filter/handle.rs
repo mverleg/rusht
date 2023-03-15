@@ -24,12 +24,10 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
     let grab_res = match (args.input.clone(), quiet) {
         (Some(inp), true) => {
             debug!("grab getting input from provided string, discarding output");
-            RejectStdin::new();  // start a thread
             grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await
         },
         (Some(inp), false) => {
             debug!("grab getting input from provided string, printing output");
-            RejectStdin::new();  // start a thread
             grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await
         }
         (None, true) => {
