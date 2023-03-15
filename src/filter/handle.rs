@@ -1,6 +1,6 @@
 use ::log::debug;
 
-use crate::common::{DiscardWriter, StdinReader, StdWriter, VecReader};
+use crate::common::{DiscardWriter, RejectStdin, StdinReader, StdWriter, VecReader};
 use crate::ExitStatus;
 use crate::filter::BetweenArgs;
 use crate::filter::between;
@@ -20,10 +20,24 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
         assert!(expect_match || expect_no_match, "grab: --quiet only usable when --expect-match or --expect-no-match");
     }
     let grab_res = match (args.input.clone(), quiet) {
-        (Some(inp), true) => grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await,
-        (Some(inp), false) => grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await,
-        (None, true) => grab(args, StdinReader::new(), DiscardWriter::new()).await,
-        (None, false) => grab(args, StdinReader::new(), StdWriter::stdout()).await,
+        (Some(inp), true) => {
+            debug!("grab getting input from provided string, discarding output");
+            RejectStdin::new();  // start a thread
+            grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await
+        },
+        (Some(inp), false) => {
+            debug!("grab getting input from provided string, printing output");
+            RejectStdin::new();  // start a thread
+            grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await
+        }
+        (None, true) => {
+            debug!("grab getting input from stdin, discarding output");
+            grab(args, StdinReader::new(), DiscardWriter::new()).await
+        }
+        (None, false) => {
+            debug!("grab getting input from stdin, printing output");
+            grab(args, StdinReader::new(), StdWriter::stdout()).await
+        }
     };
     match grab_res {
         Ok(match_cnt) => {
