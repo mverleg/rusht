@@ -4,16 +4,12 @@ use ::std::cmp::min;
 use ::log::debug;
 use ::sha2::Digest;
 use ::sha2::Sha256;
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 
 use crate::common::{LineReader, LineWriter};
 
 use super::NamesafeArgs;
-
-const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
-    base64::engine::fast_portable::FastPortable::from(
-        &base64::alphabet::URL_SAFE,
-        base64::engine::fast_portable::NO_PAD,
-    );
 
 pub async fn namesafe(
     mut args: NamesafeArgs,
@@ -109,7 +105,7 @@ fn compute_hash(text: &str, hash_length: usize) -> String {
     let mut hasher = Sha256::new();
     hasher.update(text.as_bytes());
     let hash_out = hasher.finalize();
-    let encoded = base64::encode_engine(hash_out, &URL_SAFE_NO_PAD);
+    let encoded = URL_SAFE_NO_PAD.encode(hash_out);
     encoded[..hash_length].to_ascii_lowercase()
 }
 

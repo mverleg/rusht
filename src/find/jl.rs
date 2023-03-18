@@ -7,6 +7,8 @@ use ::sha2::Digest;
 use ::sha2::Sha256;
 use ::walkdir::DirEntry;
 use ::walkdir::WalkDir;
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 
 use crate::common::{safe_filename, LineWriter};
 use crate::find::jl_args::{ErrorHandling, JlArgs};
@@ -151,17 +153,11 @@ fn to_timestamp(result: io::Result<SystemTime>, log_path: &str) -> Result<u64, S
         .as_secs())
 }
 
-const URL_SAFE_NO_PAD: base64::engine::fast_portable::FastPortable =
-    base64::engine::fast_portable::FastPortable::from(
-        &base64::alphabet::URL_SAFE,
-        base64::engine::fast_portable::NO_PAD,
-    );
-
 fn compute_hash(content: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(content.as_bytes());
     let hash_out = hasher.finalize();
-    let encoded = base64::encode_engine(hash_out, &URL_SAFE_NO_PAD);
+    let encoded = URL_SAFE_NO_PAD.encode(hash_out);
     format!("sha256:{}", encoded.to_ascii_lowercase())
 }
 
