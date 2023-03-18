@@ -14,6 +14,8 @@ include = [
 ]
 default-run = "rusht"
 
+build = "build.rs"
+
 [lib]
 name = "rusht"
 path = "src/lib.rs"

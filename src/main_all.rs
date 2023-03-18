@@ -94,42 +94,4 @@ async fn main() -> ExitStatus {
     }
 }
 
-#[cfg(test)]
-mod executable {
-    use ::std::fs;
-    use ::std::io::BufRead;
-    use ::std::process::Command;
-
-    fn get_all_bins() -> Vec<String> {
-        // trigger error message to list all binaries
-        let out = Command::new("cargo")
-            .args(["run", "--bin"])
-            .output()
-            .expect("failed to execute process");
-        String::from_utf8(out.stderr)
-            .expect("cargo output not utf8")
-            .lines()
-            .skip(2)
-            .map(|line| {
-                line.trim().to_owned()
-            })
-            .filter(|bin| !bin.is_empty())
-            .filter(|bin| !bin.contains("debug"))
-            .collect()
-    }
-
-    #[test]
-    fn test_bins_help() {
-        //let cargo = fs::read_to_string("./Cargo.toml").expect("did not find Cargo.toml file");  //TODO @mark: TEMPORARY! REMOVE THIS!
-        let bins = get_all_bins();
-        assert!(!bins.is_empty(), "no binaries found");
-        for bin in bins {
-            let out = Command::new("cargo")
-                .args(["run", "--bin", &bin, "--all-features", "--", "--help"])
-                .output()
-                .expect("failed to execute binary");
-            assert_eq!(out.status.code(), Some(0), "failed binary {bin} --help because exit code was not 0");
-            println!("ran binary {bin} --help");
-        }
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
