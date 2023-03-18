@@ -1,8 +1,8 @@
 use ::clap::Parser;
 
-use ::rusht::ExitStatus;
-use ::rusht::textproc::BatchedArgs;
 use ::rusht::textproc::handle_batched;
+use ::rusht::textproc::BatchedArgs;
+use ::rusht::ExitStatus;
 
 #[async_std::main]
 async fn main() -> ExitStatus {

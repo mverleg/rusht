@@ -20,7 +20,8 @@ pub async fn grab(
             args.first_match_only,
             args.first_capture_only,
             args.keep_unmatched,
-        ).await;
+        )
+        .await;
         if let Some(max) = args.max_lines {
             if match_cnt >= max {
                 debug!(

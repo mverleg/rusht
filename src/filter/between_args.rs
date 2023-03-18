@@ -8,10 +8,7 @@ pub const FROM_DEFAULT: &'static str = "^";
 
 //TODO @mverleg: add as subcommand to `rusht`
 #[derive(Parser, Debug)]
-#[command(
-    name = "between",
-    about = "Select all lines between two matches"
-)]
+#[command(name = "between", about = "Select all lines between two matches")]
 pub struct BetweenArgs {
     #[arg(short = 'f', long, default_value = FROM_DEFAULT)]
     /// Start collecting lines when this expression matches
@@ -47,10 +44,14 @@ impl FromStr for MatchHandling {
 
 impl fmt::Display for MatchHandling {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match self {
-            MatchHandling::Include => "include",
-            MatchHandling::Exclude => "exclude",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                MatchHandling::Include => "include",
+                MatchHandling::Exclude => "exclude",
+            }
+        )
     }
 }
 

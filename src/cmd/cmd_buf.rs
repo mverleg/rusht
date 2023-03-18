@@ -3,7 +3,7 @@ use ::clap::Parser;
 use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks};
 use crate::cmd::cmd_type::{TaskStack, TaskType};
 use crate::cmd::create_cmd::create_tasks;
-use crate::common::{CommandArgs, EmptyLineHandling, stdin_lines};
+use crate::common::{stdin_lines, CommandArgs, EmptyLineHandling};
 use crate::ExitStatus;
 
 #[derive(Parser, Debug)]

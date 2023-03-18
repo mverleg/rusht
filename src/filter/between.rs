@@ -6,16 +6,25 @@ use crate::filter::between_args::MatchHandling;
 use crate::filter::between_args::FROM_DEFAULT;
 use crate::filter::BetweenArgs;
 
-pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) -> Result<(), String> {
+pub async fn between(
+    args: BetweenArgs,
+    reader: &mut impl LineReader,
+    writer: &mut impl LineWriter,
+) -> Result<(), String> {
     if args.from.as_str() == FROM_DEFAULT && args.to.is_none() {
-        return Err("between: at least one of --from or --to should be provided; see --help".to_owned())
+        return Err(
+            "between: at least one of --from or --to should be provided; see --help".to_owned(),
+        );
     }
     // Search start point
     let mut i = 1;
     let mut found_start = false;
     while let Some(line) = reader.read_line().await {
         if args.from.is_match(line) {
-            debug!("found a 'between' start match at line #{i}, handling={}", args.from_handling);
+            debug!(
+                "found a 'between' start match at line #{i}, handling={}",
+                args.from_handling
+            );
             found_start = true;
             if args.from_handling == MatchHandling::Include {
                 writer.write_line(line).await;
@@ -24,19 +33,22 @@ pub async fn between(args: BetweenArgs, reader: &mut impl LineReader, writer: &m
         }
         i += 1;
     }
-    if ! found_start {
+    if !found_start {
         debug!("reached end of input in 'between' after {i} lines before finding start match; stopping");
-        return Ok(())
+        return Ok(());
     }
     if let Some(end_re) = &args.to {
         debug!("searching end pattern in 'between' from line #{i}");
         while let Some(line) = reader.read_line().await {
             if end_re.is_match(line) {
-                debug!("found a 'between' end match at line #{i}, handling={}", args.to_handling);
+                debug!(
+                    "found a 'between' end match at line #{i}, handling={}",
+                    args.to_handling
+                );
                 if args.to_handling == MatchHandling::Include {
                     writer.write_line(line).await;
                 }
-                return Ok(())
+                return Ok(());
             }
             writer.write_line(line).await;
             i += 1;
@@ -63,7 +75,9 @@ mod tests {
 
     async fn check_between_args<L: Into<String>>(args: BetweenArgs, lines: Vec<L>) -> Vec<String> {
         let mut writer = CollectorWriter::new();
-        between(args, &mut VecReader::new(lines), &mut writer).await.unwrap();
+        between(args, &mut VecReader::new(lines), &mut writer)
+            .await
+            .unwrap();
         writer.lines().snapshot().await.clone()
     }
 
@@ -164,7 +178,12 @@ mod tests {
             from_handling: MatchHandling::Exclude,
             to_handling: MatchHandling::Exclude,
         };
-        let res = between(args, &mut VecReader::new(vec![""]), &mut CollectorWriter::new()).await;
+        let res = between(
+            args,
+            &mut VecReader::new(vec![""]),
+            &mut CollectorWriter::new(),
+        )
+        .await;
         assert!(res.is_err());
     }
 }

@@ -8,15 +8,12 @@ use ::sha2::Sha256;
 use ::walkdir::DirEntry;
 use ::walkdir::WalkDir;
 
-use crate::common::{LineWriter, safe_filename};
-use crate::ExitStatus;
+use crate::common::{safe_filename, LineWriter};
 use crate::find::jl_args::{ErrorHandling, JlArgs};
 use crate::find::jl_json_api::FSNode;
+use crate::ExitStatus;
 
-pub async fn list_files(
-    args: JlArgs,
-    writer: &mut impl LineWriter,
-) -> ExitStatus {
+pub async fn list_files(args: JlArgs, writer: &mut impl LineWriter) -> ExitStatus {
     assert!(!(args.no_dirs && args.only_dirs));
     if args.max_depth == 0 {
         eprintln!("jq max-depth is 0, likely should be at least 1")
@@ -25,7 +22,7 @@ pub async fn list_files(
     let mut has_err = false;
     let mut is_first = true;
     let mut line = String::new();
-    if ! args.entry_per_lines {
+    if !args.entry_per_lines {
         line.push('[');
     }
     //TODO @mverleg: async walk dir?
@@ -41,8 +38,8 @@ pub async fn list_files(
                 match args.on_error {
                     ErrorHandling::Abort => {
                         eprintln!("{err}");
-                        return ExitStatus::of(1)
-                    },
+                        return ExitStatus::of(1);
+                    }
                     ErrorHandling::FailAtEnd => {
                         eprintln!("{err}");
                         has_err = true;
@@ -50,13 +47,13 @@ pub async fn list_files(
                     ErrorHandling::Warn => eprintln!("{err}"),
                     ErrorHandling::Ignore => debug!("ignoring file read error: {err}"),
                 }
-                continue
+                continue;
             }
         };
         if is_first {
             is_first = false;
         } else {
-            if ! args.entry_per_lines {
+            if !args.entry_per_lines {
                 line.push(',');
             }
             writer.write_line(&line).await;
@@ -66,41 +63,53 @@ pub async fn list_files(
         line.push_str(&serde_json::to_string(&node).expect("failed to create json from FSNode"));
         // unnecessary allocation but probably not performance-critical ^
     }
-    if ! args.entry_per_lines {
+    if !args.entry_per_lines {
         line.push(']');
     }
     writer.write_line(&line).await;
     ExitStatus::of_is_ok(!has_err)
 }
 
-async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs) -> Result<Option<FSNode>, String> {
-    let entry = entry_res.map_err(|err| format!("failed to read file/dir inside {}, err: {err}", args.root.to_string_lossy()))?;
+async fn analyze_file(
+    entry_res: walkdir::Result<DirEntry>,
+    args: &JlArgs,
+) -> Result<Option<FSNode>, String> {
+    let entry = entry_res.map_err(|err| {
+        format!(
+            "failed to read file/dir inside {}, err: {err}",
+            args.root.to_string_lossy()
+        )
+    })?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
     let log_path = log_path_owned.as_ref();
-    let metadata = entry.metadata().map_err(|err| format!("could not get metadata for {log_path}, err {err}"))?;
+    let metadata = entry
+        .metadata()
+        .map_err(|err| format!("could not get metadata for {log_path}, err {err}"))?;
 
-    let name = path.file_name()
+    let name = path
+        .file_name()
         .ok_or_else(|| "could not read filename".to_owned())?
         .to_str()
         .ok_or_else(|| "could not convert filename to utf8".to_owned())?;
     if let Some(pattern) = &args.filter {
-        if ! pattern.is_match(name) {
-            return Ok(None)
+        if !pattern.is_match(name) {
+            return Ok(None);
         }
     }
     let is_dir = metadata.is_dir();
     if args.no_dirs && is_dir {
-        return Ok(None)
+        return Ok(None);
     }
-    if args.only_dirs && ! is_dir {
-        return Ok(None)
+    if args.only_dirs && !is_dir {
+        return Ok(None);
     }
     let filesize_b = metadata.len();
     let filesize_bm = ((filesize_b as f64) / (1024. * 1024.)).round() as u64;
-    let hash = if args.do_hash && ! is_dir {
-        let content: String = fs::read_to_string(path).await
-            .map_err(|err| format!("could not read file content for hashing for {log_path}, err {err}"))?;
+    let hash = if args.do_hash && !is_dir {
+        let content: String = fs::read_to_string(path).await.map_err(|err| {
+            format!("could not read file content for hashing for {log_path}, err {err}")
+        })?;
         Some(compute_hash(&content))
     } else {
         None
@@ -112,9 +121,14 @@ async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs) -> Re
         base_name: "".to_string(),
         extension: "".to_string(),
         rel_path: "".to_string(),
-        canonical_path: path.canonicalize()
+        canonical_path: path
+            .canonicalize()
             .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
-            .to_str().ok_or_else(|| format!("could not convert canonical (abs) path for {log_path} to utf8"))?.to_owned(),
+            .to_str()
+            .ok_or_else(|| {
+                format!("could not convert canonical (abs) path for {log_path} to utf8")
+            })?
+            .to_owned(),
         is_dir,
         is_link: entry.path_is_symlink(),
         size_b: filesize_b,
@@ -150,7 +164,6 @@ fn compute_hash(content: &str) -> String {
     let encoded = base64::encode_engine(hash_out, &URL_SAFE_NO_PAD);
     format!("sha256:{}", encoded.to_ascii_lowercase())
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -188,17 +201,35 @@ mod tests {
         let status = list_files(args, &mut writer).await;
         let lines = line_container.snapshot().await;
 
-        lines.iter().enumerate().for_each(|(i, l)| println!("{i}: |{l}|"));
+        lines
+            .iter()
+            .enumerate()
+            .for_each(|(i, l)| println!("{i}: |{l}|"));
         assert!(status.is_ok());
         assert_eq!(lines.len(), 3);
         assert!(!lines[0].starts_with('['));
         assert!(!lines[1].ends_with(','));
         assert!(!lines[2].ends_with(']'));
-        assert_eq!(lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(), 1);
+        assert_eq!(
+            lines.iter().filter(|l| l.contains("\"file1.txt\"")).count(),
+            1
+        );
         assert_eq!(lines.iter().filter(|l| l.contains("\"file2\"")).count(), 1);
         assert_eq!(lines.iter().filter(|l| l.contains("\"subdir\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("\"safe_name\":\"file1_txt\"")).count(), 1);
-        assert_eq!(lines.iter().filter(|l| l.contains("sha256:hmfxpto-b9_cqulnzrwplpjh3mdi7zpitalvzledshe")).count(), 1);
+        assert_eq!(
+            lines
+                .iter()
+                .filter(|l| l.contains("\"safe_name\":\"file1_txt\""))
+                .count(),
+            1
+        );
+        assert_eq!(
+            lines
+                .iter()
+                .filter(|l| l.contains("sha256:hmfxpto-b9_cqulnzrwplpjh3mdi7zpitalvzledshe"))
+                .count(),
+            1
+        );
     }
 
     #[async_std::test]
@@ -224,14 +255,29 @@ mod tests {
         let status = list_files(args, &mut writer).await;
         let lines = line_container.snapshot().await;
 
-        lines.iter().enumerate().for_each(|(i, l)| println!("{i}: |{l}|"));
+        lines
+            .iter()
+            .enumerate()
+            .for_each(|(i, l)| println!("{i}: |{l}|"));
         assert!(status.is_ok());
         assert_eq!(lines.len(), 2);
         assert!(lines[0].starts_with('['));
         assert!(lines[0].ends_with(','));
         assert!(lines[1].ends_with(']'));
-        assert_eq!(lines.iter().filter(|l| l.contains("do-not-find.txt")).count(), 0);
-        assert_eq!(lines.iter().filter(|l| l.contains("\"needle.txt\"")).count(), 1);
+        assert_eq!(
+            lines
+                .iter()
+                .filter(|l| l.contains("do-not-find.txt"))
+                .count(),
+            0
+        );
+        assert_eq!(
+            lines
+                .iter()
+                .filter(|l| l.contains("\"needle.txt\""))
+                .count(),
+            1
+        );
         assert!(!lines[1].contains("hash"));
     }
 
@@ -255,10 +301,14 @@ mod tests {
 
         let mut writer = CollectorWriter::new();
         let line_container = writer.lines();
-        let status = list_files(JlArgs {
-            root: dir_path.to_owned(),
-            ..JlArgs::default()
-        }, &mut writer).await;
+        let status = list_files(
+            JlArgs {
+                root: dir_path.to_owned(),
+                ..JlArgs::default()
+            },
+            &mut writer,
+        )
+        .await;
         let lines = line_container.snapshot().await;
 
         assert!(status.is_ok());

@@ -13,10 +13,10 @@ use ::itertools::Itertools;
 use ::log::debug;
 use futures::AsyncWriteExt;
 
-use crate::common::{LineWriter, StdWriter, Task};
 use crate::common::write::FunnelFactory;
-use crate::ExitStatus;
+use crate::common::{LineWriter, StdWriter, Task};
 use crate::observe::mon_task;
+use crate::ExitStatus;
 
 static USE_SHELL_ENV_NAME: &'static str = "RUSHT_SHELL_EXEC";
 
@@ -44,7 +44,17 @@ impl Task {
     ) -> ExitStatus {
         if monitor {
             let funnel = FunnelFactory::new(out_writer);
-            mon_task(self, &mut funnel.writer("out"), &mut funnel.writer("mon"), true, true, true, false, true).await
+            mon_task(
+                self,
+                &mut funnel.writer("out"),
+                &mut funnel.writer("mon"),
+                true,
+                true,
+                true,
+                false,
+                true,
+            )
+            .await
         } else {
             self.execute_with_stdout_nomonitor(out_writer, err_writer)
                 .await
@@ -94,7 +104,11 @@ impl Task {
         let mut child = base_cmd
             .current_dir(&self.working_dir)
             .envs(&self.extra_envs)
-            .stdin(if self.stdin.is_some() { Stdio::piped() } else { Stdio::null() })
+            .stdin(if self.stdin.is_some() {
+                Stdio::piped()
+            } else {
+                Stdio::null()
+            })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -114,7 +128,9 @@ impl Task {
             let err_task = scope.spawn(move || forward_out(proc_err, err_writer));
             let in_task = if let Some(sin) = &self.stdin {
                 let mut proc_in = child.stdin.take().expect("child should have stdin piped");
-                Some(scope.spawn(move || block_on(proc_in.write_all(sin.as_bytes())).expect("failed to send stdin")))
+                Some(scope.spawn(move || {
+                    block_on(proc_in.write_all(sin.as_bytes())).expect("failed to send stdin")
+                }))
             } else {
                 None
             };

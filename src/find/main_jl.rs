@@ -1,8 +1,8 @@
 use ::clap::Parser;
 
-use ::rusht::ExitStatus;
 use ::rusht::find::handle_jl;
 use ::rusht::find::JlArgs;
+use ::rusht::ExitStatus;
 
 #[async_std::main]
 async fn main() -> ExitStatus {

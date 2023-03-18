@@ -1,7 +1,7 @@
 use ::clap::Parser;
 
-use ::rusht::cmd::BufArgs;
 use ::rusht::cmd::handle_buf;
+use ::rusht::cmd::BufArgs;
 use ::rusht::ExitStatus;
 
 fn main() -> ExitStatus {

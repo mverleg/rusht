@@ -23,7 +23,8 @@ pub async fn piped(
         run_source(source, &mut chain_write, args.stderr),
         //TODO @mverleg: chain_read into this cmd:
         sink.execute_with_stdout_nomonitor(writer, &mut StdWriter::stderr()),
-    ).await;
+    )
+    .await;
     ExitStatus::max(source_res, sink_res)
 }
 

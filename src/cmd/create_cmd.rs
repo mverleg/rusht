@@ -1,14 +1,14 @@
 use ::std::collections::HashSet;
 use ::std::env::current_dir;
-use ::std::io::Read;
 use ::std::io::stdin;
+use ::std::io::Read;
 use ::std::path::PathBuf;
 use ::std::thread::spawn;
 
 use ::log::debug;
 use log::warn;
 
-use crate::common::{CommandArgs, fail, Task};
+use crate::common::{fail, CommandArgs, Task};
 
 pub fn create_tasks(
     line_reader: impl FnOnce() -> Vec<String>,
@@ -22,12 +22,12 @@ pub fn create_tasks(
     let new_tasks = if let Some(templ) = lines_with {
         assert!(!templ.is_empty());
         let mut has_placeholder = cmd.iter().any(|part| part.contains(&templ));
-        if !has_placeholder{
+        if !has_placeholder {
             if let Some(cwd) = &working_dir {
                 has_placeholder |= cwd.contains(&templ);
             }
         }
-        if !has_placeholder{
+        if !has_placeholder {
             if let Some(sin) = &stdin {
                 has_placeholder |= sin.contains(&templ);
             }
@@ -41,7 +41,9 @@ pub fn create_tasks(
         line_reader()
             .iter()
             .filter(|line| !unique || seen.insert(line))
-            .map(|input| task_from_template(&cmd, input, &templ, working_dir.as_ref(), stdin.as_ref()))
+            .map(|input| {
+                task_from_template(&cmd, input, &templ, working_dir.as_ref(), stdin.as_ref())
+            })
             .collect()
     } else {
         spawn(stdin_ignored_warning);

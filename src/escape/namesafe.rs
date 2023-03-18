@@ -46,7 +46,11 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     assert!(!args.keep_extension, "keeping extension not yet supported"); //TODO @mverleg:
     let mut count = 0;
     let max_length = max(8, args.max_length as usize);
-    let mut is_prev_special = if args.allow_outer_connector { false } else { true };
+    let mut is_prev_special = if args.allow_outer_connector {
+        false
+    } else {
+        true
+    };
     let mut filtered = original
         .chars()
         .map(|c| if args.charset.is_allowed(c) { c } else { '_' })
@@ -61,7 +65,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
             count={count}, max_length={max_length}, do_hash={do_hash}, hash_policy={0:?}",
         args.hash_policy
     );
-    if ! args.allow_outer_connector {
+    if !args.allow_outer_connector {
         while filtered.ends_with('_') || filtered.ends_with('-') {
             filtered.pop();
         }

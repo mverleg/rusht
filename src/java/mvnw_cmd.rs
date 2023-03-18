@@ -119,7 +119,12 @@ impl MvnCmdConfig {
                         })
                         .collect::<Vec<_>>(),
                 );
-                tasks.lint = Some(Task::new("java".to_owned(), lint_args, self.cwd.clone(), None));
+                tasks.lint = Some(Task::new(
+                    "java".to_owned(),
+                    lint_args,
+                    self.cwd.clone(),
+                    None,
+                ));
             } else {
                 warn!(
                     "skipping checkstyle because config was not found at '{}'",

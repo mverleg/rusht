@@ -3,24 +3,44 @@ use ::std::time::Instant;
 use ::log::debug;
 
 use crate::common::{LineWriter, PrefixWriter, StdWriter, Task, VecWriter};
-use crate::ExitStatus;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
+use crate::ExitStatus;
 
-pub async fn mon(args: MonArgs, output_writer: &mut impl LineWriter, monitor_writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn mon(
+    args: MonArgs,
+    output_writer: &mut impl LineWriter,
+    monitor_writer: &mut impl LineWriter,
+) -> ExitStatus {
     let task = args.cmd.clone().into_task();
     if let Some(mut prefix) = args.prefix.clone() {
-        assert!(!prefix.contains("%{date}"), "placeholders not supported yet for mon --prefix");
-        assert!(!prefix.contains("%{time}"), "placeholders not supported yet for mon --prefix");
+        assert!(
+            !prefix.contains("%{date}"),
+            "placeholders not supported yet for mon --prefix"
+        );
+        assert!(
+            !prefix.contains("%{time}"),
+            "placeholders not supported yet for mon --prefix"
+        );
         prefix.push(' ');
-        mon_task_with_writer(&task, args, &mut PrefixWriter::new(output_writer, prefix), monitor_writer).await
+        mon_task_with_writer(
+            &task,
+            args,
+            &mut PrefixWriter::new(output_writer, prefix),
+            monitor_writer,
+        )
+        .await
     } else {
         mon_task_with_writer(&task, args, output_writer, monitor_writer).await
     }
-
 }
 
-pub async fn mon_task_with_writer(task: &Task, args: MonArgs, output_writer: &mut impl LineWriter, monitor_writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn mon_task_with_writer(
+    task: &Task,
+    args: MonArgs,
+    output_writer: &mut impl LineWriter,
+    monitor_writer: &mut impl LineWriter,
+) -> ExitStatus {
     mon_task(
         &task,
         output_writer,
@@ -30,7 +50,8 @@ pub async fn mon_task_with_writer(task: &Task, args: MonArgs, output_writer: &mu
         !args.no_timing,
         args.sound_success,
         args.sound_failure,
-    ).await
+    )
+    .await
 }
 
 pub async fn mon_task(
@@ -46,7 +67,9 @@ pub async fn mon_task(
     debug!("print_cmd={print_cmd} output_on_success={output_on_success} timing={timing} sound_success={sound_success} sound_failure={sound_failure} for task {}", task.as_str());
     let cmd_str = task.as_str();
     if print_cmd {
-        monitor_writer.write_line(format!("going to run {}", cmd_str)).await;
+        monitor_writer
+            .write_line(format!("going to run {}", cmd_str))
+            .await;
     }
     let t0 = Instant::now();
     let status = if output_on_success {
@@ -90,11 +113,7 @@ pub async fn mon_task(
             status.code()
         );
     } else if !timing && !status.is_ok() {
-        eprintln!(
-            "FAILED command {} (code {})",
-            cmd_str,
-            status.code()
-        );
+        eprintln!("FAILED command {} (code {})", cmd_str, status.code());
     }
     if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()) {
         eprintln!("notification sound problem: {}", err);

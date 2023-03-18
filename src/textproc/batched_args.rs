@@ -7,7 +7,7 @@ use crate::common::CommandArgs;
 #[derive(Parser, Debug, Clone)]
 #[command(
     name = "batched",
-    about = "Split stdin into groups of N lines, and pass them to the command",
+    about = "Split stdin into groups of N lines, and pass them to the command"
 )]
 pub struct BatchedArgs {
     /// Maximum number of items per batch (may be smaller, e.g. for last one, or due to filtering).
@@ -31,7 +31,15 @@ pub struct BatchedArgs {
 
 #[test]
 fn test_cli_args() {
-    BatchedArgs::try_parse_from(&["batched", "-c=2", "wc", "-l",]).unwrap();
-    BatchedArgs::try_parse_from(&["batched", "-c=2", "--apart", "nr([0-9]+)", "--mixed-groups", "implode",]).unwrap();
-    BatchedArgs::try_parse_from(&["batched", "-c=2", "--together", "^\\w+", "implode",]).unwrap();
+    BatchedArgs::try_parse_from(&["batched", "-c=2", "wc", "-l"]).unwrap();
+    BatchedArgs::try_parse_from(&[
+        "batched",
+        "-c=2",
+        "--apart",
+        "nr([0-9]+)",
+        "--mixed-groups",
+        "implode",
+    ])
+    .unwrap();
+    BatchedArgs::try_parse_from(&["batched", "-c=2", "--together", "^\\w+", "implode"]).unwrap();
 }

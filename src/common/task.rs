@@ -28,7 +28,12 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(cmd: String, args: Vec<String>, working_dir: PathBuf, stdin: Option<String>) -> Self {
+    pub fn new(
+        cmd: String,
+        args: Vec<String>,
+        working_dir: PathBuf,
+        stdin: Option<String>,
+    ) -> Self {
         Task::new_with_env(cmd, args, working_dir, stdin, HashMap::new())
     }
 
@@ -55,7 +60,12 @@ impl Task {
 
     pub fn new_split_in_cwd(parts: Vec<String>) -> Self {
         let (cmd, args) = parts.split_first().unwrap();
-        Task::new(cmd.to_owned(), args.to_vec(), env::current_dir().unwrap(), None)
+        Task::new(
+            cmd.to_owned(),
+            args.to_vec(),
+            env::current_dir().unwrap(),
+            None,
+        )
     }
 
     pub fn new_split(parts: Vec<String>, working_dir: PathBuf, stdin: Option<String>) -> Self {

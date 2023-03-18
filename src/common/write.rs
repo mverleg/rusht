@@ -246,9 +246,13 @@ pub struct RegexWatcherWriter<F: Fn(&str) + Send> {
     action: F,
 }
 
-impl <F: Fn(&str) + Send> fmt::Debug for RegexWatcherWriter<F> {
+impl<F: Fn(&str) + Send> fmt::Debug for RegexWatcherWriter<F> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "RegexWatcherWriter{{patterns={:?},action=fn}}", self.patterns)
+        write!(
+            f,
+            "RegexWatcherWriter{{patterns={:?},action=fn}}",
+            self.patterns
+        )
     }
 }
 

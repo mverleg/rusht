@@ -1,9 +1,9 @@
 use crate::common::{RejectStdin, StdWriter};
-use crate::ExitStatus;
 use crate::find::jl::list_files;
 use crate::find::jl_args::JlArgs;
+use crate::ExitStatus;
 
-use super::{DirWithArgs, find_dir_with, PathModification};
+use super::{find_dir_with, DirWithArgs, PathModification};
 
 pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
     if args.roots.len() > 1 && args.path_modification == PathModification::Relative {
@@ -24,6 +24,6 @@ pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
 }
 
 pub async fn handle_jl(args: JlArgs) -> ExitStatus {
-    RejectStdin::new();  // start a thread
+    RejectStdin::new(); // start a thread
     list_files(args, &mut StdWriter::stdout()).await
 }
