@@ -22,7 +22,7 @@ pub struct JlArgs {
     #[arg(short = 'e', long = "on-error", default_value = "fail-at-end")]
     /// What to do when failing to read a file
     pub on_error: ErrorHandling,
-    #[arg(short = 'h', long = "hash")]
+    #[arg(short = 's', long = "hash")]
     /// Add a hash of file content to the result
     pub do_hash: bool,
     #[arg(short = 'd', long)]
