@@ -14,7 +14,7 @@ fn main() {
         "Keyboard events",
         options,
         Box::new(|_cc| Box::new(TestApp::default())),
-    )
+    ).unwrap()
 }
 
 #[derive(Default)]
@@ -43,9 +43,10 @@ impl eframe::App for TestApp {
                 ui.button("Go");
                 inp.request_focus();
             });
-            if ctx.input().key_pressed(egui::Key::Escape) {
-                frame.close();
-            }
+            // if ctx.input().key_pressed(egui::Key::Escape) {
+            //     frame.close();
+            // }
+            //TODO @mark: fix following update to input() signature
             ui.style_mut().text_styles = [(
                 egui::TextStyle::Body,
                 egui::FontId::new(128.0, egui::FontFamily::Proportional),
