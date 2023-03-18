@@ -2,18 +2,19 @@ use ::clap::Parser;
 use ::clap::Subcommand;
 use ::env_logger;
 
-use ::rusht::cached::handle_cached;
 use ::rusht::cached::CachedArgs;
+use ::rusht::cached::handle_cached;
 use ::rusht::cmd::{handle_add, handle_do, handle_drop, handle_list};
 use ::rusht::cmd::{AddArgs, DoArgs, DropArgs, ListArgs};
 use ::rusht::escape::handle_namesafe;
 use ::rusht::escape::NamesafeArgs;
-use ::rusht::filter::{handle_filter, FilterArgs};
+use ::rusht::ExitStatus;
+use ::rusht::filter::{FilterArgs, handle_filter};
 use ::rusht::filter::{handle_grab, handle_unique};
 use ::rusht::filter::{GrabArgs, UniqueArgs};
+use ::rusht::find::DirWithArgs;
 use ::rusht::find::handle_dir_with;
 use ::rusht::find::handle_jl;
-use ::rusht::find::DirWithArgs;
 use ::rusht::find::JlArgs;
 use ::rusht::java::{handle_mvnw, MvnwArgs};
 use ::rusht::observe::{handle_mon, MonArgs};
@@ -23,9 +24,8 @@ use ::rusht::textproc::batched_args::BatchedArgs;
 use ::rusht::textproc::handle::handle_batched;
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
-use ::rusht::ExitStatus;
-use rusht::cmd::{handle_buf, BufArgs};
-use rusht::filter::{handle_between, BetweenArgs};
+use rusht::cmd::{BufArgs, handle_buf};
+use rusht::filter::{BetweenArgs, handle_between};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -91,5 +91,39 @@ async fn main() -> ExitStatus {
         SubCmd::Jl(sub_args) => handle_jl(sub_args).await,
         SubCmd::Rsh(sub_args) => handle_rsh(sub_args),
         SubCmd::Between(sub_args) => handle_between(sub_args).await,
+    }
+}
+
+#[cfg(test)]
+mod executable {
+    use ::std::fs;
+    use ::std::process::Command;
+    use std::io::BufRead;
+
+    fn get_all_bins() -> Vec<String> {
+        // trigger error message to list all binaries
+        let out = Command::new("cargo")
+            .args(["run", "--bin"])
+            .output()
+            .expect("failed to execute process");
+        String::from_utf8(out.stderr)
+            .expect("cargo output not utf8")
+            .lines()
+            .skip(2)
+            .map(|line| {
+                line.trim().to_owned()
+            })
+            .filter(|bin| !bin.is_empty())
+            .collect()
+    }
+
+    #[test]
+    fn test_bins_help() {
+        //let cargo = fs::read_to_string("./Cargo.toml").expect("did not find Cargo.toml file");  //TODO @mark: TEMPORARY! REMOVE THIS!
+        let bins = get_all_bins();
+        for bin in bins {
+            eprintln!("bin='{}'", bin);
+        }
+        panic!()
     }
 }
