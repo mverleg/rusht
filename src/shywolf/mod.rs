@@ -4,11 +4,16 @@ use ::std::sync::RwLock;
 use ::lazy_static::lazy_static;
 
 lazy_static! {
-    static ref TYPES: RwLock<TypeRegistry> = RwLock::new(TypeRegistry::new());
+    static ref TYPES: TypeRegistry = TypeRegistry::new();
 }
 
 #[derive(Debug)]
 pub struct TypeRegistry {
+    content: RwLock<TypeRegistryContent>,
+}
+
+#[derive(Debug)]
+pub struct TypeRegistryContent {
     all: Vec<TypeInfo>,
     seen: HashSet<String>,
 }
@@ -16,9 +21,17 @@ pub struct TypeRegistry {
 impl TypeRegistry {
     pub fn new() -> Self {
         TypeRegistry {
-            all: Vec::new(),
-            seen: HashSet::new(),
+            content: RwLock::new(TypeRegistryContent {
+                all: Vec::new(),
+                seen: HashSet::new(),
+            })
         }
+    }
+
+    pub fn add_struct(&self, name: &str) -> Type {
+        let mut content = self.content.write().expect("lock poisoned");
+        assert!(content.seen.insert(name.to_owned()));
+        todo!()
     }
 }
 
@@ -38,12 +51,8 @@ pub struct TypeInfo {
     pub kind: TypeKind,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Type {}
-
-pub fn define_struct(name: &str) -> Type {
-    todo!()
-}
 
 #[cfg(test)]
 mod tests {
@@ -51,8 +60,7 @@ mod tests {
 
     #[test]
     fn test_concrete_match() {
-        let int = define_struct("int");
-        let real = define_struct("f64");
+        let int = TYPES.add_struct("int");
     }
 
     #[test]
