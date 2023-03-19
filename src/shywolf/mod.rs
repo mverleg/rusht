@@ -1,6 +1,5 @@
-use ::std::collections::HashSet;
+use ::std::collections::HashMap;
 use ::std::sync::RwLock;
-use std::collections::HashMap;
 
 use ::lazy_static::lazy_static;
 
@@ -48,6 +47,16 @@ impl TypeRegistry {
         });
         Type { id: rank }
     }
+
+    pub fn lookup(&self, name: &str) -> Option<Type> {
+        let content = self.content.read().expect("lock poisoned");
+        content.lookup.get(name).map(|typ| *typ)
+    }
+
+    pub fn info(&self, typ: Type) -> &TypeInfo {
+        let content = self.content.read().expect("lock poisoned");
+        content.all.get(typ.id).expect("non-existent Type instance")
+    }
 }
 
 #[derive(Debug)]
@@ -66,7 +75,7 @@ pub struct TypeInfo {
     pub kind: TypeKind,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Type {
     id: usize,
 }
@@ -85,14 +94,14 @@ mod tests {
 
     #[test]
     fn test_concrete_identical() {
-        let nr = TYPES.lookup("int");
+        let nr = TYPES.lookup("int").unwrap();
         assert!(nr.is_assignable_from(nr));
     }
 
     #[test]
     fn test_concrete_mismatch_structs() {
-        let nr = TYPES.lookup("int");
-        let text = TYPES.lookup("string");
-        assert!(!nr.is_assignable_from(txt));
+        let nr = TYPES.lookup("int").unwrap();
+        let text = TYPES.lookup("string").unwrap();
+        assert!(!nr.is_assignable_from(text));
     }
 }
