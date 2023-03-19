@@ -39,18 +39,7 @@ pub struct JlArgs {
 #[test]
 fn test_cli_args() {
     JlArgs::try_parse_from(&["jl"]).unwrap();
-    JlArgs::try_parse_from(&[
-        "jl",
-        "-d",
-        "2",
-        "-f",
-        "^.*\\.java$",
-        "-P",
-        "-L",
-        "/tmp",
-        "-D",
-    ])
-    .unwrap();
+    JlArgs::try_parse_from(&["jl", "-n", "2", "-f", "^.*\\.java$", "-P", "-L", "/tmp", "-D"]).unwrap();
 }
 
 impl Default for JlArgs {

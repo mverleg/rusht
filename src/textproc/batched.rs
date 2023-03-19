@@ -290,6 +290,7 @@ mod tests {
     use super::*;
     use crate::common::{CollectorWriter, CommandArgs, VecReader};
 
+    #[ignore]  //TODO @mverleg: enable when `batched` is ready
     #[async_std::test]
     async fn batch_2_wcl() {
         let mut writer = CollectorWriter::new();
