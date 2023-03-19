@@ -31,19 +31,32 @@ impl TypeRegistry {
         let types = Self::new();
         types.add_struct("int");
         types.add_struct("string");
+        types.add_struct("Password");
+        types.add_interface("Display");
         types
     }
 
     pub fn add_struct(&self, name: &str) -> Type {
+        self.add_type(name, || TypeInfo {
+            name: name.to_string(),
+            kind: TypeKind::Struct {},
+        })
+    }
+
+    pub fn add_interface(&self, name: &str) -> Type {
+        self.add_type(name, || TypeInfo {
+            name: name.to_string(),
+            kind: TypeKind::Interface { sealed: false },
+        })
+    }
+
+    fn add_type(&self, name: &str, info_gen: impl FnOnce() -> TypeInfo) -> Type {
         let mut content = self.content.write().expect("lock poisoned");
         let rank = content.all.len();
         if content.lookup.contains_key(name) {
             panic!("type already defined: {name}'")
         }
-        content.all.push(TypeInfo {
-            name: name.to_string(),
-            kind: TypeKind::Struct {},
-        });
+        content.all.push(info_gen());
         let typ = Type { id: rank };
         content.lookup.insert(name.to_owned(), typ);
         typ
