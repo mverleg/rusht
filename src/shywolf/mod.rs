@@ -1,4 +1,5 @@
 use ::std::collections::HashMap;
+use ::std::fmt;
 use ::std::sync::RwLock;
 
 use ::lazy_static::lazy_static;
@@ -7,9 +8,15 @@ lazy_static! {
     static ref TYPES: TypeRegistry = TypeRegistry::init();
 }
 
-#[derive(Debug)]
 pub struct TypeRegistry {
     content: RwLock<TypeRegistryContent>,
+}
+
+impl fmt::Debug for TypeRegistry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut content = self.content.write().expect("lock poisoned");
+        write!(f, "{:?}", &*content)
+    }
 }
 
 #[derive(Debug)]
@@ -52,11 +59,6 @@ impl TypeRegistry {
         let content = self.content.read().expect("lock poisoned");
         content.lookup.get(name).map(|typ| *typ)
     }
-
-    pub fn with<'a, R>(&self, op: &'a impl FnOnce(dyn Fn(Type) -> &'a TypeInfo) -> R) -> R {
-        let content = self.content.read().expect("lock poisoned");
-        op(|typ: Type| content.all.get(typ.id).expect("non-existent Type instance"))
-    }
 }
 
 #[derive(Debug)]
@@ -65,8 +67,9 @@ pub struct Constraint {}
 #[derive(Debug)]
 pub enum TypeKind {
     Struct {},
-    Interface {},
-    Sealed {},
+    Interface {
+        sealed: bool,
+    },
 }
 
 #[derive(Debug)]
@@ -84,7 +87,14 @@ impl Type {
     /// is this valid?
     /// x: ThisType = ArgumentType::new()
     pub fn is_assignable_from(&self, value: Type) -> bool {
-        todo!()
+        let types = &TYPES.content.read().expect("lock poisoned").all;
+        //TODO @mverleg: not ideal to access `content` directly, but whatever
+        let left = &types[self.id];
+        let right = &types[value.id];
+        match (&left.kind, &right.kind) {
+            (TypeKind::Struct {}, _) => left.name == right.name,
+            _ => panic!(),
+        }
     }
 }
 
@@ -94,6 +104,7 @@ mod tests {
 
     #[test]
     fn test_concrete_identical() {
+        dbg!(&TYPES);
         let nr = TYPES.lookup("int").unwrap();
         assert!(nr.is_assignable_from(nr));
     }
