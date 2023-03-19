@@ -15,10 +15,10 @@ pub struct FSNode {
     pub size_b: u64,
     pub size_mb: u64,
     pub created_ts: u64,
-    pub created_by: String,
+    //pub created_by: String,
     pub changed_ts: u64,
-    pub changed_age_sec: String,
-    pub changed_by: String,
+    pub changed_age_sec: u64,
+    //pub changed_by: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hash: Option<String>,
     //TODO @mverleg: permissions

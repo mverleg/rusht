@@ -1,5 +1,6 @@
 use ::std::io;
 use ::std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTimeError};
 
 use ::async_std::fs;
 use ::log::debug;
@@ -32,8 +33,15 @@ pub async fn list_files(args: JlArgs, writer: &mut impl LineWriter) -> ExitStatu
         .max_depth(args.max_depth.try_into().expect("max depth too large"))
         .min_depth(1)
         .follow_links(!args.no_recurse_symlinks);
+    let now_ts_sec = match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(dur) => dur.as_secs(),
+        Err(_) => {
+            eprintln!("could not get the current time");
+            return ExitStatus::err()
+        }
+    };
     for entry_res in walker.into_iter() {
-        let node = match analyze_file(entry_res, &args).await {
+        let node = match analyze_file(entry_res, &args, now_ts_sec).await {
             Ok(Some(node)) => node,
             Ok(None) => continue,
             Err(err) => {
@@ -72,16 +80,8 @@ pub async fn list_files(args: JlArgs, writer: &mut impl LineWriter) -> ExitStatu
     ExitStatus::of_is_ok(!has_err)
 }
 
-async fn analyze_file(
-    entry_res: walkdir::Result<DirEntry>,
-    args: &JlArgs,
-) -> Result<Option<FSNode>, String> {
-    let entry = entry_res.map_err(|err| {
-        format!(
-            "failed to read file/dir inside {}, err: {err}",
-            args.root.to_string_lossy()
-        )
-    })?;
+async fn analyze_file(entry_res: walkdir::Result<DirEntry>, args: &JlArgs, now_ts_sec: u64) -> Result<Option<FSNode>, String> {
+    let entry = entry_res.map_err(|err| format!("failed to read file/dir inside {}, err: {err}", args.root.to_string_lossy()))?;
     let path = entry.path();
     let log_path_owned = path.to_string_lossy();
     let log_path = log_path_owned.as_ref();
@@ -117,28 +117,36 @@ async fn analyze_file(
         None
     };
 
+    let base_name = path.file_stem()
+        .map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned();
+    let extension = path.extension()
+        .map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned();
+    let rel_path = path.strip_prefix(&args.root)
+        .map(|pth| pth.to_str().expect("not utf8")).unwrap_or_else(|_| "").to_owned();
+    let canonical_path = path.canonicalize()
+        .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
+        .to_str().ok_or_else(|| format!("could not convert canonical (abs) path for {log_path} to utf8"))?.to_owned();
+
+    let created_ts = to_timestamp(metadata.created(), log_path)?;
+    let changed_ts = to_timestamp(metadata.modified(), log_path)?;
+    let changed_age_sec = now_ts_sec.saturating_sub(changed_ts);
+
     Ok(Some(FSNode {
         name: name.to_owned(),
         safe_name: safe_filename(name),
-        base_name: path.file_stem().map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned(),
-        extension: path.extension().map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned(),
-        rel_path: path.strip_prefix(&args.root).map(|pth| pth.to_str().expect("not utf8")).unwrap_or_else(|_| "").to_owned(),
-        canonical_path: path.canonicalize()
-            .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
-            .to_str()
-            .ok_or_else(|| {
-                format!("could not convert canonical (abs) path for {log_path} to utf8")
-            })?
-            .to_owned(),
+        base_name,
+        extension,
+        rel_path,
+        canonical_path,
         is_dir,
         is_link: entry.path_is_symlink(),
         size_b: filesize_b,
         size_mb: filesize_bm,
-        created_ts: to_timestamp(metadata.created(), log_path)?,
-        created_by: "".to_owned(),
-        changed_ts: to_timestamp(metadata.modified(), log_path)?,
-        changed_age_sec: "".to_string(),
-        changed_by: "".to_string(),
+        created_ts,
+        //created_by: "".to_owned(),
+        changed_ts,
+        changed_age_sec,
+        //changed_by: "".to_string(),
         hash,
     }))
     //TODO @mverleg: make sure all fields are filled
