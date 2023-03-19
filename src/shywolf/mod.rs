@@ -31,7 +31,12 @@ impl TypeRegistry {
     pub fn add_struct(&self, name: &str) -> Type {
         let mut content = self.content.write().expect("lock poisoned");
         assert!(content.seen.insert(name.to_owned()));
-        todo!()
+        let rank = content.all.len();
+        content.all.push(TypeInfo {
+            name: name.to_string(),
+            kind: TypeKind::Struct {},
+        });
+        Type { id: rank }
     }
 }
 
@@ -52,19 +57,32 @@ pub struct TypeInfo {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Type {}
+pub struct Type {
+    id: usize,
+}
+
+impl Type {
+    /// is this valid?
+    /// x: ThisType = ArgumentType::new()
+    pub fn is_assignable_from(&self, value: Type) {
+        todo!()
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_concrete_match() {
-        let int = TYPES.add_struct("int");
+    fn test_concrete_identical() {
+        let nr = TYPES.add_struct("int");
+        assert!(nr.is_assignable_from(nr));
     }
 
     #[test]
-    fn test_concrete_mismatch() {
-        todo!()
+    fn test_concrete_mismatch_structs() {
+        let nr = TYPES.add_struct("int");
+        let txt = TYPES.add_struct("string");
+        assert!(!nr.is_assignable_from(txt));
     }
 }
