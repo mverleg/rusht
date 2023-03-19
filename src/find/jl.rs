@@ -1,6 +1,6 @@
 use ::std::io;
-use ::std::time::{SystemTime, UNIX_EPOCH};
-use std::time::{Duration, SystemTimeError};
+use ::std::time::SystemTime;
+use ::std::time::UNIX_EPOCH;
 
 use ::async_std::fs;
 use ::log::debug;
