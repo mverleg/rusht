@@ -120,11 +120,10 @@ async fn analyze_file(
     Ok(Some(FSNode {
         name: name.to_owned(),
         safe_name: safe_filename(name),
-        base_name: "".to_string(),
-        extension: "".to_string(),
-        rel_path: "".to_string(),
-        canonical_path: path
-            .canonicalize()
+        base_name: path.file_stem().map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned(),
+        extension: path.extension().map(|nm| nm.to_str().expect("not utf8")).unwrap_or_else(|| "").to_owned(),
+        rel_path: path.strip_prefix(&args.root).map(|pth| pth.to_str().expect("not utf8")).unwrap_or_else(|_| "").to_owned(),
+        canonical_path: path.canonicalize()
             .map_err(|err| format!("could not get canonical (abs) path for {log_path}, err {err}"))?
             .to_str()
             .ok_or_else(|| {
