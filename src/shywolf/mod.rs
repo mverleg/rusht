@@ -53,9 +53,9 @@ impl TypeRegistry {
         content.lookup.get(name).map(|typ| *typ)
     }
 
-    pub fn info(&self, typ: Type) -> &TypeInfo {
+    pub fn with<'a, R>(&self, op: &'a impl FnOnce(dyn Fn(Type) -> &'a TypeInfo) -> R) -> R {
         let content = self.content.read().expect("lock poisoned");
-        content.all.get(typ.id).expect("non-existent Type instance")
+        op(|typ: Type| content.all.get(typ.id).expect("non-existent Type instance"))
     }
 }
 
