@@ -31,6 +31,9 @@ pub struct BufArgs {
     #[arg(short = 'c', long)]
     /// Maximum number of commands to run (others are forgotten).
     pub count: Option<u32>,
+    #[arg(short = '0', long)]
+    /// Do not fail if 0 tasks were run due to empty input.
+    pub allow_empty: bool,
     #[arg(short = 'p', long = "parallel", default_value = "1")]
     /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
@@ -61,6 +64,12 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         args.stdin,
         args.unique,
     );
+    if !args.allow_empty && tasks.is_empty() {
+        if !args.quiet {
+            eprintln!("no tasks found, was stdin empty?");
+        }
+        return ExitStatus::err();
+    }
     let mut task_stack = TaskStack::from(tasks.into_iter().map(TaskType::Pending).collect());
     let to_run = mark_tasks_to_run(
         false,

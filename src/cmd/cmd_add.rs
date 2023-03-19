@@ -39,6 +39,9 @@ pub struct AddArgs {
     #[arg(short = 'D', long)]
     /// Drop all entries before adding new ones.
     pub replace_existing: bool,
+    #[arg(short = '0', long)]
+    /// Do not fail if 0 tasks were run due to empty input.
+    pub allow_empty: bool,
     #[arg(short = 'P', long)]
     /// Working directory when running the command. Can use placeholder with -l/-L.
     pub working_dir: Option<String>,
@@ -64,7 +67,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.stdin,
         args.unique,
     );
-    if new_tasks.is_empty() {
+    if !args.allow_empty && new_tasks.is_empty() {
         if !args.quiet && !args.very_quiet {
             eprintln!("no tasks found, was stdin empty?");
         }
