@@ -89,7 +89,10 @@ impl TypeRegistry {
 }
 
 #[derive(Debug)]
-pub struct Constraint {}
+pub struct Constraint {
+    and_bounds: HashSet<Type>,
+    //TODO @mverleg: ordered set
+}
 
 #[derive(Debug)]
 pub enum TypeKind {
@@ -105,7 +108,7 @@ pub struct TypeInfo {
     pub kind: TypeKind,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Type {
     id: usize,
 }
@@ -119,6 +122,12 @@ impl fmt::Display for Type {
             TypeKind::Interface { sealed: false } => write!(f, "interface ")?,
         }
         write!(f, "{}", cur.name)
+    }
+
+}
+impl fmt::Debug for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({})", self, self.id)
     }
 }
 
@@ -135,9 +144,9 @@ impl Type {
                 left.name == right.name
             },
             (TypeKind::Interface { sealed: _ }, TypeKind::Struct {}) => {
-                types.impls.contains(&(*self, value))
+                types.impls.contains(&(value, *self))
+                //TODO @mverleg: ^ this is only valid as long as interfaces cannot extend/impl other interfaces
             },
-            //TODO @mverleg: ^ this is only valid as long as interfaces cannot extend/impl other interfaces
             _ => panic!(),
         }
     }
@@ -148,27 +157,27 @@ mod tests {
     use super::*;
 
     #[test]
-    fn identical_concrete_types_assignable() {
+    fn can_assign_struct_to_same_struct() {
         let nr = TYPES.lookup("int").unwrap();
         assert!(nr.is_assignable_from(nr));
     }
 
     #[test]
-    fn test_concrete_mismatch_structs() {
+    fn cannot_assign_struct_to_different_struct() {
         let nr = TYPES.lookup("int").unwrap();
         let text = TYPES.lookup("string").unwrap();
         assert!(!nr.is_assignable_from(text));
     }
 
     #[test]
-    fn concrete_assignable_to_interface_if_impl() {
+    fn can_assign_concrete_to_interface_if_impl() {
         let display = TYPES.lookup("Display").unwrap();
         let nr = TYPES.lookup("int").unwrap();
         assert!(display.is_assignable_from(nr));
     }
 
     #[test]
-    fn concrete_unassignable_to_interface_if_not_impl() {
+    fn cannot_assign_concrete_to_interface_if_not_impl() {
         let display = TYPES.lookup("Display").unwrap();
         let password = TYPES.lookup("Password").unwrap();
         assert!(!display.is_assignable_from(password));
