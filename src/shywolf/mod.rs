@@ -36,7 +36,7 @@ impl TypeRegistry {
         let types = Self::new();
         let int = types.add_struct("int");
         let string = types.add_struct("string");
-        let password = types.add_struct("Password");
+        types.add_struct("Password");
         let display = types.add_interface("Display");
         types.implement(int, display);
         types.implement(string, display);
@@ -126,12 +126,18 @@ impl Type {
     /// is this valid?
     /// x: ThisType = ArgumentType::new()
     pub fn is_assignable_from(&self, value: Type) -> bool {
-        let types = &TYPES.content.read().expect("lock poisoned").all;
+        let types = &TYPES.content.read().expect("lock poisoned");
         //TODO @mverleg: not ideal to access `content` directly, but whatevera
-        let left = &types[self.id];
-        let right = &types[value.id];
+        let left = &types.all[self.id];
+        let right = &types.all[value.id];
         match (&left.kind, &right.kind) {
-            (TypeKind::Struct {}, _) => left.name == right.name,
+            (TypeKind::Struct {}, _) => {
+                left.name == right.name
+            },
+            (TypeKind::Interface { sealed: _ }, TypeKind::Struct {}) => {
+                types.impls.contains(&(*self, value))
+            },
+            //TODO @mverleg: ^ this is only valid as long as interfaces cannot extend/impl other interfaces
             _ => panic!(),
         }
     }
