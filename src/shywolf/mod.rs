@@ -20,6 +20,18 @@ pub struct TypeRegistryContent {
     impls: HashSet<(Type, Type)>,
 }
 
+#[derive(Debug)]
+pub enum DefineErr {
+    AlreadyExists(String),
+}
+
+#[derive(Debug)]
+pub enum ImplErr {
+    Circular(Type, Type),
+    CannotImplStruct(Type),
+    AlreadyImpl(Type, Type),
+}
+
 impl TypeRegistry {
     pub fn new() -> Self {
         let capacity = 128;
@@ -34,70 +46,76 @@ impl TypeRegistry {
 
     pub fn init() -> Self {
         let types = Self::new();
-        let int = types.add_struct("int");
-        let double = types.add_struct("double");
-        let string = types.add_struct("string");
+        let int = types.add_struct("int").unwrap();
+        let double = types.add_struct("double").unwrap();
+        let string = types.add_struct("string").unwrap();
         types.add_struct("Password");
-        let display = types.add_interface("Display");
-        types.implement(int, display);
-        types.implement(double, display);
-        types.implement(string, display);
-        let number = types.add_interface("Number");
-        let add = types.add_interface("Add");
-        let sub = types.add_interface("Sub");
-        let mul = types.add_interface("Mul");
-        let div = types.add_interface("Div");
-        types.implement(number, add);
-        types.implement(number, sub);
-        types.implement(number, mul);
-        types.implement(number, div);
+        let display = types.add_interface("Display").unwrap();
+        types.implement(int, display).unwrap();
+        types.implement(double, display).unwrap();
+        types.implement(string, display).unwrap();
+        let number = types.add_interface("Number").unwrap();
+        let add = types.add_interface("Add").unwrap();
+        let sub = types.add_interface("Sub").unwrap();
+        let mul = types.add_interface("Mul").unwrap();
+        let div = types.add_interface("Div").unwrap();
+        types.implement(number, add).unwrap();
+        types.implement(number, sub).unwrap();
+        types.implement(number, mul).unwrap();
+        types.implement(number, div).unwrap();
         //TODO @mverleg: does order matter? i.e. if int impl number, and then number impl add, does int still require number?
-        types.implement(int, number);
-        types.implement(double, number);
+        //TODO @mverleg: I think we must collect all impls, and then at the end test that transitive impls are satisfied
+        types.implement(int, number).unwrap();
+        types.implement(double, number).unwrap();
         types
     }
 
-    pub fn add_struct(&self, name: &str) -> Type {
+    pub fn add_struct(&self, name: &str) -> Result<Type, DefineErr> {
         self.add_type(name, || TypeInfo {
             name: name.to_string(),
             kind: TypeKind::Struct {},
         })
     }
 
-    pub fn add_interface(&self, name: &str) -> Type {
+    pub fn add_interface(&self, name: &str) -> Result<Type, DefineErr> {
         self.add_type(name, || TypeInfo {
             name: name.to_string(),
             kind: TypeKind::Interface { sealed: false },
         })
     }
 
-    pub fn add_sealed(&self, name: &str) -> Type {
+    pub fn add_sealed(&self, name: &str) -> Result<Type, DefineErr> {
         self.add_type(name, || TypeInfo {
             name: name.to_string(),
             kind: TypeKind::Interface { sealed: true },
         })
     }
 
-    pub fn implement(&self, implementer: Type, abstraction: Type) {
-        let mut content = self.content.write().expect("lock poisoned");
-        //TODO @mverleg: cannot impl concrete type
-        if content.impls.contains(&(abstraction, implementer)) {
-            panic!("cannot impl {abstraction} for {implementer} because {implementer} already implements {abstraction}")
-        }
-        let was_inserted = content.impls.insert((implementer, abstraction));
-        assert!(was_inserted, "{implementer} already implements {abstraction}");
-    }
-
-    fn add_type(&self, name: &str, info_gen: impl FnOnce() -> TypeInfo) -> Type {
+    fn add_type(&self, name: &str, info_gen: impl FnOnce() -> TypeInfo) -> Result<Type, DefineErr> {
         let mut content = self.content.write().expect("lock poisoned");
         let rank = content.all.len();
         if content.lookup.contains_key(name) {
-            panic!("type already defined: {name}'")
+            return Err(DefineErr::AlreadyExists(name.to_owned()))
         }
         content.all.push(info_gen());
         let typ = Type { id: rank };
         content.lookup.insert(name.to_owned(), typ);
-        typ
+        Ok(typ)
+    }
+
+    pub fn implement(&self, implementer: Type, abstraction: Type) -> Result<(), ImplErr> {
+        let mut content = self.content.write().expect("lock poisoned");
+        if let TypeKind::Struct { .. } = content.all[abstraction.id].kind {
+            return Err(ImplErr::CannotImplStruct(abstraction))
+        }
+        if content.impls.contains(&(abstraction, implementer)) {
+            return Err(ImplErr::Circular(implementer, abstraction))
+        }
+        if content.impls.contains(&(implementer, abstraction)) {
+            return Err(ImplErr::AlreadyImpl(implementer, abstraction))
+        }
+        assert!(content.impls.insert((implementer, abstraction)));
+        Ok(())
     }
 
     pub fn lookup(&self, name: &str) -> Option<Type> {
