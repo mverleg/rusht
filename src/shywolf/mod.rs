@@ -1,4 +1,5 @@
 use ::std::collections::HashMap;
+use ::std::collections::HashSet;
 use ::std::sync::RwLock;
 
 use ::lazy_static::lazy_static;
@@ -15,24 +16,29 @@ pub struct TypeRegistry {
 pub struct TypeRegistryContent {
     all: Vec<TypeInfo>,
     lookup: HashMap<String, Type>,
+    impls: HashSet<(Type, Type)>,
 }
 
 impl TypeRegistry {
     pub fn new() -> Self {
+        let capacity = 128;
         TypeRegistry {
             content: RwLock::new(TypeRegistryContent {
-                all: Vec::new(),
-                lookup: HashMap::new(),
+                all: Vec::with_capacity(capacity),
+                lookup: HashMap::with_capacity(capacity),
+                impls: HashSet::with_capacity(capacity),
             })
         }
     }
 
     pub fn init() -> Self {
         let types = Self::new();
-        types.add_struct("int");
-        types.add_struct("string");
-        types.add_struct("Password");
-        types.add_interface("Display");
+        let int = types.add_struct("int");
+        let string = types.add_struct("string");
+        let password = types.add_struct("Password");
+        let display = types.add_interface("Display");
+        types.implement(int, display);
+        types.implement(string, display);
         types
     }
 
@@ -48,6 +54,18 @@ impl TypeRegistry {
             name: name.to_string(),
             kind: TypeKind::Interface { sealed: false },
         })
+    }
+
+    pub fn add_sealed(&self, name: &str) -> Type {
+        self.add_type(name, || TypeInfo {
+            name: name.to_string(),
+            kind: TypeKind::Interface { sealed: true },
+        })
+    }
+
+    pub fn implement(&self, implementer: Type, abstraction: Type) {
+        let mut content = self.content.write().expect("lock poisoned");
+        todo!()
     }
 
     fn add_type(&self, name: &str, info_gen: impl FnOnce() -> TypeInfo) -> Type {
