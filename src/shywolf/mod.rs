@@ -35,11 +35,25 @@ impl TypeRegistry {
     pub fn init() -> Self {
         let types = Self::new();
         let int = types.add_struct("int");
+        let double = types.add_struct("double");
         let string = types.add_struct("string");
         types.add_struct("Password");
         let display = types.add_interface("Display");
         types.implement(int, display);
+        types.implement(double, display);
         types.implement(string, display);
+        let number = types.add_interface("Number");
+        let add = types.add_interface("Add");
+        let sub = types.add_interface("Sub");
+        let mul = types.add_interface("Mul");
+        let div = types.add_interface("Div");
+        types.implement(number, add);
+        types.implement(number, sub);
+        types.implement(number, mul);
+        types.implement(number, div);
+        //TODO @mverleg: does order matter? i.e. if int impl number, and then number impl add, does int still require number?
+        types.implement(int, number);
+        types.implement(double, number);
         types
     }
 
@@ -66,6 +80,10 @@ impl TypeRegistry {
 
     pub fn implement(&self, implementer: Type, abstraction: Type) {
         let mut content = self.content.write().expect("lock poisoned");
+        //TODO @mverleg: cannot impl concrete type
+        if content.impls.contains(&(abstraction, implementer)) {
+            panic!("cannot impl {abstraction} for {implementer} because {implementer} already implements {abstraction}")
+        }
         let was_inserted = content.impls.insert((implementer, abstraction));
         assert!(was_inserted, "{implementer} already implements {abstraction}");
     }
@@ -170,14 +188,28 @@ mod tests {
     }
 
     #[test]
-    fn can_assign_concrete_to_interface_if_impl() {
+    fn can_assign_interface_to_interface() {
+        let display = TYPES.lookup("Display").unwrap();
+        let nr = TYPES.lookup("int").unwrap();
+        assert!(!nr.is_assignable_from(display));
+    }
+
+    #[test]
+    fn cannot_assign_interface_to_struct() {
+        let display = TYPES.lookup("Display").unwrap();
+        let nr = TYPES.lookup("int").unwrap();
+        assert!(!nr.is_assignable_from(display));
+    }
+
+    #[test]
+    fn can_assign_struct_to_interface_if_impl() {
         let display = TYPES.lookup("Display").unwrap();
         let nr = TYPES.lookup("int").unwrap();
         assert!(display.is_assignable_from(nr));
     }
 
     #[test]
-    fn cannot_assign_concrete_to_interface_if_not_impl() {
+    fn cannot_assign_struct_to_interface_if_not_impl() {
         let display = TYPES.lookup("Display").unwrap();
         let password = TYPES.lookup("Password").unwrap();
         assert!(!display.is_assignable_from(password));
