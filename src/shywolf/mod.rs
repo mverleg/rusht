@@ -148,8 +148,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_concrete_identical() {
-        dbg!(&TYPES.content.read());
+    fn identical_concrete_types_assignable() {
         let nr = TYPES.lookup("int").unwrap();
         assert!(nr.is_assignable_from(nr));
     }
@@ -159,5 +158,19 @@ mod tests {
         let nr = TYPES.lookup("int").unwrap();
         let text = TYPES.lookup("string").unwrap();
         assert!(!nr.is_assignable_from(text));
+    }
+
+    #[test]
+    fn concrete_assignable_to_interface_if_impl() {
+        let display = TYPES.lookup("Display").unwrap();
+        let nr = TYPES.lookup("int").unwrap();
+        assert!(display.is_assignable_from(nr));
+    }
+
+    #[test]
+    fn concrete_unassignable_to_interface_if_not_impl() {
+        let display = TYPES.lookup("Display").unwrap();
+        let password = TYPES.lookup("Password").unwrap();
+        assert!(!display.is_assignable_from(password));
     }
 }
