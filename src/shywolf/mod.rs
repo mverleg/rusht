@@ -1,5 +1,6 @@
 use ::std::collections::HashMap;
 use ::std::collections::HashSet;
+use ::std::fmt;
 use ::std::sync::RwLock;
 
 use ::lazy_static::lazy_static;
@@ -65,7 +66,8 @@ impl TypeRegistry {
 
     pub fn implement(&self, implementer: Type, abstraction: Type) {
         let mut content = self.content.write().expect("lock poisoned");
-        todo!()
+        let was_inserted = content.impls.insert((implementer, abstraction));
+        assert!(was_inserted, "{implementer} already implements {abstraction}");
     }
 
     fn add_type(&self, name: &str, info_gen: impl FnOnce() -> TypeInfo) -> Type {
@@ -106,6 +108,18 @@ pub struct TypeInfo {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Type {
     id: usize,
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let cur = &TYPES.content.read().expect("lock poisoned").all[self.id];
+        match cur.kind {
+            TypeKind::Struct {} => write!(f, "struct ")?,
+            TypeKind::Interface { sealed: true } => write!(f, "sealed ")?,
+            TypeKind::Interface { sealed: false } => write!(f, "interface ")?,
+        }
+        write!(f, "{}", cur.name)
+    }
 }
 
 impl Type {
