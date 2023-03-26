@@ -40,6 +40,10 @@ impl Type {
             info,
         }
     }
+
+    pub fn name(&self) -> &str {
+        &self.info.name
+    }
 }
 
 impl PartialEq for Type {
@@ -59,6 +63,12 @@ struct TypeInfo {
     id: usize,
     name: String,
     kind: TypeKind,
+}
+
+impl TypeInfo {
+    pub fn typ(self: &Rc<Self>) -> Type {
+        Type::of(self.clone())
+    }
 }
 
 #[derive(Debug)]
@@ -92,7 +102,7 @@ impl AST {
 
 #[derive(Debug)]
 struct TypeContext {
-    types_by_name: HashMap<String, TypeInfo>,
+    types_by_name: HashMap<String, Rc<TypeInfo>>,
 }
 
 fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
@@ -104,9 +114,9 @@ fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     })
 }
 
-fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, TypeInfo> {
+fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<TypeInfo>> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
-    let mut types_by_name = HashMap::with_capacity(type_cnt);
+    let mut types_by_name: HashMap<String, Rc<TypeInfo>> = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
         let kind = TypeKind::Struct;
@@ -117,11 +127,11 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, TypeIn
                 duplicate_loc: loc.clone(),
             })
         } else {
-            types_by_name.insert(strct_name.to_owned(), TypeInfo {
+            types_by_name.insert(strct_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: strct_name.to_owned(),
                 kind,
-            });
+            }));
         }
     }
     for (iface_name, loc, is_sealed) in &ast.interfaces {
@@ -133,16 +143,15 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, TypeIn
                 duplicate_loc: loc.clone(),
             })
         } else {
-            types_by_name.insert(iface_name.to_owned(), TypeInfo {
+            types_by_name.insert(iface_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: iface_name.to_owned(),
                 kind,
-            });
+            }));
         }
     }
     types_by_name
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -167,15 +176,15 @@ mod tests {
     #[test]
     fn typecheck_dummy_ast() {
         let ast = build_test_ast();
-        check_types(&ast, &mut TypeCache::new()).unwrap();
+        check_types(&ast).unwrap();
     }
 
     #[test]
     fn duplicate_declaration_struct_struct() {
         let mut ast = build_test_ast();
         let new_loc = Loc::dummy();
-        ast.declare_struct("Password", new_loc);
-        let errs = check_types(&ast, &mut TypeCache::new()).unwrap_err();
+        ast.declare_struct("Password", new_loc.clone());
+        let errs = check_types(&ast).unwrap_err();
         assert_eq!(errs.len(), 1);
         let TypeErr::DoubleDeclaration { existing, duplicate_kind, duplicate_loc } = errs.into_iter().next().unwrap() else {
             panic!("wrong error")
