@@ -61,7 +61,7 @@ enum TypeKind {
 #[derive(Debug)]
 struct TypeInfo {
     id: usize,
-    name: String,
+    name: Identifier,
     kind: TypeKind,
 }
 
@@ -73,9 +73,9 @@ impl TypeInfo {
 
 #[derive(Debug)]
 struct AST {
-    structs: Vec<(String, Loc)>,
-    interfaces: Vec<(String, Loc, bool)>,
-    implementations: Vec<(String, String, Loc)>,
+    structs: Vec<(Identifier, Loc)>,
+    interfaces: Vec<(Identifier, Loc, bool)>,
+    implementations: Vec<(Identifier, Identifier, Loc)>,
 }
 
 impl AST {
@@ -87,15 +87,15 @@ impl AST {
         }
     }
 
-    pub fn declare_struct(&mut self, name: impl Into<String>, loc: Loc) {
+    pub fn declare_struct(&mut self, name: impl Into<Identifier>, loc: Loc) {
         self.structs.push((name.into(), loc));
     }
 
-    pub fn declare_interface(&mut self, name: impl Into<String>, loc: Loc, is_sealed: bool) {
+    pub fn declare_interface(&mut self, name: impl Into<Identifier>, loc: Loc, is_sealed: bool) {
         self.interfaces.push((name.into(), loc, is_sealed));
     }
 
-    pub fn add_implementation(&mut self, implementer: impl Into<String>, abstraction: impl Into<String>, loc: Loc) {
+    pub fn add_implementation(&mut self, implementer: impl Into<Identifier>, abstraction: impl Into<Identifier>, loc: Loc) {
         self.implementations.push((implementer.into(), abstraction.into(), loc));
     }
 }
@@ -104,6 +104,13 @@ impl AST {
 struct Identifier {
     //TODO @mverleg: use this instead of string
     name: String,
+}
+
+impl Identifier {
+    pub fn new(name: impl Into<String>) -> Self {
+        // TODO validation happens here in the future
+        Identifier { name: name.into() }
+    }
 }
 
 #[derive(Debug)]
@@ -119,7 +126,7 @@ struct ImplInfo {
 
 #[derive(Debug)]
 struct TypeContext {
-    types_by_name: HashMap<String, Rc<TypeInfo>>,
+    types_by_name: HashMap<Identifier, Rc<TypeInfo>>,
     implementations: HashMap<ImplKey, ImplInfo>
 }
 
@@ -141,9 +148,9 @@ fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     })
 }
 
-fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<TypeInfo>> {
+fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc<TypeInfo>> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
-    let mut types_by_name: HashMap<String, Rc<TypeInfo>> = HashMap::with_capacity(type_cnt);
+    let mut types_by_name = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
         let kind = TypeKind::Struct;
@@ -156,7 +163,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
         } else {
             types_by_name.insert(strct_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
-                name: strct_name.to_owned(),
+                name: strct_name.clone(),
                 kind,
             }));
         }
@@ -172,7 +179,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
         } else {
             types_by_name.insert(iface_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
-                name: iface_name.to_owned(),
+                name: iface_name.clone(),
                 kind,
             }));
         }
