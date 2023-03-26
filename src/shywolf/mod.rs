@@ -24,7 +24,8 @@ impl Loc {
 
 #[derive(Debug)]
 enum TypeErr {
-    DoubleDeclaration { existing: Type, duplicate_kind: TypeKind, duplicate_loc: Loc }
+    DoubleDeclaration { existing: Type, duplicate_kind: TypeKind, duplicate_loc: Loc },
+    DoubleImpl {},
 }
 
 #[derive(Debug)]
@@ -42,6 +43,32 @@ impl Type {
 enum TypeKind {
     Struct,
     Interface { sealed: bool, },
+}
+
+#[derive(Debug)]
+struct TypeInfo {
+    name: String,
+    kind: TypeKind,
+}
+
+#[derive(Debug)]
+struct TypeCache {
+    types: Vec<TypeInfo>,
+}
+
+impl TypeCache {
+    pub fn new() -> Self {
+        TypeCache { types: Vec::with_capacity(512) }
+    }
+
+    pub fn register(&mut self, name: impl Into<String>, kind: TypeKind) -> Type {
+        let id = self.types.len();
+        self.types.push(TypeInfo {
+            name: name.into(),
+            kind
+        });
+        Type { id }
+    }
 }
 
 #[derive(Debug)]
@@ -130,6 +157,7 @@ mod tests {
     #[test]
     fn typecheck_dummy_ast() {
         let ast = build_test_ast();
+        let mut types = TypeCache::new();
         check_types(&ast).unwrap();
     }
 
