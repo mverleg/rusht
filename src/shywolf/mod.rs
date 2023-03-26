@@ -101,19 +101,43 @@ impl AST {
 }
 
 #[derive(Debug)]
+struct Identifier {
+    //TODO @mverleg: use this instead of string
+    name: String,
+}
+
+#[derive(Debug)]
+struct ImplKey {
+    implementer: Type,
+    abstraction: Type,
+}
+
+#[derive(Debug)]
+struct ImplInfo {
+
+}
+
+#[derive(Debug)]
 struct TypeContext {
     types_by_name: HashMap<String, Rc<TypeInfo>>,
+    implementations: HashMap<ImplKey, ImplInfo>
 }
 
 fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     let mut errors = Vec::new();
     let types_by_name = collect_types(&ast, &mut errors);
 
+    let implementations = HashMap::new();
+    for (implementer_name, abstraction_name, imp_loc) in &ast.implementations {
+        todo!()
+    }
+
     if ! errors.is_empty() {
         return Err(errors)
     }
     Ok(TypeContext {
         types_by_name,
+        implementations,
     })
 }
 
@@ -124,14 +148,12 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
     for (strct_name, loc) in &ast.structs {
         let kind = TypeKind::Struct;
         if let Some(existing) = types_by_name.get(strct_name) {
-            println!("duplicate struct {strct_name}");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             errors.push(TypeErr::DoubleDeclaration {
                 existing: existing.typ(),
                 duplicate_kind: kind,
                 duplicate_loc: loc.clone(),
             })
         } else {
-            println!("new struct {strct_name}");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             types_by_name.insert(strct_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: strct_name.to_owned(),
@@ -142,14 +164,12 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
     for (iface_name, loc, is_sealed) in &ast.interfaces {
         let kind = TypeKind::Interface { sealed: *is_sealed };
         if let Some(existing) = types_by_name.get(iface_name) {
-            println!("duplicate interface {iface_name} (sealed={is_sealed})");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             errors.push(TypeErr::DoubleDeclaration {
                 existing: existing.typ(),
                 duplicate_kind: kind,
                 duplicate_loc: loc.clone(),
             })
         } else {
-            println!("new interface {iface_name} (sealed={is_sealed})");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             types_by_name.insert(iface_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: iface_name.to_owned(),
