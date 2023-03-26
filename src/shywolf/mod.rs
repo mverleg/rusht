@@ -1,17 +1,16 @@
 
 //TODO @mverleg: scopes
 
-use std::collections::hash_map::OccupiedError;
 use std::collections::HashMap;
-use std::collections::HashSet;
-use std::rc::Rc;
-use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 
 static TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// Source file location; dummy for now
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Loc {
     pub pos: u32,
 }
@@ -25,7 +24,7 @@ impl Loc {
 
 #[derive(Debug)]
 enum TypeErr {
-    DoubleDeclaration { existing: Type, duplicate: Loc }
+    DoubleDeclaration { existing: Type, duplicate_kind: TypeKind, duplicate_loc: Loc }
 }
 
 #[derive(Debug)]
@@ -82,13 +81,16 @@ fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
     let mut types_by_name = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
-    for (strct_name, loc) in ast.structs {
+    for (strct_name, loc) in &ast.structs {
         let new_typ = Type::new();
-        match types_by_name.try_insert(strct_name, new_typ) {
-            Ok(_) => {}
-            Err(existing_entry) => {
-                errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate: loc })
-            }
+        if let Err(existing_entry) = types_by_name.try_insert(strct_name, new_typ) {
+            errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Struct, duplicate_loc: loc.clone() })
+        }
+    }
+    for (iface_name, loc, is_sealed) in &ast.interfaces {
+        let new_typ = Type::new();
+        if let Err(existing_entry) = types_by_name.try_insert(iface_name, new_typ) {
+            errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Interface { sealed: *is_sealed }, duplicate_loc: loc.clone() })
         }
     }
     todo!()
@@ -116,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn test_add() {
+    fn typecheck_dummy_ast() {
         let ast = build_test_ast();
         check_types(&ast).unwrap();
     }
