@@ -10,7 +10,7 @@ static TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// Source file location; dummy for now
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Loc {
     pub pos: u32,
 }
@@ -38,7 +38,7 @@ impl Type {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum TypeKind {
     Struct,
     Interface { sealed: bool, },
@@ -131,5 +131,20 @@ mod tests {
     fn typecheck_dummy_ast() {
         let ast = build_test_ast();
         check_types(&ast).unwrap();
+    }
+
+    #[test]
+    fn duplicate_declaration_struct_struct() {
+        let mut ast = build_test_ast();
+        let new_loc = Loc::dummy();
+        ast.declare_struct("Password", new_loc);
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 1);
+        let TypeErr::DoubleDeclaration { existing, duplicate_kind, duplicate_loc } = errs.into_iter().next().unwrap() else {
+            panic!("wrong error")
+        };
+        assert_eq!(existing.name(), "");
+        assert_eq!(duplicate_kind, TypeKind::Struct);
+        assert_eq!(duplicate_loc, new_loc);
     }
 }
