@@ -1,12 +1,12 @@
 
 //TODO @mverleg: scopes
 
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::atomic::AtomicU32;
-use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
 
-static TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// Source file location; dummy for now
@@ -30,12 +30,22 @@ enum TypeErr {
 
 #[derive(Debug)]
 struct Type {
-    pub id: usize,
+    id: usize,
+    info: Rc<TypeInfo>,
 }
 
 impl Type {
-    pub fn new() -> Type {
-        Type { id: TYPE_COUNTER.fetch_add(1, Ordering::AcqRel) }
+    pub fn of(info: Rc<TypeInfo>) -> Self {
+        Type {
+            id: info.id,
+            info,
+        }
+    }
+}
+
+impl PartialEq for Type {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }
 
@@ -47,27 +57,32 @@ enum TypeKind {
 
 #[derive(Debug)]
 struct TypeInfo {
+    id: usize,
     name: String,
     kind: TypeKind,
 }
 
 #[derive(Debug)]
 struct TypeCache {
-    types: Vec<TypeInfo>,
+    contents: HashMap<String, Rc<TypeInfo>>,
 }
 
 impl TypeCache {
     pub fn new() -> Self {
-        TypeCache { types: Vec::with_capacity(512) }
+        TypeCache { contents: HashMap::new() }
     }
 
-    pub fn register(&mut self, name: impl Into<String>, kind: TypeKind) -> Type {
-        let id = self.types.len();
-        self.types.push(TypeInfo {
-            name: name.into(),
-            kind
-        });
-        Type { id }
+    pub fn add_or_get(&mut self, name: impl Into<String>, kind: TypeKind) -> Type {
+        let name = name.into();
+        match self.contents.entry(name) {
+            Entry::Occupied(occupied) =>
+                Type::of(occupied.get()),
+            Entry::Vacant(vacant) => {
+                let info = Rc::new(TypeInfo { id: self.contents.len(), name, kind, });
+                vacant.insert(info.clone());
+                Type::of(info)
+            }
+        }
     }
 }
 
