@@ -72,11 +72,12 @@ impl TypeCache {
         TypeCache { contents: HashMap::new() }
     }
 
+    /// Does not check if existing value is the same/compatible with new one
     pub fn add_or_get(&mut self, name: impl Into<String>, kind: TypeKind) -> Type {
         let name = name.into();
         match self.contents.entry(name) {
             Entry::Occupied(occupied) =>
-                Type::of(occupied.get()),
+                Type::of(occupied.get().clone()),
             Entry::Vacant(vacant) => {
                 let info = Rc::new(TypeInfo { id: self.contents.len(), name, kind, });
                 vacant.insert(info.clone());
@@ -120,7 +121,7 @@ struct TypeContext {
     types_by_name: HashMap<String, Type>,
 }
 
-fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
+fn check_types(ast: &AST, x: &mut TypeCache) -> Result<TypeContext, Vec<TypeErr>> {
     let mut errors = Vec::new();
     let types_by_name = collect_types(&ast, &mut errors);
 
@@ -134,15 +135,17 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Type> 
     let mut types_by_name = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
-        let new_typ = Type::new();
-        if let Err(existing_entry) = types_by_name.try_insert(strct_name.to_owned(), new_typ) {
+        if let Some(existing) = types_by_name.get(strct_name) {
             errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Struct, duplicate_loc: loc.clone() })
+        } else {
+            types_by_name.insert(strct_name.to_owned(), );
         }
     }
     for (iface_name, loc, is_sealed) in &ast.interfaces {
-        let new_typ = Type::new();
-        if let Err(existing_entry) = types_by_name.try_insert(iface_name.to_owned(), new_typ) {
+        if let Some(existing) = types_by_name.get(strct_name) {
             errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Interface { sealed: *is_sealed }, duplicate_loc: loc.clone() })
+        } else {
+            types_by_name.insert(strct_name.to_owned(), );
         }
     }
     types_by_name
@@ -172,8 +175,7 @@ mod tests {
     #[test]
     fn typecheck_dummy_ast() {
         let ast = build_test_ast();
-        let mut types = TypeCache::new();
-        check_types(&ast).unwrap();
+        check_types(&ast, &mut TypeCache::new()).unwrap();
     }
 
     #[test]
@@ -181,7 +183,7 @@ mod tests {
         let mut ast = build_test_ast();
         let new_loc = Loc::dummy();
         ast.declare_struct("Password", new_loc);
-        let errs = check_types(&ast).unwrap_err();
+        let errs = check_types(&ast, &mut TypeCache::new()).unwrap_err();
         assert_eq!(errs.len(), 1);
         let TypeErr::DoubleDeclaration { existing, duplicate_kind, duplicate_loc } = errs.into_iter().next().unwrap() else {
             panic!("wrong error")
