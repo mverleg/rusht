@@ -41,7 +41,7 @@ enum TypeKind {
 struct AST {
     structs: Vec<(String, Loc)>,
     interfaces: Vec<(String, Loc, bool)>,
-    implementations: Vec<(Type, Type, Loc)>,
+    implementations: Vec<(String, String, Loc)>,
 }
 
 impl AST {
@@ -59,6 +59,10 @@ impl AST {
 
     pub fn declare_interface(&mut self, name: impl Into<String>, loc: Loc, is_sealed: bool) {
         self.interfaces.push((name.into(), loc, is_sealed));
+    }
+
+    pub fn add_implementation(&mut self, implementer: impl Into<String>, abstraction: impl Into<String>, loc: Loc) {
+        self.implementations.push((implementer.into(), abstraction.into(), loc));
     }
 }
 
@@ -82,6 +86,11 @@ mod tests {
         ast.declare_struct("Password", Loc::dummy());
         ast.declare_interface("Display", Loc::dummy(), false);
         ast.declare_interface("Add", Loc::dummy(), false);
+        ast.add_implementation("int", "Add", Loc::dummy());
+        ast.add_implementation("float", "Add", Loc::dummy());
+        ast.add_implementation("int", "Display", Loc::dummy());
+        ast.add_implementation("float", "Display", Loc::dummy());
+        ast.add_implementation("string", "Display", Loc::dummy());
         ast
     }
 
