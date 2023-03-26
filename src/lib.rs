@@ -2,6 +2,7 @@
 #![feature(async_closure)]
 #![feature(type_changing_struct_update)]
 #![feature(result_flattening)]
+#![feature(map_try_insert)]
 
 extern crate core;
 

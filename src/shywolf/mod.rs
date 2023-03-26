@@ -1,10 +1,13 @@
 
 //TODO @mverleg: scopes
 
+use std::collections::hash_map::OccupiedError;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::rc::Rc;
+use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
+static TYPE_COUNTER: AtomicUsize = AtomicUsize::new(0);
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 /// Source file location; dummy for now
@@ -22,13 +25,18 @@ impl Loc {
 
 #[derive(Debug)]
 enum TypeErr {
-    //
+    DoubleDeclaration { existing: Type, duplicate: Loc }
 }
 
 #[derive(Debug)]
 struct Type {
     pub id: usize,
-    name: String,
+}
+
+impl Type {
+    pub fn new() -> Type {
+        Type { id: TYPE_COUNTER.fetch_add(1, Ordering::AcqRel) }
+    }
 }
 
 #[derive(Debug)]
@@ -70,6 +78,19 @@ impl AST {
 struct TypeContext {}
 
 fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
+    let mut errors = Vec::new();
+    let type_cnt = ast.structs.len() + ast.interfaces.len();
+    let mut types_by_name = HashMap::with_capacity(type_cnt);
+    //let mut meta_for_type = HashMap::with_capacity(type_cnt);
+    for (strct_name, loc) in ast.structs {
+        let new_typ = Type::new();
+        match types_by_name.try_insert(strct_name, new_typ) {
+            Ok(_) => {}
+            Err(existing_entry) => {
+                errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate: loc })
+            }
+        }
+    }
     todo!()
 }
 
