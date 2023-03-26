@@ -74,26 +74,36 @@ impl AST {
 }
 
 #[derive(Debug)]
-struct TypeContext {}
+struct TypeContext {
+    types_by_name: HashMap<String, Type>,
+}
 
 fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     let mut errors = Vec::new();
+    let types_by_name = collect_types(&ast, &mut errors);
+
+    Ok(TypeContext {
+        types_by_name,
+    })
+}
+
+fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Type> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
     let mut types_by_name = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
         let new_typ = Type::new();
-        if let Err(existing_entry) = types_by_name.try_insert(strct_name, new_typ) {
+        if let Err(existing_entry) = types_by_name.try_insert(strct_name.to_owned(), new_typ) {
             errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Struct, duplicate_loc: loc.clone() })
         }
     }
     for (iface_name, loc, is_sealed) in &ast.interfaces {
         let new_typ = Type::new();
-        if let Err(existing_entry) = types_by_name.try_insert(iface_name, new_typ) {
+        if let Err(existing_entry) = types_by_name.try_insert(iface_name.to_owned(), new_typ) {
             errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Interface { sealed: *is_sealed }, duplicate_loc: loc.clone() })
         }
     }
-    todo!()
+    types_by_name
 }
 
 
