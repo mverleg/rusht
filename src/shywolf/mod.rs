@@ -1,7 +1,6 @@
 
 //TODO @mverleg: scopes
 
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::atomic::AtomicU32;
@@ -63,31 +62,6 @@ struct TypeInfo {
 }
 
 #[derive(Debug)]
-struct TypeCache {
-    contents: HashMap<String, Rc<TypeInfo>>,
-}
-
-impl TypeCache {
-    pub fn new() -> Self {
-        TypeCache { contents: HashMap::new() }
-    }
-
-    /// Does not check if existing value is the same/compatible with new one
-    pub fn add_or_get(&mut self, name: impl Into<String>, kind: TypeKind) -> Type {
-        let name = name.into();
-        match self.contents.entry(name) {
-            Entry::Occupied(occupied) =>
-                Type::of(occupied.get().clone()),
-            Entry::Vacant(vacant) => {
-                let info = Rc::new(TypeInfo { id: self.contents.len(), name, kind, });
-                vacant.insert(info.clone());
-                Type::of(info)
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
 struct AST {
     structs: Vec<(String, Loc)>,
     interfaces: Vec<(String, Loc, bool)>,
@@ -118,10 +92,10 @@ impl AST {
 
 #[derive(Debug)]
 struct TypeContext {
-    types_by_name: HashMap<String, Type>,
+    types_by_name: HashMap<String, TypeInfo>,
 }
 
-fn check_types(ast: &AST, x: &mut TypeCache) -> Result<TypeContext, Vec<TypeErr>> {
+fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     let mut errors = Vec::new();
     let types_by_name = collect_types(&ast, &mut errors);
 
@@ -130,22 +104,40 @@ fn check_types(ast: &AST, x: &mut TypeCache) -> Result<TypeContext, Vec<TypeErr>
     })
 }
 
-fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Type> {
+fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, TypeInfo> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
     let mut types_by_name = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
+        let kind = TypeKind::Struct;
         if let Some(existing) = types_by_name.get(strct_name) {
-            errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Struct, duplicate_loc: loc.clone() })
+            errors.push(TypeErr::DoubleDeclaration {
+                existing: existing.typ(),
+                duplicate_kind: kind,
+                duplicate_loc: loc.clone(),
+            })
         } else {
-            types_by_name.insert(strct_name.to_owned(), );
+            types_by_name.insert(strct_name.to_owned(), TypeInfo {
+                id: types_by_name.len(),
+                name: strct_name.to_owned(),
+                kind,
+            });
         }
     }
     for (iface_name, loc, is_sealed) in &ast.interfaces {
-        if let Some(existing) = types_by_name.get(strct_name) {
-            errors.push(TypeErr::DoubleDeclaration { existing: existing_entry.value, duplicate_kind: TypeKind::Interface { sealed: *is_sealed }, duplicate_loc: loc.clone() })
+        let kind = TypeKind::Interface { sealed: *is_sealed };
+        if let Some(existing) = types_by_name.get(iface_name) {
+            errors.push(TypeErr::DoubleDeclaration {
+                existing: existing.typ(),
+                duplicate_kind: kind,
+                duplicate_loc: loc.clone(),
+            })
         } else {
-            types_by_name.insert(strct_name.to_owned(), );
+            types_by_name.insert(iface_name.to_owned(), TypeInfo {
+                id: types_by_name.len(),
+                name: iface_name.to_owned(),
+                kind,
+            });
         }
     }
     types_by_name
