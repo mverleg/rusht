@@ -42,7 +42,7 @@ impl Type {
     }
 
     pub fn name(&self) -> &str {
-        &self.info.name
+        &self.info.name.text
     }
 }
 
@@ -100,16 +100,28 @@ impl AST {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Identifier {
     //TODO @mverleg: use this instead of string
-    name: String,
+    text: String,
 }
 
 impl Identifier {
     pub fn new(name: impl Into<String>) -> Self {
         // TODO validation happens here in the future
-        Identifier { name: name.into() }
+        Identifier { text: name.into() }
+    }
+}
+
+impl From<String> for Identifier {
+    fn from(value: String) -> Self {
+        Identifier::new(value)
+    }
+}
+
+impl <'a> From<&'a str> for Identifier {
+    fn from(value: &'a str) -> Self {
+        Identifier::new(value)
     }
 }
 
@@ -150,7 +162,7 @@ fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
 
 fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc<TypeInfo>> {
     let type_cnt = ast.structs.len() + ast.interfaces.len();
-    let mut types_by_name = HashMap::with_capacity(type_cnt);
+    let mut types_by_name: HashMap<Identifier, Rc<TypeInfo>> = HashMap::with_capacity(type_cnt);
     //let mut meta_for_type = HashMap::with_capacity(type_cnt);
     for (strct_name, loc) in &ast.structs {
         let kind = TypeKind::Struct;
