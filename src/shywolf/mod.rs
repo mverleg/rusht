@@ -109,6 +109,9 @@ fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
     let mut errors = Vec::new();
     let types_by_name = collect_types(&ast, &mut errors);
 
+    if ! errors.is_empty() {
+        return Err(errors)
+    }
     Ok(TypeContext {
         types_by_name,
     })
@@ -121,12 +124,14 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
     for (strct_name, loc) in &ast.structs {
         let kind = TypeKind::Struct;
         if let Some(existing) = types_by_name.get(strct_name) {
+            println!("duplicate struct {strct_name}");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             errors.push(TypeErr::DoubleDeclaration {
                 existing: existing.typ(),
                 duplicate_kind: kind,
                 duplicate_loc: loc.clone(),
             })
         } else {
+            println!("new struct {strct_name}");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             types_by_name.insert(strct_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: strct_name.to_owned(),
@@ -137,12 +142,14 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<String, Rc<Typ
     for (iface_name, loc, is_sealed) in &ast.interfaces {
         let kind = TypeKind::Interface { sealed: *is_sealed };
         if let Some(existing) = types_by_name.get(iface_name) {
+            println!("duplicate interface {iface_name} (sealed={is_sealed})");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             errors.push(TypeErr::DoubleDeclaration {
                 existing: existing.typ(),
                 duplicate_kind: kind,
                 duplicate_loc: loc.clone(),
             })
         } else {
+            println!("new interface {iface_name} (sealed={is_sealed})");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             types_by_name.insert(iface_name.to_owned(), Rc::new(TypeInfo {
                 id: types_by_name.len(),
                 name: iface_name.to_owned(),
@@ -189,7 +196,7 @@ mod tests {
         let TypeErr::DoubleDeclaration { existing, duplicate_kind, duplicate_loc } = errs.into_iter().next().unwrap() else {
             panic!("wrong error")
         };
-        assert_eq!(existing.name(), "");
+        assert_eq!(existing.name(), "Password");
         assert_eq!(duplicate_kind, TypeKind::Struct);
         assert_eq!(duplicate_loc, new_loc);
     }
