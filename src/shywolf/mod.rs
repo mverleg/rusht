@@ -5,6 +5,9 @@ use ::std::collections::HashMap;
 use ::std::rc::Rc;
 use ::std::sync::atomic::AtomicU32;
 use ::std::sync::atomic::Ordering;
+use std::collections::hash_map::Entry;
+use std::hash;
+use std::hash::Hasher;
 
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -27,9 +30,10 @@ enum TypeErr {
     /// implement an abstraction for a type that doesn't exist; shouldn't really be possible with current syntax plan
     NonExistentImplementer { implementer: Identifier, abstraction: Identifier, impl_loc: Loc },
     NonExistentAbstraction { implementer: Type, abstraction: Identifier, impl_loc: Loc },
+    DuplicateImplementation { first_impl: ImplInfo, duplicate_impl: ImplKey, duplicate_loc: Loc },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Type {
     id: usize,
     info: Rc<TypeInfo>,
@@ -51,6 +55,14 @@ impl Type {
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
+    }
+}
+
+impl Eq for Type {}
+
+impl hash::Hash for Type {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.id)
     }
 }
 
@@ -128,7 +140,7 @@ impl <'a> From<&'a str> for Identifier {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct ImplKey {
     implementer: Type,
     abstraction: Type,
@@ -136,6 +148,8 @@ struct ImplKey {
 
 #[derive(Debug)]
 struct ImplInfo {
+    implementer: Type,
+    abstraction: Type,
     declaration_loc: Loc,
 }
 
@@ -202,7 +216,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
 }
 
 fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>, errors: &mut Vec<TypeErr>) -> HashMap<ImplKey, ImplInfo> {
-    let implementations = HashMap::new();
+    let mut implementations = HashMap::new();
     for (implementer_name, abstraction_name, impl_loc) in &ast.implementations {
         let implementer_type = match types.get(implementer_name) {
             Some(typ) => typ,
@@ -226,7 +240,18 @@ fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>,
                 continue
             }
         };
-        todo!()
+        let key = ImplKey { implementer: implementer_type.typ(), abstraction: abstraction_type.typ() };
+        match implementations.entry(key) {
+            Entry::Occupied(occupied) => {
+                errors.push(TypeErr::DuplicateImplementation {
+                    first_impl: occupied.get().clone(),
+                    duplicate_impl: occupied.key().clone(),
+                    duplicate_loc: impl_loc.clone(),
+                });
+                continue
+            }
+            Entry::Vacant(vacant) => {}
+        }
     }
     implementations
 }
