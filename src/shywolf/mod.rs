@@ -33,6 +33,7 @@ enum TypeErr {
     NonExistentAbstraction { implementer: Type, abstraction: Identifier, impl_loc: Loc },
     DuplicateImplementation { implementer: Type, abstraction: Type, first_loc: Loc, duplicate_loc: Loc },
     StructAbstraction { implementer: Type, abstraction_struct: Type, impl_loc: Loc },
+    ImplementationCycle { cycle: Vec<Type>, impl_loc: Loc },
 }
 
 #[derive(Debug, Clone)]
@@ -316,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_declaration_struct_struct() {
+    fn duplicate_declaration_struct_struct_err() {
         let mut ast = build_test_ast();
         let new_loc = Loc::dummy();
         ast.declare_struct("Password", new_loc.clone());
@@ -346,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn non_existent_implementer_and_abstraction() {
+    fn non_existent_implementer_and_abstraction_err() {
         let mut ast = build_test_ast();
         let first_loc = Loc::dummy();
         let second_loc = Loc::dummy();
@@ -370,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_impl() {
+    fn duplicate_impl_err() {
         let mut ast = build_test_ast();
         let first_loc = Loc::dummy();
         let second_loc = Loc::dummy();
@@ -385,5 +386,39 @@ mod tests {
         assert_eq!(abstraction.name(), "TestSeal");
         assert_eq!(first_loc, first_loc);
         assert_eq!(duplicate_loc, second_loc);
+    }
+
+    #[test]
+    fn self_impl_err() {
+        let mut ast = build_test_ast();
+        let new_loc = Loc::dummy();
+        ast.add_implementation("TestSeal", "TestSeal", new_loc.clone());
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 1);
+        let TypeErr::ImplementationCycle { cycle, impl_loc } = errs.into_iter().next().unwrap() else {
+            panic!("wrong error")
+        };
+        assert_eq!(cycle.len(), 1);
+        assert_eq!(cycle[0].name(), "TestSeal");
+        assert_eq!(impl_loc, new_loc);
+    }
+
+    #[test]
+    fn indirect_cycle_err() {
+        let mut ast = build_test_ast();
+        let main_loc = Loc::dummy();
+        ast.add_implementation("Number", "TestSeal", Loc::dummy());
+        ast.add_implementation("TestSeal", "Add", main_loc.clone());
+        // Add <- Number <- TestSeal <- Add
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 1);
+        let TypeErr::ImplementationCycle { cycle, impl_loc } = errs.into_iter().next().unwrap() else {
+            panic!("wrong error")
+        };
+        assert_eq!(cycle.len(), 3);
+        assert_eq!(cycle[0].name(), "TestSeal");
+        assert_eq!(cycle[1].name(), "Add");
+        assert_eq!(cycle[2].name(), "Number");
+        assert_eq!(impl_loc, main_loc);
     }
 }
