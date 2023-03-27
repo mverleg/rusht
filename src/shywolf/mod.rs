@@ -273,8 +273,14 @@ mod tests {
         ast.declare_struct("Password", Loc::dummy());
         ast.declare_interface("Display", Loc::dummy(), false);
         ast.declare_interface("Add", Loc::dummy(), false);
+        ast.declare_interface("Sub", Loc::dummy(), false);
+        ast.declare_interface("Number", Loc::dummy(), false);
         ast.add_implementation("int", "Add", Loc::dummy());
         ast.add_implementation("float", "Add", Loc::dummy());
+        ast.add_implementation("int", "Sub", Loc::dummy());
+        ast.add_implementation("float", "Sub", Loc::dummy());
+        ast.add_implementation("Number", "Add", Loc::dummy());
+        ast.add_implementation("Number", "Sub", Loc::dummy());
         ast.add_implementation("int", "Display", Loc::dummy());
         ast.add_implementation("float", "Display", Loc::dummy());
         ast.add_implementation("String", "Display", Loc::dummy());
