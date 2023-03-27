@@ -1,13 +1,15 @@
 
 //TODO @mverleg: scopes
+//TODO @mverleg: switch to tinyvec
 
+use ::std::cell::RefCell;
+use ::std::collections::hash_map::Entry;
 use ::std::collections::HashMap;
+use ::std::hash;
+use ::std::hash::Hasher;
 use ::std::rc::Rc;
 use ::std::sync::atomic::AtomicU32;
 use ::std::sync::atomic::Ordering;
-use std::collections::hash_map::Entry;
-use std::hash;
-use std::hash::Hasher;
 
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -80,6 +82,11 @@ struct TypeInfo {
     id: usize,
     name: Identifier,
     kind: TypeKind,
+    /// All parent types, including 'transitive' ones
+    parents: HashMap<Type, ()>,
+    //TODO @mverleg: the problem here is that we create types first, and then impls
+    //TODO @mverleg: but we already create a bunch of Type with Rcs so we can't just have a
+    //TODO @mverleg: before- and after-types... meaning this should be mutable, or redesign
     declaration_loc: Loc,
 }
 
@@ -196,6 +203,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: strct_name.clone(),
                 kind,
+                parents: vec![],
                 declaration_loc: loc.clone(),
             }));
         }
@@ -213,6 +221,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: iface_name.clone(),
                 kind,
+                parents: vec![],
                 declaration_loc: loc.clone(),
             }));
         }
