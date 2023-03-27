@@ -128,6 +128,10 @@ impl Identifier {
         // TODO validation happens here in the future
         Identifier { text: name.into() }
     }
+
+    pub fn name(&self) -> &str {
+        &self.text
+    }
 }
 
 impl From<String> for Identifier {
@@ -284,6 +288,7 @@ mod tests {
         ast.declare_interface("Add", Loc::dummy(), false);
         ast.declare_interface("Sub", Loc::dummy(), false);
         ast.declare_interface("Number", Loc::dummy(), false);
+        ast.declare_interface("TestSeal", Loc::dummy(), true);
         ast.add_implementation("int", "Add", Loc::dummy());
         ast.add_implementation("float", "Add", Loc::dummy());
         ast.add_implementation("int", "Sub", Loc::dummy());
@@ -317,10 +322,6 @@ mod tests {
         assert_eq!(duplicate_loc, new_loc);
     }
 
-    //TODO @mverleg: NonExistentImplementer
-    //TODO @mverleg: NonExistentAbstraction
-    //TODO @mverleg: DuplicateImplementation
-
     #[test]
     fn implement_struct_err() {
         let mut ast = build_test_ast();
@@ -334,5 +335,47 @@ mod tests {
         assert_eq!(implementer.name(), "int");
         assert_eq!(abstraction_struct.name(), "String");
         assert_eq!(impl_loc, new_loc);
+    }
+
+    #[test]
+    fn non_existent_implementer_and_abstraction() {
+        let mut ast = build_test_ast();
+        let first_loc = Loc::dummy();
+        let second_loc = Loc::dummy();
+        ast.add_implementation("NonExistent", "TestSeal", first_loc.clone());
+        ast.add_implementation("int", "NonExistent", second_loc.clone());
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 2);
+        let mut err_iter = errs.into_iter();
+        let TypeErr::NonExistentImplementer { implementer, abstraction, impl_loc } = err_iter.next().unwrap() else {
+            panic!("wrong first error")
+        };
+        assert_eq!(implementer.name(), "NonExistent");
+        assert_eq!(abstraction.name(), "TestSeal");
+        assert_eq!(impl_loc, first_loc);
+        let TypeErr::NonExistentAbstraction { implementer, abstraction, impl_loc } = err_iter.next().unwrap() else {
+            panic!("wrong second error")
+        };
+        assert_eq!(implementer.name(), "int");
+        assert_eq!(abstraction.name(), "NonExistent");
+        assert_eq!(impl_loc, second_loc);
+    }
+
+    #[test]
+    fn duplicate_impl() {
+        let mut ast = build_test_ast();
+        let first_loc = Loc::dummy();
+        let second_loc = Loc::dummy();
+        ast.add_implementation("int", "TestSeal", first_loc.clone());
+        ast.add_implementation("int", "TestSeal", second_loc.clone());
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 1);
+        let TypeErr::DuplicateImplementation { implementer, abstraction, first_loc, duplicate_loc } = errs.into_iter().next().unwrap() else {
+            panic!("wrong error")
+        };
+        assert_eq!(implementer.name(), "int");
+        assert_eq!(abstraction.name(), "TestSeal");
+        assert_eq!(first_loc, first_loc);
+        assert_eq!(duplicate_loc, second_loc);
     }
 }
