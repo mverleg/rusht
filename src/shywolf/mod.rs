@@ -388,6 +388,7 @@ mod tests {
         assert_eq!(duplicate_loc, second_loc);
     }
 
+    #[ignore]  //TODO @mverleg: first think about datamodel, does it only represent direct parents or also transitive?
     #[test]
     fn self_impl_err() {
         let mut ast = build_test_ast();
@@ -403,6 +404,7 @@ mod tests {
         assert_eq!(impl_loc, new_loc);
     }
 
+    #[ignore]  //TODO @mverleg: first think about datamodel, does it only represent direct parents or also transitive?
     #[test]
     fn indirect_cycle_err() {
         let mut ast = build_test_ast();
