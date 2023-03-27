@@ -24,13 +24,14 @@ impl Loc {
     }
 }
 
+#[allow(unused)]  // used later in error handling
 #[derive(Debug)]
 enum TypeErr {
     DoubleDeclaration { existing: Type, duplicate_kind: TypeKind, duplicate_loc: Loc },
     /// implement an abstraction for a type that doesn't exist; shouldn't really be possible with current syntax plan
     NonExistentImplementer { implementer: Identifier, abstraction: Identifier, impl_loc: Loc },
     NonExistentAbstraction { implementer: Type, abstraction: Identifier, impl_loc: Loc },
-    DuplicateImplementation { first_impl: ImplInfo, duplicate_impl: ImplKey, duplicate_loc: Loc },
+    DuplicateImplementation { implementer: Type, abstraction: Type, first_loc: Loc, duplicate_loc: Loc },
 }
 
 #[derive(Debug, Clone)]
@@ -148,8 +149,6 @@ struct ImplKey {
 
 #[derive(Debug)]
 struct ImplInfo {
-    implementer: Type,
-    abstraction: Type,
     declaration_loc: Loc,
 }
 
@@ -216,7 +215,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
 }
 
 fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>, errors: &mut Vec<TypeErr>) -> HashMap<ImplKey, ImplInfo> {
-    let mut implementations = HashMap::new();
+    let mut implementations: HashMap<ImplKey, ImplInfo> = HashMap::new();
     for (implementer_name, abstraction_name, impl_loc) in &ast.implementations {
         let implementer_type = match types.get(implementer_name) {
             Some(typ) => typ,
@@ -244,13 +243,19 @@ fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>,
         match implementations.entry(key) {
             Entry::Occupied(occupied) => {
                 errors.push(TypeErr::DuplicateImplementation {
-                    first_impl: occupied.get().clone(),
-                    duplicate_impl: occupied.key().clone(),
+                    implementer: implementer_type.typ(),
+                    abstraction: abstraction_type.typ(),
+                    first_loc: (*occupied.get()).declaration_loc.clone(),
                     duplicate_loc: impl_loc.clone(),
                 });
                 continue
             }
-            Entry::Vacant(vacant) => {}
+            Entry::Vacant(vacant) => {
+                let impl_info = ImplInfo {
+                    declaration_loc: impl_loc.clone(),
+                };
+                vacant.insert(impl_info);
+            }
         }
     }
     implementations
@@ -272,7 +277,7 @@ mod tests {
         ast.add_implementation("float", "Add", Loc::dummy());
         ast.add_implementation("int", "Display", Loc::dummy());
         ast.add_implementation("float", "Display", Loc::dummy());
-        ast.add_implementation("string", "Display", Loc::dummy());
+        ast.add_implementation("String", "Display", Loc::dummy());
         ast
     }
 
