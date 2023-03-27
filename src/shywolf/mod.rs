@@ -252,6 +252,14 @@ fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>,
             });
             continue
         }
+        if let TypeKind::Interface { sealed: true, .. } = abstraction_type.kind {
+            //TODO @mverleg: mot sure yet about this one, let's start strict
+            if ! matches!(implementer_type.kind, TypeKind::Struct { .. }) &&
+                    ! matches!(implementer_type.kind, TypeKind::Interface { sealed: true, .. }) {
+                panic!("sealed interface can only implement struct or another sealed interface");  //TODO @mverleg: real error if this restriction stays
+            }
+        }
+        //TODO @mverleg: detect recursion
         let key = ImplKey { implementer: implementer_type.typ(), abstraction: abstraction_type.typ() };
         match implementations.entry(key) {
             Entry::Occupied(occupied) => {
