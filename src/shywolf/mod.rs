@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
+use crate::shywolf::TypeErr::NonExistentImplementer;
 
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -24,7 +25,9 @@ impl Loc {
 #[derive(Debug)]
 enum TypeErr {
     DoubleDeclaration { existing: Type, duplicate_kind: TypeKind, duplicate_loc: Loc },
-    DoubleImpl {},
+    /// implement an abstraction for a type that doesn't exist; shouldn't really be possible with current syntax plan
+    NonExistentImplementer { implementer: Identifier, abstraction: Identifier, impl_loc: Loc },
+    NonExistentAbstraction { implementer: Type, abstraction: Identifier, impl_loc: Loc },
 }
 
 #[derive(Debug)]
@@ -143,13 +146,10 @@ struct TypeContext {
 }
 
 fn check_types(ast: &AST) -> Result<TypeContext, Vec<TypeErr>> {
+
     let mut errors = Vec::new();
     let types_by_name = collect_types(&ast, &mut errors);
-
-    let implementations = HashMap::new();
-    for (implementer_name, abstraction_name, imp_loc) in &ast.implementations {
-        todo!()
-    }
+    let implementations = collect_implementations(&ast, &types_by_name, &mut errors);
 
     if ! errors.is_empty() {
         return Err(errors)
@@ -197,6 +197,36 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
         }
     }
     types_by_name
+}
+
+fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>, errors: &mut Vec<TypeErr>) -> HashMap<ImplKey, ImplInfo> {
+    let implementations = HashMap::new();
+    for (implementer_name, abstraction_name, impl_loc) in &ast.implementations {
+        let implementer_type = match types.get(implementer_name) {
+            Some(typ) => typ,
+            None => {
+                errors.push(TypeErr::NonExistentImplementer {
+                    implementer: implementer_name.clone(),
+                    abstraction: abstraction_name.clone(),
+                    impl_loc: impl_loc.clone(),
+                });
+                continue
+            }
+        };
+        let abstraction_type = match types.get(abstraction_name) {
+            Some(typ) => typ,
+            None => {
+                errors.push(TypeErr::NonExistentAbstraction {
+                    implementer: implementer_type.typ(),
+                    abstraction: abstraction_name.clone(),
+                    impl_loc: impl_loc.clone(),
+                });
+                continue
+            }
+        };
+        todo!()
+    }
+    implementations
 }
 
 #[cfg(test)]
