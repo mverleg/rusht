@@ -1,11 +1,10 @@
 
 //TODO @mverleg: scopes
 
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::sync::atomic::AtomicU32;
-use std::sync::atomic::Ordering;
-use crate::shywolf::TypeErr::NonExistentImplementer;
+use ::std::collections::HashMap;
+use ::std::rc::Rc;
+use ::std::sync::atomic::AtomicU32;
+use ::std::sync::atomic::Ordering;
 
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -66,6 +65,7 @@ struct TypeInfo {
     id: usize,
     name: Identifier,
     kind: TypeKind,
+    declaration_loc: Loc,
 }
 
 impl TypeInfo {
@@ -136,7 +136,7 @@ struct ImplKey {
 
 #[derive(Debug)]
 struct ImplInfo {
-
+    declaration_loc: Loc,
 }
 
 #[derive(Debug)]
@@ -177,6 +177,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: strct_name.clone(),
                 kind,
+                declaration_loc: loc.clone(),
             }));
         }
     }
@@ -193,6 +194,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: iface_name.clone(),
                 kind,
+                declaration_loc: loc.clone(),
             }));
         }
     }
