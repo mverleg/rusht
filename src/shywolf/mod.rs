@@ -32,6 +32,7 @@ enum TypeErr {
     NonExistentImplementer { implementer: Identifier, abstraction: Identifier, impl_loc: Loc },
     NonExistentAbstraction { implementer: Type, abstraction: Identifier, impl_loc: Loc },
     DuplicateImplementation { implementer: Type, abstraction: Type, first_loc: Loc, duplicate_loc: Loc },
+    StructAbstraction { implementer: Type, abstraction_struct: Type, impl_loc: Loc },
 }
 
 #[derive(Debug, Clone)]
@@ -239,6 +240,14 @@ fn collect_implementations(ast: &AST, types: &HashMap<Identifier, Rc<TypeInfo>>,
                 continue
             }
         };
+        if let TypeKind::Struct { .. } = abstraction_type.kind {
+            errors.push(TypeErr::StructAbstraction {
+                implementer: implementer_type.typ(),
+                abstraction_struct: abstraction_type.typ(),
+                impl_loc: impl_loc.clone(),
+            });
+            continue
+        }
         let key = ImplKey { implementer: implementer_type.typ(), abstraction: abstraction_type.typ() };
         match implementations.entry(key) {
             Entry::Occupied(occupied) => {
@@ -306,5 +315,24 @@ mod tests {
         assert_eq!(existing.name(), "Password");
         assert_eq!(duplicate_kind, TypeKind::Struct);
         assert_eq!(duplicate_loc, new_loc);
+    }
+
+    //TODO @mverleg: NonExistentImplementer
+    //TODO @mverleg: NonExistentAbstraction
+    //TODO @mverleg: DuplicateImplementation
+
+    #[test]
+    fn implement_struct_err() {
+        let mut ast = build_test_ast();
+        let new_loc = Loc::dummy();
+        ast.add_implementation("int", "String", new_loc.clone());
+        let errs = check_types(&ast).unwrap_err();
+        assert_eq!(errs.len(), 1);
+        let TypeErr::StructAbstraction { implementer, abstraction_struct, impl_loc } = errs.into_iter().next().unwrap() else {
+            panic!("wrong error")
+        };
+        assert_eq!(implementer.name(), "int");
+        assert_eq!(abstraction_struct.name(), "String");
+        assert_eq!(impl_loc, new_loc);
     }
 }
