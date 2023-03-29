@@ -78,7 +78,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         &mut task_stack,
         0,
     );
-    if !args.very_quiet && !to_run.is_empty() {
+    if !args.quiet && !to_run.is_empty() {
         println!(
             "collected {} commands to run, e.g. {}",
             to_run.len(),
@@ -89,7 +89,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         to_run,
         args.continue_on_error || args.parallel > 1,
         args.parallel,
-        args.quiet,
+        args.quiet && args.mostly_quiet,
     );
     let exit_code = statuses
         .iter()

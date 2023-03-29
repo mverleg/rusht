@@ -68,7 +68,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.unique,
     );
     if !args.allow_empty && new_tasks.is_empty() {
-        if !args.quiet && !args.very_quiet {
+        if !args.quiet {
             eprintln!("no tasks found, was stdin empty?");
         }
         return;
@@ -79,7 +79,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         read(args.namespace.clone())
     };
     for task in new_tasks {
-        if !args.quiet && !args.very_quiet {
+        if !args.quiet && !args.mostly_quiet {
             println!("{}", task.as_str());
         }
         if args.end {
@@ -88,7 +88,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
             stored_tasks.add(task);
         }
     }
-    if !args.very_quiet {
+    if !args.quiet {
         println!("{} command(s) pending", stored_tasks.len());
     }
     write(args.namespace, &stored_tasks);

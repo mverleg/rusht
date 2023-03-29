@@ -2,7 +2,6 @@
 //TODO @mverleg: scopes
 //TODO @mverleg: switch to tinyvec
 
-use ::std::cell::RefCell;
 use ::std::collections::hash_map::Entry;
 use ::std::collections::HashMap;
 use ::std::hash;
