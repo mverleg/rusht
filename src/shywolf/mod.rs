@@ -203,7 +203,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: strct_name.clone(),
                 kind,
-                parents: vec![],
+                parents: HashMap::new(),
                 declaration_loc: loc.clone(),
             }));
         }
@@ -221,7 +221,7 @@ fn collect_types(ast: &AST, errors: &mut Vec<TypeErr>) -> HashMap<Identifier, Rc
                 id: types_by_name.len(),
                 name: iface_name.clone(),
                 kind,
-                parents: vec![],
+                parents: HashMap::new(),
                 declaration_loc: loc.clone(),
             }));
         }

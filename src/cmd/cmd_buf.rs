@@ -43,9 +43,9 @@ pub struct BufArgs {
     #[arg(short = 'q', long)]
     /// Do not log command and timing.
     pub quiet: bool,
-    // #[structopt(short = '0', long = "allow-empty")]
-    // /// Silently do nothing if there are no commands.
-    // pub allow_empty: bool,
+    #[arg(short = 'Q', long, hide_short_help = true)]
+    /// Do not log anything unless it is an error.
+    pub very_quiet: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
@@ -78,7 +78,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         &mut task_stack,
         0,
     );
-    if !to_run.is_empty() {
+    if !args.very_quiet && !to_run.is_empty() {
         println!(
             "collected {} commands to run, e.g. {}",
             to_run.len(),
