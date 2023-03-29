@@ -146,6 +146,7 @@ fn onebyone_add_run() {
         drop_failed: false,
         keep_successful: false,
         quiet: false,
+        mostly_quiet: false,
         allow_empty: false,
     });
     let out = list_cmds(ListArgs {

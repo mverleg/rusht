@@ -89,7 +89,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         to_run,
         args.continue_on_error || args.parallel > 1,
         args.parallel,
-        args.quiet && args.mostly_quiet,
+        args.quiet || args.mostly_quiet,
     );
     let exit_code = statuses
         .iter()

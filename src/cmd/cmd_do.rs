@@ -49,7 +49,10 @@ pub struct DoArgs {
     #[arg(short = 'k', long = "keep")]
     /// Keep the task on the stack when ran when successful.
     pub keep_successful: bool,
-    #[arg(short = 'q', long)]
+    #[arg(short = 'Q', long)]
+    /// Do not log the command and timing, but do log the total at the end.
+    pub mostly_quiet: bool,
+    #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
     /// Do not log command and timing.
     pub quiet: bool,
     #[arg(short = '0', long = "allow-empty")]
@@ -70,14 +73,17 @@ pub fn do_cmd(args: DoArgs) -> bool {
         if args.allow_empty {
             return true;
         }
-        eprintln!("there are no commands to run, use cmadd to add them");
+        if !args.quiet {
+            eprintln!("there are no commands to run, use cmadd to add them");
+        }
         return false;
     }
 
     let to_run = mark_tasks_to_run(args.restart_running, args.all, args.count, &mut tasks, ts_s);
     write(args.namespace.clone(), &tasks);
 
-    let statuses = run_tasks(to_run, args.continue_on_error, args.parallel, args.quiet);
+    let statuses = run_tasks(to_run, args.continue_on_error, args.parallel,
+        args.quiet || args.mostly_quiet);
 
     let tasks = read(args.namespace.clone());
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
