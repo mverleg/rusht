@@ -22,7 +22,7 @@ use crate::ExitStatus;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmdo",
-    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop"
+    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmlist, cmdrop, cmbuf"
 )]
 pub struct DoArgs {
     #[arg(short = 'n', long, default_value = "")]

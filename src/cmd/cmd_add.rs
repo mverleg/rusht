@@ -9,7 +9,7 @@ use crate::common::CommandArgs;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmadd",
-    about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop"
+    about = "Add a command to be executed to the stack. See also cmdo, cmlist, cmdrop, cmbuf"
 )]
 pub struct AddArgs {
     #[arg(short = 'n', long, default_value = "")]
@@ -17,10 +17,10 @@ pub struct AddArgs {
     pub namespace: String,
     #[arg(short = 'Q', long)]
     /// Do not log the command, but do log the total at the end.
-    pub quiet: bool,
-    #[arg(short = 'q', long, conflicts_with = "quiet")]
+    pub mostly_quiet: bool,
+    #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
     /// Do not log the commands, and also not the total at the end.
-    pub very_quiet: bool,
+    pub quiet: bool,
     #[arg(short = 'e', long)]
     /// Add command at the end (last) instead of as the next.
     pub end: bool,

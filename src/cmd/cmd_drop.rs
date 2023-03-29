@@ -7,7 +7,7 @@ use crate::cmd::cmd_type::TaskStack;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmdrop",
-    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist"
+    about = "Execute a command and remove it from the stack if successful. See also cmadd, cmdo, cmlist, cmbuf"
 )]
 pub struct DropArgs {
     #[arg(short = 'n', long, default_value = "")]

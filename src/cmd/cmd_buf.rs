@@ -9,7 +9,7 @@ use crate::ExitStatus;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmbuf",
-    about = "Read input, build commands and buffer them, then run them all. Somewhat like xargs."
+    about = "Read input, build commands and buffer them, then run them all. Somewhat like xargs. See also cmadd, cmdo, cmlist, cmdrop"
 )]
 pub struct BufArgs {
     // #[structopt(short = 'e', long)]
@@ -40,19 +40,19 @@ pub struct BufArgs {
     #[arg(short = 'f', long = "continue-on-error")]
     /// Keep running tasks even if one fails.
     pub continue_on_error: bool,
-    #[arg(short = 'q', long)]
-    /// Do not log command and timing.
-    pub quiet: bool,
-    #[arg(short = 'Q', long, hide_short_help = true)]
+    #[arg(short = 'Q', long)]
+    /// Do not log command, timing, but do log totals.
+    pub mostly_quiet: bool,
+    #[arg(short = 'q', long, hide_short_help = true, conflicts_with = "mostly_quiet")]
     /// Do not log anything unless it is an error.
-    pub very_quiet: bool,
+    pub quiet: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
 
 #[test]
 fn test_cli_args() {
-    BufArgs::try_parse_from(&["cmd", "-L", "%", "-c=5", "ls", "%"]).unwrap();
+    BufArgs::try_parse_from(&["cmd", "-L", "%", "-c=5", "ls", "-Q", "%"]).unwrap();
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {

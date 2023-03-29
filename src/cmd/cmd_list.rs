@@ -9,7 +9,7 @@ use crate::cmd::cmd_io::stack_pth;
 #[derive(Parser, Debug)]
 #[command(
     name = "cmlist",
-    about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop"
+    about = "Show list of pending commands (escaping is not shell-safe), from next to last. See also cmadd, cmdo, cmdrop, cmbuf"
 )]
 pub struct ListArgs {
     #[arg(short = 'n', long, default_value = "")]
