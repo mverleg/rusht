@@ -19,22 +19,10 @@ pub async fn piped(
     let buffer_size = args.pipe_buffer_size.try_into().unwrap_or(usize::MAX);
     let (mut chain_write, chain_read) = chained(buffer_size);
     let (source_res, sink_res) = join!(
-        run_source(source, &mut chain_write, args.stderr),
-        run_sink(sink),
+        task.execute_with_stdout_nomonitor(chain_write, &mut StdWriter::stderr()),
+        task.execute_with_stdout_nomonitor(&mut StdWriter::stdout(), writer),
     ).await;
     ExitStatus::max(source_res, sink_res)
-}
-
-async fn run_source(task: Task, writer: &mut ChainWriter, is_stderr: bool) -> ExitStatus {
-    if is_stderr {
-        task.execute_with_stdout_nomonitor(&mut StdWriter::stdout(), writer).await
-    } else {
-        task.execute_with_stdout_nomonitor(writer, &mut StdWriter::stderr()).await
-    }
-}
-
-async fn run_sink(task: Task, writer: &mut ChainWriter) -> ExitStatus {
-    task.execute_with_stdout_nomonitor(&mut StdWriter::stdout(), writer).await
 }
 
 #[cfg(test)]
