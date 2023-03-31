@@ -37,7 +37,10 @@ impl Drop for ChainWriter {
     fn drop(&mut self) {
         // TODO rewrite for async drop if supported
         debug!("ending chain writer pipe"); //TODO @mark: TEMPORARY! REMOVE THIS!
-        block_on(self.sender.send(PipeItem::End)).unwrap()
+        match block_on(self.sender.send(PipeItem::End)) {
+            Ok(_) => {}
+            Err(err) => eprintln!("error in Drop of ChainWriter: {:?}", err),
+        }
     }
 }
 
