@@ -3,9 +3,7 @@ use ::std::future::join;
 use crate::common::LineReader;
 use crate::common::LineWriter;
 use crate::common::StdWriter;
-use crate::common::Task;
 use crate::ExitStatus;
-use crate::observe::chain::ChainWriter;
 use crate::observe::chained;
 use crate::observe::piped_args::PipedArgs;
 
@@ -19,8 +17,8 @@ pub async fn piped(
     let buffer_size = args.pipe_buffer_size.try_into().unwrap_or(usize::MAX);
     let (mut chain_write, chain_read) = chained(buffer_size);
     let (source_res, sink_res) = join!(
-        task.execute_with_stdout_nomonitor(chain_write, &mut StdWriter::stderr()),
-        task.execute_with_stdout_nomonitor(&mut StdWriter::stdout(), writer),
+        source_cmd.into_task().execute_with_stdout_nomonitor(outer_reader, chain_write, &mut StdWriter::stderr()),
+        sink_cmd.into_task().execute_with_stdout_nomonitor(chain_read, outer_writer, &mut StdWriter::stderr()),
     ).await;
     ExitStatus::max(source_res, sink_res)
 }
