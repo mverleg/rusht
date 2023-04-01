@@ -8,7 +8,6 @@ use ::std::hash;
 use ::std::hash::Hasher;
 use ::std::rc::Rc;
 use ::std::sync::atomic::AtomicU32;
-use ::std::sync::atomic::Ordering;
 
 static DUMMY_LOC_COUNTER: AtomicU32 = AtomicU32::new(0);
 

@@ -1,3 +1,5 @@
+#![allow(unused)]  //TODO @mark: TEMPORARY! REMOVE THIS!
+
 use ::std::future::join;
 
 use crate::common::LineReader;
@@ -16,11 +18,12 @@ pub async fn piped(
     let (source_cmd, sink_cmd) = args.cmds.split_once_at(&args.separator);
     let buffer_size = args.pipe_buffer_size.try_into().unwrap_or(usize::MAX);
     let (mut chain_write, chain_read) = chained(buffer_size);
-    let (source_res, sink_res) = join!(
-        source_cmd.into_task().execute_with_stdout_nomonitor(outer_reader, chain_write, &mut StdWriter::stderr()),
-        sink_cmd.into_task().execute_with_stdout_nomonitor(chain_read, outer_writer, &mut StdWriter::stderr()),
-    ).await;
-    ExitStatus::max(source_res, sink_res)
+    unimplemented!();  //TODO @mark:
+    // let (source_res, sink_res) = join!(
+    //     source_cmd.into_task().execute_with_stdout_nomonitor(outer_reader, chain_write, &mut StdWriter::stderr()),
+    //     sink_cmd.into_task().execute_with_stdout_nomonitor(chain_read, outer_writer, &mut StdWriter::stderr()),
+    // ).await;
+    // ExitStatus::max(source_res, sink_res)
 }
 
 #[cfg(test)]
