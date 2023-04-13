@@ -40,10 +40,10 @@ pub struct BufArgs {
     #[arg(short = 'f', long = "continue-on-error")]
     /// Keep running tasks even if one fails.
     pub continue_on_error: bool,
-    #[arg(short = 'Q', long)]
+    #[arg(short = 'Q', long, hide_short_help = true)]
     /// Do not log command, timing, but do log totals.
     pub mostly_quiet: bool,
-    #[arg(short = 'q', long, hide_short_help = true, conflicts_with = "mostly_quiet")]
+    #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
     /// Do not log anything unless it is an error.
     pub quiet: bool,
     #[command(subcommand)]

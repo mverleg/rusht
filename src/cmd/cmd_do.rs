@@ -49,7 +49,7 @@ pub struct DoArgs {
     #[arg(short = 'k', long = "keep")]
     /// Keep the task on the stack when ran when successful.
     pub keep_successful: bool,
-    #[arg(short = 'Q', long)]
+    #[arg(short = 'Q', long, hide_short_help = true)]
     /// Do not log the command and timing, but do log the total at the end.
     pub mostly_quiet: bool,
     #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]

@@ -15,7 +15,7 @@ pub struct AddArgs {
     #[arg(short = 'n', long, default_value = "")]
     /// Use the stack from the given namespace instead of the global one.
     pub namespace: String,
-    #[arg(short = 'Q', long)]
+    #[arg(short = 'Q', long, hide_short_help = true)]
     /// Do not log the command, but do log the total at the end.
     pub mostly_quiet: bool,
     #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
