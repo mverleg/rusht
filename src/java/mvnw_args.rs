@@ -211,8 +211,8 @@ impl MvnwArgs {
             self.test_none,
             self.prod_only,
         ) {
+            (false, false, false, false, false) => TestMode::NoRun,  // revert to Files
             (true, false, false, false, false) => TestMode::Files,
-            (false, false, false, false, false) => TestMode::Files,
             (false, true, false, false, false) => TestMode::Modules,
             (false, false, true, false, false) => TestMode::All,
             (false, false, false, true, false) => TestMode::NoRun,
