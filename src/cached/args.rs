@@ -27,13 +27,13 @@ pub struct CachedArgs {
     // /// This is just a short way to set --duration to a long time and --key to '%{git_head}_%{git_uncommitted}.cache'
     // #[structopt(short = 'g', long = "git", conflicts_with = "duration", conflicts_with = "key")]
     // pub git: bool,
-    /// Print extra information, e.g. whether the command was run or not.
     /// When loading from cache, do not show the previous output.
     #[arg(short = 's', long)]
     pub no_cached_output: bool,
     /// Use exit code 0 if the command is cached, and exit code 255 if it ran successfully.
     #[arg(short = 'e', long)]
     pub exit_code: bool,
+    /// Print extra information, e.g. whether the command was run or not.
     #[arg(short = 'v', long)]
     pub verbose: bool,
     #[command(subcommand)]
