@@ -7,10 +7,9 @@ use ::regex::Regex;
     about = "Filter lines by regular expression, keeping only the matching capture group."
 )]
 pub struct GrabArgs {
-    /// Regular expression to match. Returns the capture group if any, or the whole match otherwise.
-    /// For case-insensitive matching, prefix `(?i)`.
-    #[arg()]
-    pub pattern: Regex,
+    /// Regular expression to match. Case-insensitive by default. Returns the capture group if any, or the whole match otherwise.
+    #[arg(value_parser = valid_regex)]
+    pub pattern: String,
     #[arg(short = 'i', long)]
     /// If this string is provided, do matching on that and ignore stdin.
     pub input: Option<String>,
@@ -36,15 +35,33 @@ pub struct GrabArgs {
     /// Exit with code 1 if there are any matches
     #[arg(short = 'E', long)]
     pub expect_no_match: bool,
+    /// If the regex contains 'a' do not match 'A'.
+    #[arg(short = 'c', long)]
+    pub case_sensitive: bool,
     /// Do not show output.
     #[arg(short = 'q', long)]
     pub quiet: bool,
 }
 
+fn valid_regex(inp: &str) -> Result<String, String> {
+    Regex::new(inp).map_err(|err| format!("invalid regex: {}", err))?;
+    Ok(inp.to_owned())
+}
+
+impl GrabArgs {
+    pub fn build_regex(&self) -> Regex {
+        if self.case_sensitive {
+            Regex::new(&self.pattern)
+        } else {
+            Regex::new(&format!("(?i){}", &self.pattern))
+        }.expect("invalid grab regex but should have been validated by cli")
+    }
+}
+
 impl Default for GrabArgs {
     fn default() -> Self {
         GrabArgs {
-            pattern: Regex::new(".*").unwrap(),
+            pattern: ".*".to_owned(),
             input: None,
             first_match_only: false,
             first_capture_only: false,
@@ -52,6 +69,7 @@ impl Default for GrabArgs {
             max_lines: None,
             expect_match: false,
             expect_no_match: false,
+            case_sensitive: false,
             quiet: false,
         }
     }

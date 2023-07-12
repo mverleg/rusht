@@ -12,9 +12,10 @@ pub async fn grab(
         assert!(max > 0);
     }
     let mut match_cnt = 0;
+    let re = args.build_regex();
     while let Some(line) = reader.read_line().await {
         match_cnt += get_matches(
-            &args.pattern,
+            &re,
             line,
             &mut writer,
             args.first_match_only,
@@ -38,7 +39,6 @@ pub async fn grab(
 #[cfg(test)]
 mod tests {
     use ::async_std;
-    use ::regex::Regex;
 
     use crate::common::CollectorWriter;
     use crate::common::VecReader;
@@ -48,7 +48,7 @@ mod tests {
     async fn test_grab<S: Into<String>, T: Into<String>>(input: Vec<S>, expected: Vec<T>) {
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b").unwrap(),
+                pattern: "(a+)b".to_owned(),
                 ..GrabArgs::default()
             },
             input,
@@ -116,12 +116,38 @@ mod tests {
     }
 
     #[async_std::test]
+    async fn case_sensitive() {
+        test_grab_arg(
+            GrabArgs {
+                pattern: "aa".to_owned(),
+                case_sensitive: true,
+                ..GrabArgs::default()
+            },
+            vec!["aa", "AA"],
+            vec!["aa".to_owned()],
+        ).await;
+    }
+
+    #[async_std::test]
+    async fn case_insensitive() {
+        test_grab_arg(
+            GrabArgs {
+                pattern: "aa".to_owned(),
+                case_sensitive: true,
+                ..GrabArgs::default()
+            },
+            vec!["aa", "AA"],
+            vec!["aa".to_owned(), "AA".to_owned()],
+        ).await;
+    }
+
+    #[async_std::test]
     async fn first_of_multi_per_line() {
         let expected: Vec<String> = vec!["aa".to_owned()];
         let input = vec!["aabab"];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b").unwrap(),
+                pattern: "(a+)b".to_owned(),
                 first_match_only: true,
                 ..GrabArgs::default()
             },
@@ -143,7 +169,7 @@ mod tests {
         let expected: Vec<String> = vec!["aab".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("a+b").unwrap(),
+                pattern: "a+b".to_owned(),
                 ..GrabArgs::default()
             },
             input,
@@ -158,7 +184,7 @@ mod tests {
         let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b(c{2})").unwrap(),
+                pattern: "(a+)b(c{2})".to_owned(),
                 ..GrabArgs::default()
             },
             input,
@@ -173,7 +199,7 @@ mod tests {
         let expected: Vec<String> = vec!["aa".to_owned(), "cc".to_owned(), "a".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b+(c{2})?").unwrap(),
+                pattern: "(a+)b+(c{2})?".to_owned(),
                 ..GrabArgs::default()
             },
             input,
@@ -189,7 +215,7 @@ mod tests {
         let expected: Vec<String> = vec![];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)?c(b+)?").unwrap(),
+                pattern: "(a+)?c(b+)?".to_owned(),
                 first_match_only: true,
                 first_capture_only: true,
                 ..GrabArgs::default()
@@ -206,7 +232,7 @@ mod tests {
         let expected: Vec<String> = vec!["aa".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b(c{2})").unwrap(),
+                pattern: "(a+)b(c{2})".to_owned(),
                 first_capture_only: true,
                 ..GrabArgs::default()
             },
@@ -227,7 +253,7 @@ mod tests {
         ];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b(c{2})").unwrap(),
+                pattern: "(a+)b(c{2})".to_owned(),
                 keep_unmatched: true,
                 ..GrabArgs::default()
             },
@@ -243,7 +269,7 @@ mod tests {
         let expected: Vec<String> = vec!["aa".to_owned(), "abc".to_owned(), "bcc".to_owned()];
         test_grab_arg(
             GrabArgs {
-                pattern: Regex::new("(a+)b(c{2})").unwrap(),
+                pattern: "(a+)b(c{2})".to_owned(),
                 input: None,
                 keep_unmatched: true,
                 first_match_only: true,
@@ -251,6 +277,7 @@ mod tests {
                 max_lines: None,
                 expect_match: false,
                 expect_no_match: false,
+                case_sensitive: false,
                 quiet: false,
             },
             input,

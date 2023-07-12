@@ -103,7 +103,7 @@ mod tests {
         let (out1, mut inp2) = chained(1);
 
         let grab_args = GrabArgs {
-            pattern: Regex::new("^hello (.*)").unwrap(),
+            pattern: "^hello (.*)".to_owned(),
             input: None,
             first_match_only: true,
             first_capture_only: true,
@@ -111,6 +111,7 @@ mod tests {
             max_lines: None,
             expect_match: false,
             expect_no_match: false,
+            case_sensitive: false,
             quiet: false,
         };
 
