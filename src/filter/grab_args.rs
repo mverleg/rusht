@@ -21,7 +21,7 @@ pub struct GrabArgs {
     /// Only print the first capture group per pattern match, even if there are multiple groups in the pattern.
     /// {n}* '(a+)(b+)?' matches twice in 'aaba' with one capture each.
     /// {n}* '(a+)(b+)?' matches once in 'aabcdef' but has two captures.
-    #[arg(short = '1', long = "first_capture_only")]
+    #[arg(short = '1')]
     pub first_capture_only: bool,
     /// Keep the full line if it does not match the pattern
     #[arg(short = 'k', long)]
