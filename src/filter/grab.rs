@@ -105,7 +105,7 @@ mod tests {
 
     #[async_std::test]
     async fn match_some_lines() {
-        let expected: Vec<String> = vec!["aa".to_owned(), "a".to_owned()];
+        let expected: Vec<String> = vec!["aa".to_owned(), "a".to_owned(), "AA".to_owned()];
         test_grab(vec!["aab", "", "cab", "AAB"], expected).await;
     }
 
@@ -133,7 +133,7 @@ mod tests {
         test_grab_arg(
             GrabArgs {
                 pattern: "aa".to_owned(),
-                case_sensitive: true,
+                case_sensitive: false,
                 ..GrabArgs::default()
             },
             vec!["aa", "AA"],
