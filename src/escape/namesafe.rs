@@ -22,10 +22,13 @@ pub async fn namesafe(
     }
     let mut any_line = false;
     while let Some(oldline) = reader.read_line().await {
-        let newline = namesafe_line(&oldline, &args);
+        let mut newline = namesafe_line(&oldline, &args);
         if args.single_line && any_line {
             return Err("namesafe failed because it received more than one line, and --single was requested".to_owned());
         };
+        if args.lowercase {
+            newline = newline.to_lowercase();
+        }
         writer.write_line(&newline).await;
         any_line = true;
     }

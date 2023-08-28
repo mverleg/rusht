@@ -34,6 +34,9 @@ pub struct NamesafeArgs {
     /// Do not fail if there are no input lines.
     #[arg(short = '0', long = "allow-empty", conflicts_with = "input")]
     pub allow_empty: bool,
+    /// Turn all capital letters to lowercase.
+    #[arg(short = 'c', long = "lowercase")]
+    pub lowercase: bool,
     /// Allow dashes and underscores at the start or end of names
     #[arg(short = 'C', long)]
     pub allow_outer_connector: bool,
@@ -124,6 +127,7 @@ impl Default for NamesafeArgs {
             keep_extension: false,
             keep_tail: false,
             allow_empty: false,
+            lowercase: false,
             allow_outer_connector: false,
             input: None,
             single_line: false,
