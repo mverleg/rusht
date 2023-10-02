@@ -8,17 +8,28 @@ use ::std::time::Instant;
 use ::git2::Repository;
 use ::log::debug;
 use ::log::warn;
+use git2::Error;
 
 pub fn git_head_ref(dir: &Path) -> Result<String, String> {
-    let repo = Repository::open(dir).map_err(|err| {
-        format!(
-            "failed to read git repository at {}, err {}",
-            dir.to_string_lossy(),
-            err
-        )
-    })?;
+    let repo = repo_open_ancestor(dir)?;
     let head = repo.head().unwrap().peel_to_commit().unwrap();
     Ok(head.id().to_string())
+}
+
+fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
+    let mut current = deepest;
+    let mut msg = None;
+    for i in 0..128 {
+        match Repository::open(current) {
+            Ok(repo) => return Ok(repo),
+            Err(err) => msg.get_or_insert_with(|| err.to_string())
+        };
+        let Some(current) = current.parent() else {
+            break
+        };
+    }
+    Err(format!("failed to read git repository at {} or any of its parents, err {}",
+        deepest.to_string_lossy(), msg.unwrap_or_else(|| "(no message)".to_owned())))
 }
 
 pub fn git_master_base() {
@@ -28,13 +39,7 @@ pub fn git_master_base() {
 /// Returns changed and deleted files (separately) in head
 pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<PathBuf>), String> {
     let t0 = Instant::now();
-    let repo = Repository::open(dir).map_err(|err| {
-        format!(
-            "failed to read git repository at {}, err {}",
-            dir.to_string_lossy(),
-            err
-        )
-    })?;
+    let repo = repo_open_ancestor(dir)?;
     let head_tree = repo
         .head()
         .unwrap()
