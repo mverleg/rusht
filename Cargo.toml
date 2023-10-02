@@ -130,7 +130,7 @@ async-std = { version = "1.12.0", features = ["attributes", "unstable"] }
 async-trait = "0.1.67"
 futures = "0.3.27"
 num_cpus = "1.15.0"
-git2 = "0.17.2"
+git2 = "0.18.1"
 derive_more = "0.99.17"
 #cpal = "0.14.0"
 which = "4.4.0"
@@ -138,8 +138,8 @@ fs_extra = "1.3.0"
 tempfile = "3.4.0"
 walkdir = "2.3.3"
 #ssh2 = { version = "0.9.3", features = ["vendored-openssl"] }  # ssh2 is used transitively, use this to enable vendor feature
-egui = { version = "0.22.0", optional = true }
-eframe = { version = "0.22.0", optional = true }
+egui = { version = "0.23.0", optional = true }
+eframe = { version = "0.23.0", optional = true }
 tracing-subscriber = { version = "0.3.16", optional = true }
 
 [features]
