@@ -24,11 +24,12 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
             Ok(repo) => return Ok(repo),
             Err(err) => msg.get_or_insert_with(|| err.to_string())
         };
-        let Some(current) = current.parent() else {
+        let Some(par) = current.parent() else {
             break
         };
+        current = par
     }
-    Err(format!("failed to read git repository at {} or any of its parents, err {}",
+    Err(format!("failed to read git repository at {} or its parents, err {}",
         deepest.to_string_lossy(), msg.unwrap_or_else(|| "(no message)".to_owned())))
 }
 
