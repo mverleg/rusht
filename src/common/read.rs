@@ -5,9 +5,9 @@ use ::std::process::exit;
 
 use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
-use ::futures::{AsyncReadExt, FutureExt};
+use ::futures::AsyncReadExt;
+use ::futures::FutureExt;
 use ::log::debug;
-use egui::Key::N;
 
 use crate::common::async_gate::AsyncGate;
 
@@ -139,23 +139,28 @@ impl LineReader for VecReader {
 #[derive(Debug)]
 pub struct NonEmptyLineReader<'a, R: LineReader> {
     delegate: &'a mut R,
+    current: String,
 }
 
 impl <'a, R: LineReader> NonEmptyLineReader<'a, R> {
-    pub fn wrap(delegate_reader: &mut R) -> Self {
-        NonEmptyLineReader { delegate: delegate_reader }
+    pub fn wrap(delegate_reader: &'a mut R) -> Self {
+        NonEmptyLineReader {
+            delegate: delegate_reader,
+            current: "".to_owned(),
+        }
     }
 }
 
 #[async_trait]
 impl <'a, R: LineReader> LineReader for NonEmptyLineReader<'a, R> {
     async fn read_line(&mut self) -> Option<&str> {
-        loop {
-            let line = self.delegate.read_line().await?;
+        while let Some(line) = self.delegate.read_line().await {
             if ! line.trim().is_empty() {
-                return Some(line)
+                self.current = line.to_owned();
+                return Some(&self.current)
             }
         }
+        None
     }
 }
 
