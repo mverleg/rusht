@@ -7,6 +7,7 @@ use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
 use ::futures::{AsyncReadExt, FutureExt};
 use ::log::debug;
+use egui::Key::N;
 
 use crate::common::async_gate::AsyncGate;
 
@@ -132,6 +133,29 @@ impl LineReader for VecReader {
     async fn read_line(&mut self) -> Option<&str> {
         self.current = self.lines.pop()?;
         Some(&self.current)
+    }
+}
+
+#[derive(Debug)]
+pub struct NonEmptyLineReader<'a, R: LineReader> {
+    delegate: &'a mut R,
+}
+
+impl <'a, R: LineReader> NonEmptyLineReader<'a, R> {
+    pub fn wrap(delegate_reader: &mut R) -> Self {
+        NonEmptyLineReader { delegate: delegate_reader }
+    }
+}
+
+#[async_trait]
+impl <'a, R: LineReader> LineReader for NonEmptyLineReader<'a, R> {
+    async fn read_line(&mut self) -> Option<&str> {
+        loop {
+            let line = self.delegate.read_line().await?;
+            if ! line.trim().is_empty() {
+                return Some(line)
+            }
+        }
     }
 }
 

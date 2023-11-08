@@ -1,5 +1,7 @@
 use crate::escape::NamesafeArgs;
-use crate::escape::{namesafe_line, Charset, HashPolicy};
+use crate::escape::Charset;
+use crate::escape::namesafe_line;
+use crate::escape::HashPolicy;
 
 pub use self::cmd_args::CommandArgs;
 pub use self::dependent::run_all;
@@ -11,6 +13,7 @@ pub use self::git::git_head_ref;
 pub use self::re::get_first_match_or_all;
 pub use self::re::get_matches;
 pub use self::read::LineReader;
+pub use self::read::NonEmptyLineReader;
 pub use self::read::RejectStdin;
 pub use self::read::StdinReader;
 pub use self::read::VecReader;
