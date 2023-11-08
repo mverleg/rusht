@@ -122,6 +122,7 @@ mod tests {
             keep: Keep::First,
             by: Some(Regex::new("([^ ])* ").unwrap()),
             prefix: false,
+            keep_empty: false,
         };
         let (res, ()) = join!(
             //TODO @mark: probably an easier way for this:

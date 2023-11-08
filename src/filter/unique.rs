@@ -9,14 +9,15 @@ use ::regex::Regex;
 
 use crate::common::LineWriter;
 use crate::common::VecWriter;
-use crate::common::{get_first_match_or_all, LineReader};
+use crate::common::get_first_match_or_all;
+use crate::common::LineReader;
+use crate::common::NonEmptyLineReader;
 
 #[derive(Parser, Debug, Default)]
 #[command(
     name = "unique",
     about = "Remove any duplicate lines, keeping the first match and preserving order unless sorting is requested."
 )]
-// //TODO @mark:
 pub struct UniqueArgs {
     #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sorted", )]
     /// Sort the entries. Buffers all the input.
@@ -30,6 +31,8 @@ pub struct UniqueArgs {
     #[arg(short = 'p', long = "prefix", conflicts_with = "by")]
     /// Remove any lines for which any other line is a prefix (including duplicates). E.g. /a and /a/b will remove the latter. Buffers all the input.
     pub prefix: bool,
+    #[arg(short = 'e', long)]
+    pub keep_empty: bool,
 }
 
 #[test]
@@ -88,6 +91,14 @@ pub async fn unique(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut
         !(args.prefix && args.by.is_some()),
         "cannot use both --prefix and --by"
     );
+    if args.keep_empty {
+        unique_with_reader(args, reader, writer).await
+    } else {
+        unique_with_reader(args, &mut NonEmptyLineReader::wrap(reader), writer).await
+    }
+}
+
+async fn unique_with_reader(args: UniqueArgs, reader: &mut impl LineReader, writer: &mut impl LineWriter) {
     if args.prefix {
         let lines = reader.collect_all().await;
         for line in unique_prefix(lines, args.order, args.keep) {
