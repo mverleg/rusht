@@ -48,6 +48,9 @@ pub struct BufArgs {
     pub quiet: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
+    #[arg(long, hide_short_help = true, conflicts_with = "lines_with")]
+    /// Do not check stdin, no warning for stdin without --lines-with
+    ignore_stdin: bool,
 }
 
 #[test]
@@ -63,6 +66,7 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
         args.lines_with.or_else(|| Some("{}".to_owned())),
         args.stdin,
         args.unique,
+        args.ignore_stdin,
     );
     if !args.allow_empty && tasks.is_empty() {
         if !args.quiet {

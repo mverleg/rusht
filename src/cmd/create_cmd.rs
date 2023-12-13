@@ -17,6 +17,7 @@ pub fn create_tasks(
     lines_with: Option<String>,
     stdin: Option<String>,
     unique: bool,
+    ignore_stdin: bool,
 ) -> Vec<Task> {
     let cmd = base_cmd.unpack();
     let new_tasks = if let Some(templ) = lines_with {
@@ -46,7 +47,9 @@ pub fn create_tasks(
             })
             .collect()
     } else {
-        spawn(stdin_ignored_warning);
+        if ! ignore_stdin {
+            spawn(stdin_ignored_warning);
+        }
         let working_dir = working_dir
             .map(PathBuf::from)
             .unwrap_or_else(|| current_dir().unwrap());

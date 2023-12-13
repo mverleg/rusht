@@ -47,6 +47,9 @@ pub struct AddArgs {
     pub working_dir: Option<String>,
     #[command(subcommand)]
     pub cmd: CommandArgs,
+    #[arg(long, hide_short_help = true, conflicts_with = "lines_with,lines")]
+    /// Do not check stdin, no warning for stdin without --lines
+    ignore_stdin: bool,
 }
 
 #[test]
@@ -66,6 +69,7 @@ pub fn add_cmd(args: AddArgs, line_reader: impl FnOnce() -> Vec<String>) {
         args.lines_with,
         args.stdin,
         args.unique,
+        args.ignore_stdin,
     );
     if !args.allow_empty && new_tasks.is_empty() {
         if !args.quiet {
