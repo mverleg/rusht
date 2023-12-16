@@ -1,8 +1,6 @@
 use ::std::fmt::Debug;
 use ::std::io::BufRead;
-use ::std::io::BufReader;
-use ::std::io::stdin;
-use ::std::io::Stdin;
+use ::std::io::{stdin, BufReader, Stdin};
 use ::std::process::exit;
 
 use ::async_std::prelude::FutureExt as AltExt;

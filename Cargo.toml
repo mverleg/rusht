@@ -91,10 +91,6 @@ name = "between"
 path = "src/filter/main_between.rs"
 
 [[bin]]
-name = "r"
-path = "src/trash/main_r.rs"
-
-[[bin]]
 name = "rsh"
 path = "src/rsh/main_rsh.rs"
 
