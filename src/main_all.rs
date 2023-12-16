@@ -57,6 +57,7 @@ enum SubCmd {
     Batched(BatchedArgs),
     Jl(JlArgs),
     Between(BetweenArgs),
+    R(RArgs),
     Rsh(RshArgs),
 }
 
