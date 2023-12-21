@@ -23,7 +23,7 @@ pub struct MvnwArgs {
     #[arg(short = 'i', long)]
     pub install: bool,
     /// Build all the code, not just changed files.
-    #[arg(short = 'a', long)]
+    #[arg(long)]
     pub all: bool,
     /// Update snapshots, even if it was recently done.
     #[arg(short = 'U', long)]
