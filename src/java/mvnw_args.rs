@@ -91,8 +91,8 @@ pub struct MvnwArgs {
     /// Maven executable. Can be used to select a different path or switch to mvnd.
     #[arg(long, default_value = "mvn", hide_short_help = true)]
     pub mvn_exe: PathBuf,
-    /// Extra arguments to pass to maven.
-    #[arg(long = "mvn-arg", hide_short_help = true)]
+    /// Extra arguments to pass on to maven, e.g. -a=-Djava.net.preferIPv4Stack=true
+    #[arg(short = 'a', long = "mvn-arg")]
     pub mvn_args: Vec<String>,
     /// Maven profiles to activate. Prefix '!' to deactivate.
     #[arg(short = 'P', long = "profile")]
