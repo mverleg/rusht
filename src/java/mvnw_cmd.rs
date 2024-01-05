@@ -145,7 +145,9 @@ impl MvnCmdConfig {
             "compile"
         } else {
             debug!("maven test-compile because no install requested, and tests are run in a separate command");
-            "test-compile"
+            //"test-compile"
+            //TODO @mverleg: using package because goat does not compile well without it
+            "package"
         };
         args.push(stage.to_owned());
 

@@ -4,6 +4,7 @@ use ::std::fmt::Debug;
 use ::std::future::join;
 use ::std::io;
 use ::std::io::Write;
+use std::process::exit;
 
 use ::async_std::sync::Arc;
 use ::async_std::sync::Mutex;
@@ -12,6 +13,7 @@ use ::async_trait::async_trait;
 use ::log::debug;
 use ::regex::Regex;
 use ::smallvec::SmallVec;
+use log::warn;
 
 #[async_trait]
 pub trait LineWriter: Debug + Send {
@@ -51,14 +53,29 @@ impl StdWriter<io::Stderr> {
     }
 }
 
+impl <W: Write + Unpin + Send> StdWriter<W> {
+    fn write_unless_broken_pipe(&mut self, data: &[u8]) {
+        let res = self.writer.write(data);
+        match res {
+            Ok(write_len) => assert_eq!(data.len(), write_len, "did not write all bytes"),
+            Err(err) => {
+                if err.kind() == io::ErrorKind::BrokenPipe {
+                    debug!("broken pipe while writing");
+                    warn!("exiting because of broken pipe");  //TODO @mverleg: is this the right approach?
+                    exit(0);
+                }
+                panic!("error while writing");
+            }
+        }
+    }
+}
+
 #[async_trait]
 impl<W: Write + Unpin + Send + Debug> LineWriter for StdWriter<W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let bytes = line.as_ref().as_bytes();
-        let expected = bytes.len();
-        let write_len = self.writer.write(bytes).unwrap();
-        assert_eq!(expected, write_len);
-        self.writer.write(&[b'\n']).unwrap();
+        self.write_unless_broken_pipe(bytes);
+        self.write_unless_broken_pipe(&[b'\n']);
     }
 }
 
