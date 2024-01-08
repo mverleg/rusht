@@ -2,6 +2,7 @@ use ::std::cmp::min;
 use ::std::collections::HashMap;
 use ::std::collections::HashSet;
 use ::std::path::PathBuf;
+use std::cmp::max;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -25,7 +26,7 @@ pub struct MvnCmdConfig {
     pub verbose: bool,
     pub update: bool,
     pub clean: bool,
-    pub install: bool,
+    pub phase_override: Option<String>,
     pub execs: Vec<FullyQualifiedName>,
     pub profiles: Vec<Profile>,
     pub threads: u32,
@@ -134,12 +135,12 @@ impl MvnCmdConfig {
         }
 
         // Determine maven stage
-        let stage = if self.install {
-            debug!("maven install requested");
-            "install"
+        let stage = if let Some(phase) = &self.phase_override {
+            debug!("maven phase '{phase}' was explicitly requested");
+            phase
         } else if self.tests.run_any() && single_cmd {
-            debug!("maven test because no install requested, there are tests, and the tests don't run in a separate command");
-            "test"
+            debug!("maven verify because no install requested, there are tests (that might be ITs), and the tests don't run in a separate command");
+            "integration-test"
         } else if self.tests == TestMode::NoBuild {
             debug!("maven compile because no install or tests requested");
             "compile"
@@ -168,6 +169,7 @@ impl MvnCmdConfig {
 
         // Modifier flags
         args.push(format!("--threads={}", self.threads));
+        args.push(format!("--Dmaven.artifact.threads={}", max(8, 4 * self.threads)));
         if self.update {
             args.push("--update-snapshots".to_owned());
         } else {

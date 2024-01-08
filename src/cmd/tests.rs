@@ -45,6 +45,7 @@ fn batch_add_drop() {
             allow_empty: false,
             working_dir: None,
             cmd: CommandArgs::Cmd(vec!["print".to_owned(), "hello".to_owned(), "%".to_owned()]),
+            ignore_stdin: true,
         },
         || {
             vec![
@@ -94,6 +95,7 @@ fn add_one(namespace: &str, args: Vec<String>) {
             allow_empty: false,
             working_dir: None,
             cmd: CommandArgs::Cmd(args),
+            ignore_stdin: true,
         },
         Vec::new,
     );

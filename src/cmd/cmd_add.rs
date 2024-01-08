@@ -49,7 +49,7 @@ pub struct AddArgs {
     pub cmd: CommandArgs,
     #[arg(long, hide_short_help = true, conflicts_with = "lines_with,lines")]
     /// Do not check stdin, no warning for stdin without --lines
-    ignore_stdin: bool,
+    pub ignore_stdin: bool,
 }
 
 #[test]

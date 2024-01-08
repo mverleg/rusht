@@ -19,9 +19,12 @@ pub struct MvnwArgs {
     /// Do a clean build (also cleans unchanged modules).
     #[arg(short = 'c', long)]
     pub clean: bool,
-    /// Install the modules into local .m2 after building them.
-    #[arg(short = 'i', long)]
+    /// Install the modules into local .m2 after building them. Archaic equivalent of `--phase=install`.
+    #[arg(short = 'i', long, hide_short_help = true, conflicts_with = "phase")]
     pub install: bool,
+    /// Install the modules into local .m2 after building them.
+    #[arg(short = 'p', long,)]
+    pub phase: Option<String>,
     /// Build all the code, not just changed files.
     #[arg(long)]
     pub all: bool,

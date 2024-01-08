@@ -203,6 +203,15 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         );
     }
 
+    let phase_override= if let Some(phase) = &args.phase {
+        assert!(!args.install, "--phase and --install should not be combined");
+        Some(phase.to_owned())
+    } else if args.install {
+        Some("install".to_owned())
+    } else {
+        None
+    };
+
     let cmd_config = MvnCmdConfig {
         changed_files,
         modules,
@@ -212,7 +221,7 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         verbose: args.verbose,
         update: args.update,
         clean: args.clean,
-        install: args.install,
+        phase_override,
         execs: args.execs,
         profiles: args.profiles.into_iter().sorted().unique().collect(),
         threads: args.threads.unwrap_or_else(|| num_cpus::get() as u32),
