@@ -17,19 +17,22 @@ use ::regex::Regex;
     long_about = "Find directories that contain certain files or directories. Only supports utf8, sensible filenames."
 )]
 pub struct DirWithArgs {
+    #[arg(short = 'u')]
+    /// If set, search all parents, instead of children
+    pub upwards: bool,
     #[arg(short = 'l', long, default_value = "10000")]
     /// Maximum directory depth to recurse into
     pub max_depth: u32,
     #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Order::from_is_sorted), short = 's', long = "sort")]
     /// Sort the results alphabetically
     pub order: Order,
-    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'n', long = "nested")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(Nested::from_do_nested), short = 'n', long = "nested", conflicts_with = "upwards")]
     /// Keep recursing even if a directory matches
     pub nested: Nested,
     #[arg(short = 'x', long = "on-error", default_value = "warn")]
     /// What to do when an error occurs: [w]arn, [a]bort or [i]gnore
     pub on_err: OnErr,
-    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(PathModification::from_is_relative), short = 'z', long = "relative")]
+    #[arg(action = ArgAction::SetTrue, value_parser = BoolishValueParser::new().map(PathModification::from_is_relative), short = 'z', long = "relative", conflicts_with = "upwards")]
     /// Results are relative to roots, instead of absolute
     pub path_modification: PathModification,
     #[arg(value_parser = root_parser, short = 'r', long = "root", default_value = ".")]
@@ -63,10 +66,12 @@ pub struct DirWithArgs {
     // Keep recursing even if a directory is negative-matched by -F/-D/-I
     // pub negative_nested: Nested,
     // //TODO @mverleg: ^
+
+    //TODO @mverleg: max match count
 }
 
 #[test]
-fn test_cli_args() {
+fn test_cli_args_recursive() {
     DirWithArgs::try_parse_from(&[
         "cmd",
         "-r",
@@ -77,6 +82,20 @@ fn test_cli_args() {
         ".nobackup",
         "-n",
         "-x=silent",
+    ])
+    .unwrap();
+}
+#[test]
+fn test_cli_args_upwards() {
+    DirWithArgs::try_parse_from(&[
+        "cmd",
+        "-u",
+        ".",
+        "-l",
+        "6",
+        "-F",
+        ".nobackup",
+        "-x=a",
     ])
     .unwrap();
 }

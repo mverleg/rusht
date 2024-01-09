@@ -169,7 +169,7 @@ impl MvnCmdConfig {
 
         // Modifier flags
         args.push(format!("--threads={}", self.threads));
-        args.push(format!("--Dmaven.artifact.threads={}", max(8, 4 * self.threads)));
+        args.push(format!("-Dmaven.artifact.threads={}", max(8, 4 * self.threads)));
         if self.update {
             args.push("--update-snapshots".to_owned());
         } else {
