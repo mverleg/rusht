@@ -2,6 +2,7 @@ use ::std::fs;
 use ::std::fs::DirEntry;
 use ::std::path::Path;
 use ::std::path::PathBuf;
+use std::io::stdout;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -44,9 +45,22 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug!("args = {:?}", args);
     validate_roots_unique(&args.roots)?;
+    let mut results = if args.upwards {
+        find_dir_with_downwards(args)
+    } else {
+        find_dir_with_downwards(args)
+    }?;
+    if args.order == Order::SortAscending {
+        results.sort_unstable();
+    }
+    Ok(results)
+}
+
+pub fn find_dir_with_downwards(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+    debug_assert!(!args.upwards);
     let mut results = vec![];
     for root in &args.roots {
-        debug!("searching root '{}'", root.to_str().unwrap());
+        debug!("searching root '{}' downwards", root.to_str().unwrap());
         let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
         if args.path_modification == PathModification::Relative {
             matches = matches
@@ -60,10 +74,12 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
         }
         results.extend(matches);
     }
-    if args.order == Order::SortAscending {
-        results.sort_unstable();
-    }
     Ok(results)
+}
+
+pub fn find_dir_with_upwards(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+    debug_assert!(args.upwards);
+    unimplemented!();  //TODO @mverleg:
 }
 
 fn find_matching_dirs(
