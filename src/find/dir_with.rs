@@ -42,7 +42,7 @@ fn validate_roots_unique(roots: &[PathBuf]) -> Result<(), String> {
 
 type Dirs = SmallVec<[PathBuf; 2]>;
 
-pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+pub fn find_dir_with(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug!("args = {:?}", args);
     validate_roots_unique(&args.roots)?;
     let mut results = if args.upwards {
@@ -56,7 +56,7 @@ pub fn find_dir_with(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
     Ok(results)
 }
 
-pub fn find_dir_with_downwards(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+pub fn find_dir_with_downwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug_assert!(!args.upwards);
     let mut results = vec![];
     for root in &args.roots {
@@ -77,7 +77,7 @@ pub fn find_dir_with_downwards(args: DirWithArgs) -> Result<Vec<PathBuf>, String
     Ok(results)
 }
 
-pub fn find_dir_with_upwards(args: DirWithArgs) -> Result<Vec<PathBuf>, String> {
+pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug_assert!(args.upwards);
     unimplemented!();  //TODO @mverleg:
 }
