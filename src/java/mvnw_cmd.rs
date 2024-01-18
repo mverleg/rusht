@@ -3,6 +3,7 @@ use ::std::collections::HashMap;
 use ::std::collections::HashSet;
 use ::std::path::PathBuf;
 use std::cmp::max;
+use std::env;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -89,10 +90,7 @@ impl MvnCmdConfig {
             debug!("no affected files, checkstyle lint was requested but will be skipped");
         } else {
             //TODO @mverleg: avoid doing this if all files are deleted
-            let mut checkstyle_conf_pth = self.cwd.clone();
-            checkstyle_conf_pth.push("sputnik-rules");
-            checkstyle_conf_pth.push("checkstyle.xml");
-            if checkstyle_conf_pth.is_file() {
+            if let Some(checkstyle_conf_pth) = self.get_checkstyle_conf_path() {
                 debug!(
                     "linting enabled, found checkstyle config at: {}",
                     checkstyle_conf_pth.to_string_lossy()
@@ -126,11 +124,6 @@ impl MvnCmdConfig {
                     self.cwd.clone(),
                     None,
                 ));
-            } else {
-                warn!(
-                    "skipping checkstyle because config was not found at '{}'",
-                    checkstyle_conf_pth.to_string_lossy()
-                );
             }
         }
 
@@ -242,6 +235,25 @@ impl MvnCmdConfig {
         }
 
         tasks
+    }
+
+    fn get_checkstyle_conf_path(&self) -> Option<PathBuf> {
+        let pth = if let Ok(env_checkstyle_conf_pth) = env::var("CHECKSTYLE_CONF_PTH").map(PathBuf::from) {
+            debug!("using checkstyle path from env: {}", &env_checkstyle_conf_pth.to_string_lossy());
+            env_checkstyle_conf_pth
+        } else {
+            let mut checkstyle_conf_pth = self.cwd.clone();
+            checkstyle_conf_pth.push("sputnik-rules");
+            checkstyle_conf_pth.push("checkstyle.xml");
+            checkstyle_conf_pth
+        };
+        if !pth.is_file() {
+            warn!(
+                "skipping checkstyle because config was not found at '{}'",
+                pth.to_string_lossy());
+            return None
+        }
+        Some(pth)
     }
 
     fn make_mvn_task_with_mem(&self, args: Vec<String>, memory_mb: u32) -> Task {

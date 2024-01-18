@@ -2,7 +2,6 @@ use ::std::fs;
 use ::std::fs::DirEntry;
 use ::std::path::Path;
 use ::std::path::PathBuf;
-use std::io::stdout;
 
 use ::itertools::Itertools;
 use ::log::debug;
