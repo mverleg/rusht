@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use ::clap::Parser;
 use ::regex::Regex;
 
@@ -13,6 +14,9 @@ pub struct GrabArgs {
     #[arg(short = 'i', long)]
     /// If this string is provided, do matching on that and ignore stdin.
     pub input: Option<String>,
+    #[arg(short = 'p', long, conflicts_with = "input")]
+    /// If this path is provided, do matching on that and ignore stdin.
+    pub path: Option<PathBuf>,
     #[arg(short = 'f', long = "first-match-only")]
     /// Only print the first match of the pattern per line, even if it matches multiple times.
     ///
@@ -63,6 +67,7 @@ impl Default for GrabArgs {
         GrabArgs {
             pattern: ".*".to_owned(),
             input: None,
+            paths: vec![],
             first_match_only: false,
             first_capture_only: false,
             keep_unmatched: false,

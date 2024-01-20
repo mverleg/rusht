@@ -1,8 +1,10 @@
 use ::std::fmt::Debug;
+use ::std::io::{BufReader, stdin, Stdin};
 use ::std::io::BufRead;
-use ::std::io::{stdin, BufReader, Stdin};
+use ::std::path::Path;
 use ::std::process::exit;
 
+use ::async_std::fs::File;
 use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
 use ::futures::AsyncReadExt;
@@ -47,6 +49,40 @@ impl Default for StdinReader {
 
 #[async_trait]
 impl LineReader for StdinReader {
+    async fn read_line(&mut self) -> Option<&str> {
+        self.buffer.clear();
+        let read_len = self.reader.read_line(&mut self.buffer).unwrap();
+        while self.buffer.ends_with('\n') || self.buffer.ends_with('\r') {
+            self.buffer.pop();
+        }
+        if read_len == 0 {
+            return None;
+        }
+        Some(&self.buffer)
+    }
+}
+
+#[derive(Debug)]
+pub struct FileReader {
+    reader: async_std::io::BufReader<File>,
+    buffer: String,
+}
+
+impl FileReader {
+    pub async fn new(path: &Path) -> Self {
+        let file = match File::open(path).await {
+            Ok(file) => file,
+            Err(err) => panic!("could not open file '{}', err {:?}", path.to_string_lossy(), err),
+        };
+        FileReader {
+            reader: async_std::io::BufReader::new(file),
+            buffer: String::with_capacity(256),
+        }
+    }
+}
+
+#[async_trait]
+impl LineReader for FileReader {
     async fn read_line(&mut self) -> Option<&str> {
         self.buffer.clear();
         let read_len = self.reader.read_line(&mut self.buffer).unwrap();

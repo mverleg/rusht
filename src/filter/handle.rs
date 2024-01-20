@@ -1,6 +1,6 @@
 use ::log::debug;
 
-use crate::common::{DiscardWriter, StdWriter, StdinReader, VecReader};
+use crate::common::{DiscardWriter, StdWriter, StdinReader, VecReader, FileReader};
 use crate::filter::between;
 use crate::filter::filter;
 use crate::filter::unique;
@@ -27,22 +27,34 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
             "grab: --quiet only usable when --expect-match or --expect-no-match"
         );
     }
-    let grab_res = match (args.input.clone(), quiet) {
-        (Some(inp), true) => {
+    let grab_res = match (args.input.clone(), &args.path, quiet) {
+        (Some(inp), None, true) => {
             debug!("grab getting input from provided string, discarding output");
             grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await
         }
-        (Some(inp), false) => {
+        (Some(inp), None, false) => {
             debug!("grab getting input from provided string, printing output");
             grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await
         }
-        (None, true) => {
+        (None, Some(pth), true) => {
+            debug!("grab getting input from provided string, discarding output");
+            grab(
+                args, FileReader::new(pth).await, DiscardWriter::new()).await
+        }
+        (None, Some(pth), false) => {
+            debug!("grab getting input from provided string, printing output");
+            grab(args, FileReader::new(pth).await, StdWriter::stdout()).await
+        }
+        (None, None, true) => {
             debug!("grab getting input from stdin, discarding output");
             grab(args, StdinReader::new(), DiscardWriter::new()).await
         }
-        (None, false) => {
+        (None, None, false) => {
             debug!("grab getting input from stdin, printing output");
             grab(args, StdinReader::new(), StdWriter::stdout()).await
+        },
+        (Some(_), Some(_), _) => {
+            panic!("grab cannot work with --input and --path at the same time")
         }
     };
     match grab_res {

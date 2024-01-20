@@ -105,6 +105,7 @@ mod tests {
         let grab_args = GrabArgs {
             pattern: "^hello (.*)".to_owned(),
             input: None,
+            paths: vec![],
             first_match_only: true,
             first_capture_only: true,
             keep_unmatched: true,
