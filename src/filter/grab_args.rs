@@ -67,7 +67,7 @@ impl Default for GrabArgs {
         GrabArgs {
             pattern: ".*".to_owned(),
             input: None,
-            paths: vec![],
+            path: None,
             first_match_only: false,
             first_capture_only: false,
             keep_unmatched: false,

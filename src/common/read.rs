@@ -10,6 +10,7 @@ use ::async_trait::async_trait;
 use ::futures::AsyncReadExt;
 use ::futures::FutureExt;
 use ::log::debug;
+use async_std::io::prelude::BufReadExt;
 
 use crate::common::async_gate::AsyncGate;
 
@@ -85,7 +86,7 @@ impl FileReader {
 impl LineReader for FileReader {
     async fn read_line(&mut self) -> Option<&str> {
         self.buffer.clear();
-        let read_len = self.reader.read_line(&mut self.buffer).unwrap();
+        let read_len = self.reader.read_line(&mut self.buffer).await.unwrap();
         while self.buffer.ends_with('\n') || self.buffer.ends_with('\r') {
             self.buffer.pop();
         }

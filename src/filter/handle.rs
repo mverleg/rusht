@@ -27,7 +27,7 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
             "grab: --quiet only usable when --expect-match or --expect-no-match"
         );
     }
-    let grab_res = match (args.input.clone(), &args.path, quiet) {
+    let grab_res = match (args.input.clone(), args.path.clone(), quiet) {
         (Some(inp), None, true) => {
             debug!("grab getting input from provided string, discarding output");
             grab(args, VecReader::new(vec![inp]), DiscardWriter::new()).await
@@ -37,13 +37,12 @@ pub async fn handle_grab(args: GrabArgs) -> ExitStatus {
             grab(args, VecReader::new(vec![inp]), StdWriter::stdout()).await
         }
         (None, Some(pth), true) => {
-            debug!("grab getting input from provided string, discarding output");
-            grab(
-                args, FileReader::new(pth).await, DiscardWriter::new()).await
+            debug!("grab getting input from file '{}', discarding output", pth.to_string_lossy());
+            grab(args, FileReader::new(&pth).await, DiscardWriter::new()).await
         }
         (None, Some(pth), false) => {
-            debug!("grab getting input from provided string, printing output");
-            grab(args, FileReader::new(pth).await, StdWriter::stdout()).await
+            debug!("grab getting input from file '{}', printing output", pth.to_string_lossy());
+            grab(args, FileReader::new(&pth).await, StdWriter::stdout()).await
         }
         (None, None, true) => {
             debug!("grab getting input from stdin, discarding output");
@@ -153,6 +152,7 @@ mod tests {
             expect_no_match: false,
             case_sensitive: false,
             quiet: true,
+            ..GrabArgs::default()
         })
         .await;
         assert!(res.is_ok())

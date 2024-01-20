@@ -24,7 +24,6 @@ pub async fn grab(
         )
         .await;
         if let Some(max) = args.max_lines {
-            debug!("max lines = {max}");  //TODO @mverleg: TEMPORARY! REMOVE THIS!
             if match_cnt >= max {
                 debug!(
                     "stopping after {} lines (max {:?})",
@@ -271,8 +270,6 @@ mod tests {
         test_grab_arg(
             GrabArgs {
                 pattern: "(a+)b(c{2})".to_owned(),
-                input: None,
-                paths: vec![],
                 keep_unmatched: true,
                 first_match_only: true,
                 first_capture_only: true,
@@ -280,7 +277,7 @@ mod tests {
                 expect_match: false,
                 expect_no_match: false,
                 case_sensitive: false,
-                quiet: false,
+                ..GrabArgs::default()
             },
             input,
             expected,

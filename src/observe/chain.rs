@@ -104,8 +104,6 @@ mod tests {
 
         let grab_args = GrabArgs {
             pattern: "^hello (.*)".to_owned(),
-            input: None,
-            paths: vec![],
             first_match_only: true,
             first_capture_only: true,
             keep_unmatched: true,
@@ -113,7 +111,7 @@ mod tests {
             expect_match: false,
             expect_no_match: false,
             case_sensitive: false,
-            quiet: false,
+            ..GrabArgs::default()
         };
 
         let mut out2 = CollectorWriter::new();
