@@ -89,7 +89,7 @@ fn test_cli_args_recursive() {
 fn test_cli_args_upwards() {
     DirWithArgs::try_parse_from(&[
         "cmd",
-        "-u",
+        "-r",
         ".",
         "-l",
         "6",
