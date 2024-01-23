@@ -47,7 +47,7 @@ pub struct AddArgs {
     pub working_dir: Option<String>,
     #[command(subcommand)]
     pub cmd: CommandArgs,
-    #[arg(long, hide_short_help = true, conflicts_with = "lines_with,lines")]
+    #[arg(long, hide_short_help = true, conflicts_with_all = ["lines_with", "lines"])]
     /// Do not check stdin, no warning for stdin without --lines
     pub ignore_stdin: bool,
 }
