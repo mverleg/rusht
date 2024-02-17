@@ -3,6 +3,7 @@
 #![feature(type_changing_struct_update)]
 #![feature(result_flattening)]
 #![feature(map_try_insert)]
+#![feature(let_chains)]
 
 extern crate core;
 

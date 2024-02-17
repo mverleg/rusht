@@ -71,31 +71,31 @@ pub fn find_dir_with_downwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, Strin
 
 pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug_assert!(args.upwards);
+    let mut results = Vec::new();
     for root in args.roots.clone() {
+        debug!("searching root '{}' upwards", root.to_str().unwrap());
         let mut depth = 1;
         let mut current = root.as_path();
-        while let Some(next) = current.parent() {
-            if depth >= args.max_depth {
-                debug!("not checking {} because of max_depth {depth}", current.to_string_lossy());
-                continue
-            }
+        let mut depth_remaining = args.max_depth;
+        while let Some(next) = current.parent() && depth_remaining > 0 {
+            depth_remaining -= 1;
             current = next;
 
-            let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
+            // Use depth_remaining=0 here, because this is downward depths, not upward
+            let mut matches = find_matching_dirs(&root, &args, 0)?;
 
             if args.path_modification == PathModification::Relative {
-                matches = make_relative(root, &mut matches);
+                matches = make_relative(&root, &mut matches);
             }
             results.extend(matches);
-
-            depth += 1;
         }
-        debug!("no parent for {}, stopping (depth {depth}", current.to_string_lossy());
+        debug!("stopping for '{}' either because there is no parent or max depth {} is reached",
+            current.to_string_lossy(), args.max_depth);
     }
     //TODO @mverleg: args.on_err;
     //TODO @mverleg: args.order;
     //TODO @mverleg: args.path_modification;
-    Ok(vec![])
+    Ok(results)
 }
 
 fn make_relative(root: &PathBuf, matches: &mut Dirs) -> Dirs {
@@ -108,6 +108,7 @@ fn make_relative(root: &PathBuf, matches: &mut Dirs) -> Dirs {
         .collect()
 }
 
+/// Can be made non-recursive with depth_remaining=0
 fn find_matching_dirs(
     parent: &Path,
     args: &DirWithArgs,
@@ -196,6 +197,9 @@ fn find_matching_dirs(
         debug!("selecting {} based on range {} because there were no positive patterns, and negative ones did not match",
             parent.to_str().unwrap(), args.child_count_range);
         results.push(parent.to_path_buf())
+    }
+    if depth_remaining <= 1 {
+        return Ok(results)
     }
     for sub in content {
         if !sub.is_dir() {
