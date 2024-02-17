@@ -62,14 +62,7 @@ pub fn find_dir_with_downwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, Strin
         debug!("searching root '{}' downwards", root.to_str().unwrap());
         let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
         if args.path_modification == PathModification::Relative {
-            matches = matches
-                .into_iter()
-                .map(|pth| {
-                    pth.strip_prefix(root)
-                        .expect("failed to make path relative")
-                        .to_path_buf()
-                })
-                .collect();
+            matches = make_relative(root, &mut matches);
         }
         results.extend(matches);
     }
@@ -78,7 +71,43 @@ pub fn find_dir_with_downwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, Strin
 
 pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug_assert!(args.upwards);
-    unimplemented!();  //TODO @mverleg:
+    let mut roots: Vec<_> = args.roots.iter()
+        .map(|pth| (pth.to_owned(), 0))
+        .collect();
+    roots.reverse();
+    while let Some((mut pth, depth)) = roots.pop() {
+        if depth >= args.max_depth {
+            debug!("not checking {} because of max_depth {depth}", pth.to_string_lossy());
+            continue
+        }
+
+        let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
+        if args.path_modification == PathModification::Relative {
+            matches = make_relative(root, &mut matches);
+        }
+        results.extend(matches);
+
+        if pth.pop() {
+            roots.push((pth, depth + 1))
+        } else {
+            debug!("no parent for {}, stopping (depth {depth}", pth.to_string_lossy());
+        }
+    }
+    //TODO @mverleg: args.max_depth;
+    //TODO @mverleg: args.on_err;
+    //TODO @mverleg: args.order;
+    //TODO @mverleg: args.path_modification;
+    Ok(vec![])
+}
+
+fn make_relative(root: &PathBuf, matches: &mut Dirs) -> Dirs {
+    matches.into_iter()
+        .map(|pth| {
+            pth.strip_prefix(root)
+                .expect("failed to make path relative")
+                .to_path_buf()
+        })
+        .collect()
 }
 
 fn find_matching_dirs(
