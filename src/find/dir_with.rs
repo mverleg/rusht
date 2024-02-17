@@ -71,29 +71,27 @@ pub fn find_dir_with_downwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, Strin
 
 pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug_assert!(args.upwards);
-    let mut roots: Vec<_> = args.roots.iter()
-        .map(|pth| (pth.to_owned(), 0))
-        .collect();
-    roots.reverse();
-    while let Some((mut pth, depth)) = roots.pop() {
-        if depth >= args.max_depth {
-            debug!("not checking {} because of max_depth {depth}", pth.to_string_lossy());
-            continue
-        }
+    for root in args.roots.clone() {
+        let mut depth = 1;
+        let mut current = root.as_path();
+        while let Some(next) = current.parent() {
+            if depth >= args.max_depth {
+                debug!("not checking {} because of max_depth {depth}", current.to_string_lossy());
+                continue
+            }
+            current = next;
 
-        let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
-        if args.path_modification == PathModification::Relative {
-            matches = make_relative(root, &mut matches);
-        }
-        results.extend(matches);
+            let mut matches = find_matching_dirs(root, &args, args.max_depth)?;
 
-        if pth.pop() {
-            roots.push((pth, depth + 1))
-        } else {
-            debug!("no parent for {}, stopping (depth {depth}", pth.to_string_lossy());
+            if args.path_modification == PathModification::Relative {
+                matches = make_relative(root, &mut matches);
+            }
+            results.extend(matches);
+
+            depth += 1;
         }
+        debug!("no parent for {}, stopping (depth {depth}", current.to_string_lossy());
     }
-    //TODO @mverleg: args.max_depth;
     //TODO @mverleg: args.on_err;
     //TODO @mverleg: args.order;
     //TODO @mverleg: args.path_modification;
