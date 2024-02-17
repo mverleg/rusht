@@ -45,7 +45,7 @@ pub fn find_dir_with(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug!("args = {:?}", args);
     validate_roots_unique(&args.roots)?;
     let mut results = if args.upwards {
-        find_dir_with_downwards(args)
+        find_dir_with_upwards(args)
     } else {
         find_dir_with_downwards(args)
     }?;
@@ -92,9 +92,6 @@ pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String>
         debug!("stopping for '{}' either because there is no parent or max depth {} is reached",
             current.to_string_lossy(), args.max_depth);
     }
-    //TODO @mverleg: args.on_err;
-    //TODO @mverleg: args.order;
-    //TODO @mverleg: args.path_modification;
     Ok(results)
 }
 
