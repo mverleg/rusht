@@ -39,16 +39,6 @@ pub struct CachedArgs {
     /// Does NOT cache if different env vars are passed to the command (does not include inherited env)
     #[arg(short = 'E')]
     pub no_direct_env: bool,
-    /// Env var name. Invalidates cache if the value of this env var is different.
-    #[arg(
-        short = 'k',
-        long = "key",
-        default_value = KEY_DEFAULT,
-        help = "The key to use for the cache. Can use %{pwd}, %{env} and %{cmd} placeholders. See long --help for more.",
-        long_help = "The key to use for the cache. Can use %{pwd}, %{env} and %{cmd} placeholders.{n}{n}* %{git_uncommitted} contains a hash of the git index and unstaged files.{n}* %{git_head} contains the hash of the git head commit.{n}* %{git} is the combination of all git state.{n}* %{env} only contains non-inherited env.",
-        conflicts_with = "git_head,git_base,git_pending,env,text,no_dir,no_command,no_direct_env"
-    )]
-    pub key: String,
     #[arg(short = 's', long)]
     pub no_cached_output: bool,
     /// Use exit code 0 if the command is cached, and exit code 255 if it ran successfully.
@@ -63,6 +53,7 @@ pub struct CachedArgs {
 
 #[test]
 fn test_cli_args() {
-    CachedArgs::try_parse_from(&["cmd", "-v", "--", "ls"]).unwrap();
-    CachedArgs::try_parse_from(&["cmd", "-v", "-k", "%{pwd}_%{env}_%{cmd}.cache", "--", "ls"]).unwrap();
+    CachedArgs::try_parse_from(&["cmd", "-d1y", "-gbpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
+    CachedArgs::try_parse_from(&["cmd", "--duration", "1 year", "ls"]).unwrap();
+    CachedArgs::try_parse_from(&["cmd", "ls"]).unwrap();
 }

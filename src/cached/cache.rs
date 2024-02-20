@@ -32,8 +32,8 @@ struct Cache {
 }
 
 pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter) -> Result<CacheStatus, String> {
-    let task = args.cmd.into_task();
-    let cache_pth = get_cache_path(&args.key, &task)?;
+    let task = args.cmd.clone().into_task();
+    let cache_pth = get_cache_path(&args, &task)?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output));
@@ -125,7 +125,7 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
         });
 }
 
-fn get_cache_path(key_templ: &str, task: &Task) -> Result<PathBuf, String> {
+fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
     //TODO @mverleg:  ^
     let key = build_key(key_templ, task)?;
     let filename = unique_filename(&key);
