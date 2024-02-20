@@ -5,10 +5,10 @@ use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::Instant;
 
+use ::git2::Error;
 use ::git2::Repository;
 use ::log::debug;
 use ::log::warn;
-use git2::Error;
 
 pub fn git_head_ref(dir: &Path) -> Result<String, String> {
     let repo = repo_open_ancestor(dir)?;
@@ -33,8 +33,9 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
         deepest.to_string_lossy(), msg.unwrap_or_else(|| "(no message)".to_owned())))
 }
 
-pub fn git_master_base() {
+pub fn git_master_base_ref(dir: &Path) -> Result<String, String> {
     //git base-cmt HEAD || git rev-list --max-parents=0 HEAD
+    unimplemented!("cannot get master base")
 }
 
 /// Returns changed and deleted files (separately) in head

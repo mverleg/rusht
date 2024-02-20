@@ -10,6 +10,7 @@ pub use self::err::ExitStatus;
 pub use self::err::fail;
 pub use self::git::git_affected_files_head;
 pub use self::git::git_head_ref;
+pub use self::git::git_master_base_ref;
 pub use self::re::get_first_match_or_all;
 pub use self::re::get_matches;
 pub use self::read::FileReader;

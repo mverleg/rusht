@@ -9,6 +9,10 @@ pub async fn handle_cached(mut args: CachedArgs) -> ExitStatus {
     // sorting is needed for key stability, it is validated later only in debug mode
     args.text.sort();
     args.env.sort();
+    if args.no_command && !args.any_explicit_key() {
+        eprintln!("if --no-command is used, some other cache flag must be set");
+        return ExitStatus::err()
+    }
     let verbose = args.verbose;
     let exit_code = args.exit_code;
     let show_cached_output = !args.no_cached_output;

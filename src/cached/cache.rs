@@ -1,5 +1,6 @@
 use ::std::env;
-use ::std::fs::{create_dir_all, OpenOptions};
+use ::std::fs::create_dir_all;
+use ::std::fs::OpenOptions;
 use ::std::io::BufReader;
 use ::std::io::Write;
 use ::std::path::Path;
@@ -7,7 +8,6 @@ use ::std::path::PathBuf;
 use ::std::time::Duration;
 use std::env::VarError;
 
-use ::itertools::Itertools;
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
@@ -17,6 +17,7 @@ use crate::cached::CachedArgs;
 use crate::common::unique_filename;
 use crate::common::fail;
 use crate::common::git_head_ref;
+use crate::common::git_master_base_ref;
 use crate::common::LineWriter;
 use crate::common::Task;
 use crate::common::TeeWriter;
@@ -179,15 +180,13 @@ fn build_key_with(
     }
     if args.git_head {
         let head = git_head_ref(&task.working_dir).map_err(|err| {
-            format!(
-                "cache key contains git reference, but could not read git head, err: {}",
-                err
-            )
-        })?;
+            format!("caching based on git HEAD, but could not read it, err: {err}") })?;
         key.push(head)
     }
     if args.git_base {
-        unimplemented!("--git-base")  //TODO @mverleg:
+        let head = git_master_base_ref(&task.working_dir).map_err(|err| {
+            format!("caching based on git merge base, but could not determine it, err: {err}") })?;
+        key.push(head)
     }
     for env_key in &args.env {
         key.push(get_from_env(env_key)?)
