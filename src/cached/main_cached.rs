@@ -11,5 +11,7 @@ async fn main() -> ExitStatus {
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
     let args = CachedArgs::parse();
+    if args.no_command && !args.
+    }
     handle_cached(args).await
 }

@@ -126,25 +126,42 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
 }
 
 fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
-    //TODO @mverleg:  ^
-    let key = build_key(key_templ, task)?;
+    let key = build_key(args, task)?;
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push(format!("cmdcache_v{}", DATA_VERSION));
     create_dir_all(&pth).unwrap();
     pth.push(filename);
-    debug!(
-        "created cache path {} from template key {}",
-        pth.to_string_lossy(),
-        &key_templ
-    );
+    debug!("created cache path {} from args {:?}", pth.to_string_lossy(), args);
     Ok(pth)
 }
 
-fn build_key(key_templ: &str, task: &Task) -> Result<String, String> {
-    assert!(!key_templ.contains("%{git_uncommitted}"), "not implemented");
-    assert!(!key_templ.contains("%{git}"), "not implemented");
-    let mut key = key_templ.to_owned();
+fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
+    assert!(!args.git_pending, "--git-pending not implemented");
+    let key = Vec::new();
+    if ! args.no_dir {
+        unimplemented!()  //TODO @mverleg:
+    }
+    if ! args.no_command {
+        unimplemented!()  //TODO @mverleg:
+    }
+    if ! args.no_direct_env {
+        unimplemented!()  //TODO @mverleg:
+    }
+    if args.git_head {
+        unimplemented!()  //TODO @mverleg:
+    }
+    if args.git_base {
+        unimplemented!()  //TODO @mverleg:
+    }
+    for env in args.env {
+        unimplemented!()  //TODO @mverleg:
+    }
+    for text in args.text {
+        unimplemented!()  //TODO @mverleg:
+    }
+
+    let mut key = args.to_owned();
     key = key.replace("%{git}", "%{git_head}_%{git_uncommitted}");
     if key.contains("%{pwd}") {
         key = key.replace("%{pwd}", &task.working_dir.to_string_lossy());

@@ -51,9 +51,22 @@ pub struct CachedArgs {
     pub cmd: CommandArgs,
 }
 
+impl CachedArgs {
+    pub fn any_explicit_key(&self) -> bool {
+        self.git_head || self.git_base || self.git_pending || !self.env.is_empty() || !self.text.is_empty()
+    }
+}
+
 #[test]
 fn test_cli_args() {
-    CachedArgs::try_parse_from(&["cmd", "-d1y", "-gbpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
-    CachedArgs::try_parse_from(&["cmd", "--duration", "1 year", "ls"]).unwrap();
-    CachedArgs::try_parse_from(&["cmd", "ls"]).unwrap();
+    let mut args = CachedArgs::try_parse_from(&["cmd", "ls"]).unwrap();
+    assert!(!args.any_explicit_key());
+    args = CachedArgs::try_parse_from(&["cmd", "--duration", "1 year", "ls"]).unwrap();
+    assert!(!args.any_explicit_key());
+    args = CachedArgs::try_parse_from(&["cmd", "-d1y", "--git-head", "--git_pending", "ls", "-a", "-l", "-s", "-h"]).unwrap();
+    assert!(args.any_explicit_key());
+    args = CachedArgs::try_parse_from(&["cmd", "-d1y", "--text", "string", "ls", "-alsh"]).unwrap();
+    assert!(args.any_explicit_key());
+    args = CachedArgs::try_parse_from(&["cmd", "-d1y", "-gbpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
+    assert!(args.any_explicit_key());
 }
