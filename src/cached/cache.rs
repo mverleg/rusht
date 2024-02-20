@@ -1,9 +1,11 @@
+use ::std::env;
 use ::std::fs::{create_dir_all, OpenOptions};
 use ::std::io::BufReader;
 use ::std::io::Write;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::Duration;
+use std::env::VarError;
 
 use ::itertools::Itertools;
 use ::log::debug;
@@ -13,11 +15,11 @@ use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
 use crate::common::{safe_filename, unique_filename};
-use crate::common::TeeWriter;
-use crate::common::Task;
-use crate::common::LineWriter;
-use crate::common::git_head_ref;
 use crate::common::fail;
+use crate::common::git_head_ref;
+use crate::common::LineWriter;
+use crate::common::Task;
+use crate::common::TeeWriter;
 use crate::common::VecWriter;
 use crate::escape::{Charset, HashPolicy, namesafe_line, NamesafeArgs};
 use crate::ExitStatus;
@@ -171,11 +173,15 @@ fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
     if args.git_base {
         unimplemented!("--git-base")  //TODO @mverleg:
     }
-    for _env in args.env {
-        unimplemented!()
+    for env_key in &args.env {
+        key.push(match env::var(env_key) {
+            Ok(val) => format!("{env_key}-{val}"),
+            Err(VarError::NotPresent) => format!("{env_key}_NO"),
+            Err(VarError::NotUnicode(bytes)) => format!("{env_key}_lossy-{}", bytes.to_string_lossy()),
+        })
     }
-    for text in args.text {
-        key.push(text)
+    for text in &args.text {
+        key.push(text.to_owned())
     }
     Ok(unique_filename(&key.join("_")))
 }
