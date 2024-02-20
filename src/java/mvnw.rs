@@ -203,9 +203,10 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         );
     }
 
-    let phase_override= if let Some(phase) = &args.phase {
+    // phase is a vec to allow overriding, but really we only care about the last one
+    let phase_override= if let Some(phase) = &args.phase.last() {
         assert!(!args.install, "--phase and --install should not be combined");
-        Some(phase.to_owned())
+        Some((*phase).to_owned())
     } else if args.install {
         Some("install".to_owned())
     } else {

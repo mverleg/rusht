@@ -23,8 +23,8 @@ pub struct MvnwArgs {
     #[arg(short = 'i', long, hide_short_help = true, conflicts_with = "phase")]
     pub install: bool,
     /// Install the modules into local .m2 after building them.
-    #[arg(short = 'p', long, num_args = 1..)]
-    pub phase: Option<String>,
+    #[arg(short = 'p', long)]
+    pub phase: Vec<String>,  // only use last one
     /// Build all the code, not just changed files.
     #[arg(long)]
     pub all: bool,
