@@ -145,6 +145,23 @@ fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
 }
 
 fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
+    build_key_with(args, task, read_from_sys_env)
+}
+
+fn read_from_sys_env(env_key: &str) -> Result<String, String> {
+    Ok(match env::var(env_key) {
+        Ok(val) => format!("{env_key}-{val}"),
+        Err(VarError::NotPresent) => format!("{env_key}_NO"),
+        Err(VarError::NotUnicode(_)) =>
+            return Err(format!("cannot cache env '{env_key}' because value is not unicode")),
+    })
+}
+
+fn build_key_with(
+    args: &CachedArgs,
+    task: &Task,
+    get_from_env: impl Fn(&str) -> Result<String, String>
+) -> Result<String, String> {
     assert!(!args.git_pending, "--git-pending not implemented");
     debug_assert!(args.env.is_sorted());
     debug_assert!(args.env.is_sorted());
@@ -173,12 +190,7 @@ fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
         unimplemented!("--git-base")  //TODO @mverleg:
     }
     for env_key in &args.env {
-        key.push(match env::var(env_key) {
-            Ok(val) => format!("{env_key}-{val}"),
-            Err(VarError::NotPresent) => format!("{env_key}_NO"),
-            Err(VarError::NotUnicode(_)) =>
-                return Err(format!("cannot cache env '{env_key}' because value is not unicode")),
-        })
+        key.push(get_from_env(env_key)?)
     }
     for text in &args.text {
         key.push(text.to_owned())
@@ -201,11 +213,18 @@ mod tests {
         }
     }
 
+    fn read_from_test_env(env_key: &str) -> Result<String, String> {
+        Ok(match env_key {
+            "KEY" => "ENV_VALUE".to_owned(),
+            other_key => format!("{env_key}_NO"),
+        })
+    }
+
     #[test]
     fn build_key_vanilla() {
         let task = create_test_task();
         let args = CachedArgs::default();
-        let key = build_key(&args, &task);
+        let key = build_key_with(&args, &task, read_from_test_env);
         assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
     }
 
@@ -217,7 +236,7 @@ mod tests {
             env: vec!["VAR".to_owned()],
             ..Default::default()
         };
-        let key = build_key(&args, &task);
-        assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
+        let key = build_key_with(&args, &task, read_from_test_env);
+        assert_eq!(key, Ok("tmp_ls_a_VAR_NO_hellq1kzva1h4vlt".to_owned()));
     }
 }
