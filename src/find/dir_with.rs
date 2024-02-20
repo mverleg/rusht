@@ -74,12 +74,12 @@ pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String>
     let mut results = Vec::new();
     for root in args.roots.clone() {
         debug!("searching root '{}' upwards", root.to_str().unwrap());
-        let mut depth = 1;
-        let mut current = root.as_path();
+        let mut current = root.canonicalize().unwrap();
         let mut depth_remaining = args.max_depth;
         while let Some(next) = current.parent() && depth_remaining > 0 {
             depth_remaining -= 1;
-            current = next;
+            current = next.to_owned();
+            trace!("checking '{}'", &current.to_string_lossy());
 
             // Use depth_remaining=0 here, because this is downward depths, not upward
             let mut matches = find_matching_dirs(&root, &args, 0)?;
