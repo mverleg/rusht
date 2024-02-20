@@ -12,7 +12,14 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{fail, git_head_ref, unique_filename, LineWriter, Task, TeeWriter, VecWriter};
+use crate::common::{safe_filename, unique_filename};
+use crate::common::TeeWriter;
+use crate::common::Task;
+use crate::common::LineWriter;
+use crate::common::git_head_ref;
+use crate::common::fail;
+use crate::common::VecWriter;
+use crate::escape::{Charset, HashPolicy, namesafe_line, NamesafeArgs};
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -138,57 +145,37 @@ fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
 
 fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
     assert!(!args.git_pending, "--git-pending not implemented");
-    let key = Vec::new();
+    debug_assert!(args.env.is_sorted());
+    debug_assert!(args.env.is_sorted());
+    let mut key: Vec<String> = Vec::new();
     if ! args.no_dir {
-        unimplemented!()  //TODO @mverleg:
+        key.push(task.working_dir.to_string_lossy().into_owned())
     }
     if ! args.no_command {
-        unimplemented!()  //TODO @mverleg:
+        key.push(task.as_cmd_str())
     }
     if ! args.no_direct_env {
-        unimplemented!()  //TODO @mverleg:
+        for (env_key, value) in &task.extra_envs {
+            key.push(format!("{}-{}", env_key, value))
+        }
     }
     if args.git_head {
-        unimplemented!()  //TODO @mverleg:
+        let head = git_head_ref(&task.working_dir).map_err(|err| {
+            format!(
+                "cache key contains git reference, but could not read git head, err: {}",
+                err
+            )
+        })?;
+        key.push(head)
     }
     if args.git_base {
-        unimplemented!()  //TODO @mverleg:
+        unimplemented!("--git-base")  //TODO @mverleg:
     }
-    for env in args.env {
-        unimplemented!()  //TODO @mverleg:
+    for _env in args.env {
+        unimplemented!()
     }
     for text in args.text {
-        unimplemented!()  //TODO @mverleg:
+        key.push(text)
     }
-
-    let mut key = args.to_owned();
-    key = key.replace("%{git}", "%{git_head}_%{git_uncommitted}");
-    if key.contains("%{pwd}") {
-        key = key.replace("%{pwd}", &task.working_dir.to_string_lossy());
-    }
-    if key.contains("%{env}") {
-        key = key.replace(
-            "%{env}",
-            &task
-                .extra_envs
-                .iter()
-                .map(|(k, v)| format!("{}{}", k, v))
-                .join("_"),
-        );
-    }
-    if key.contains("%{cmd}") {
-        key = key.replace("%{cmd}", &task.as_cmd_str());
-    }
-    if key.contains("%{git_head}") {
-        key = key.replace(
-            "%{git_head}",
-            &git_head_ref(&task.working_dir).map_err(|err| {
-                format!(
-                    "cache key contains git reference, but could not read git head, err: {}",
-                    err
-                )
-            })?,
-        );
-    }
-    Ok(key)
+    Ok(unique_filename(&key.join("_")))
 }

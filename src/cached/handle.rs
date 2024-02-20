@@ -5,7 +5,10 @@ use super::cached;
 use super::CacheStatus;
 use super::CachedArgs;
 
-pub async fn handle_cached(args: CachedArgs) -> ExitStatus {
+pub async fn handle_cached(mut args: CachedArgs) -> ExitStatus {
+    // sorting is needed for key stability, it is validated later only in debug mode
+    args.text.sort();
+    args.env.sort();
     let verbose = args.verbose;
     let exit_code = args.exit_code;
     let show_cached_output = !args.no_cached_output;
