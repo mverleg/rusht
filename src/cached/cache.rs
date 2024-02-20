@@ -14,14 +14,13 @@ use ::serde::Serialize;
 use ::time::OffsetDateTime;
 
 use crate::cached::CachedArgs;
-use crate::common::{safe_filename, unique_filename};
+use crate::common::unique_filename;
 use crate::common::fail;
 use crate::common::git_head_ref;
 use crate::common::LineWriter;
 use crate::common::Task;
 use crate::common::TeeWriter;
 use crate::common::VecWriter;
-use crate::escape::{Charset, HashPolicy, namesafe_line, NamesafeArgs};
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -177,11 +176,48 @@ fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
         key.push(match env::var(env_key) {
             Ok(val) => format!("{env_key}-{val}"),
             Err(VarError::NotPresent) => format!("{env_key}_NO"),
-            Err(VarError::NotUnicode(bytes)) => format!("{env_key}_lossy-{}", bytes.to_string_lossy()),
+            Err(VarError::NotUnicode(_)) =>
+                return Err(format!("cannot cache env '{env_key}' because value is not unicode")),
         })
     }
     for text in &args.text {
         key.push(text.to_owned())
     }
     Ok(unique_filename(&key.join("_")))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+    use super::*;
+
+    fn create_test_task() -> Task {
+        Task {
+            cmd: "ls".to_owned(),
+            args: vec!["-a".to_owned()],
+            working_dir: PathBuf::from("/tmp"),
+            extra_envs: HashMap::new(),
+            stdin: None,
+        }
+    }
+
+    #[test]
+    fn build_key_vanilla() {
+        let task = create_test_task();
+        let args = CachedArgs::default();
+        let key = build_key(&args, &task);
+        assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
+    }
+
+    #[test]
+    fn build_key_with_text_env() {
+        let task = create_test_task();
+        let args = CachedArgs {
+            text: vec!["hello".to_owned(), "world".to_owned()],
+            env: vec!["VAR".to_owned()],
+            ..Default::default()
+        };
+        let key = build_key(&args, &task);
+        assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
+    }
 }

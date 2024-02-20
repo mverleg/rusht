@@ -7,7 +7,7 @@ use crate::common::CommandArgs;
 
 const KEY_DEFAULT: &'static str = "%{pwd}_%{env}_%{cmd}.cache";
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, PartialEq)]
 #[command(
     name = "cached",
     about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired. Stderr is only shown on first run."
@@ -57,10 +57,34 @@ impl CachedArgs {
     }
 }
 
+impl Default for CachedArgs {
+    fn default() -> Self {
+        CachedArgs {
+            duration: Duration::from_secs(15 * 60),
+            git_head: false,
+            git_base: false,
+            git_pending: false,
+            env: vec![],
+            text: vec![],
+            no_dir: false,
+            no_command: false,
+            no_direct_env: false,
+            no_cached_output: false,
+            exit_code: false,
+            verbose: false,
+            cmd: CommandArgs::Cmd(Vec::new()),
+        }
+    }
+}
+
 #[test]
 fn test_cli_args() {
     let mut args = CachedArgs::try_parse_from(&["cmd", "ls"]).unwrap();
     assert!(!args.any_explicit_key());
+    assert_eq!(args, CachedArgs {
+        cmd: CommandArgs::Cmd(vec!["cmd".to_owned(), "ls".to_owned()]),
+        ..CachedArgs::default()
+    });
     args = CachedArgs::try_parse_from(&["cmd", "--duration", "1 year", "ls"]).unwrap();
     assert!(!args.any_explicit_key());
     args = CachedArgs::try_parse_from(&["cmd", "-d1y", "--git-head", "--git_pending", "ls", "-a", "-l", "-s", "-h"]).unwrap();
