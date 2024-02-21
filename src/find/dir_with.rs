@@ -83,10 +83,11 @@ pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String>
                 break;
             }
             depth_remaining -= 1;
-            trace!("checking '{}'", &current.to_string_lossy());
 
             // Use depth_remaining=0 here, because this is downward depths, not upward
             let mut matches = find_matching_dirs(&root, &args, 0)?;
+            trace!("checking '{}' result_count={} depth_remaining={depth_remaining}",
+                matches.len(), &current.to_string_lossy());
 
             if args.path_modification == PathModification::Relative {
                 matches = make_relative(&root, &mut matches);

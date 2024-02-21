@@ -45,7 +45,8 @@ enum SubCmd {
     Cmlist(ListArgs),
     Cmdrop(DropArgs),
     Cmbuf(BufArgs),
-    Dirwith(DirWithArgs),
+    #[clap(name = "dir_with")]
+    DirWith(DirWithArgs),
     Grab(GrabArgs),
     Unique(UniqueArgs),
     Filter(FilterArgs),
@@ -78,7 +79,7 @@ async fn main() -> ExitStatus {
         SubCmd::Cmlist(sub_args) => handle_list(sub_args),
         SubCmd::Cmdrop(sub_args) => handle_drop(sub_args),
         SubCmd::Cmbuf(sub_args) => handle_buf(sub_args),
-        SubCmd::Dirwith(sub_args) => handle_dir_with(sub_args),
+        SubCmd::DirWith(sub_args) => handle_dir_with(sub_args),
         SubCmd::Grab(sub_args) => handle_grab(sub_args).await,
         SubCmd::Unique(sub_args) => handle_unique(sub_args).await,
         SubCmd::Filter(sub_args) => handle_filter(sub_args).await,
