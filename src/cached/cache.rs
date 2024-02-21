@@ -12,6 +12,7 @@ use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
 use ::time::OffsetDateTime;
+use crate::cached::args::CachedKeyArgs;
 
 use crate::cached::CachedArgs;
 use crate::common::unique_filename;
@@ -146,7 +147,7 @@ fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
 }
 
 fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
-    build_key_with(args, task, read_from_sys_env)
+    build_key_with(&args.key, task, read_from_sys_env)
 }
 
 fn read_from_sys_env(env_key: &str) -> Result<String, String> {
@@ -159,7 +160,7 @@ fn read_from_sys_env(env_key: &str) -> Result<String, String> {
 }
 
 fn build_key_with(
-    args: &CachedArgs,
+    args: &CachedKeyArgs,
     task: &Task,
     get_from_env: impl Fn(&str) -> Result<String, String>
 ) -> Result<String, String> {
@@ -223,7 +224,7 @@ mod tests {
     fn build_key_vanilla() {
         let task = create_test_task();
         let args = CachedArgs::default();
-        let key = build_key_with(&args, &task, read_from_test_env);
+        let key = build_key_with(&args.key, &task, read_from_test_env);
         assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
     }
 
@@ -231,11 +232,14 @@ mod tests {
     fn build_key_with_text_env() {
         let task = create_test_task();
         let args = CachedArgs {
-            text: vec!["hello".to_owned(), "world".to_owned()],
-            env: vec!["VAR".to_owned()],
+            key: CachedKeyArgs {
+                text: vec!["hello".to_owned(), "world".to_owned()],
+                env: vec!["VAR".to_owned()],
+                ..Default::default()
+            },
             ..Default::default()
         };
-        let key = build_key_with(&args, &task, read_from_test_env);
+        let key = build_key_with(&args.key, &task, read_from_test_env);
         assert_eq!(key, Ok("tmp_ls_a_VAR_NO_hellq1kzva1h4vlt".to_owned()));
     }
 }

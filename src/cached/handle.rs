@@ -7,9 +7,9 @@ use super::CachedArgs;
 
 pub async fn handle_cached(mut args: CachedArgs) -> ExitStatus {
     // sorting is needed for key stability, it is validated later only in debug mode
-    args.text.sort();
-    args.env.sort();
-    if args.no_command && !args.any_explicit_key() {
+    args.key.text.sort();
+    args.key.env.sort();
+    if args.key.no_command && !args.any_explicit_key() {
         eprintln!("if --no-command is used, some other cache flag must be set");
         return ExitStatus::err()
     }
