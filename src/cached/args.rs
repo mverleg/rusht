@@ -13,7 +13,7 @@ const KEY_DEFAULT: &'static str = "%{pwd}_%{env}_%{cmd}.cache";
     about = "Cache the output of a command for a given duration, running it only if there is no cache or it has expired. Stderr is only shown on first run."
 )]
 pub struct CachedArgs {
-    /// Duration the cache should be valid for, e.g. "30 min" or "1 day -1 hour".
+    /// Duration after which the cache should be invalidated, e.g. "30 min" or "1 day -1 hour".
     #[arg(value_parser = parse_dur, short = 'd', long = "duration", default_value = "15 min")]
     pub duration: Duration,
     /// Invalidates cache if the current git HEAD commit is different.
@@ -25,6 +25,7 @@ pub struct CachedArgs {
     /// Invalidates cache if the uncommitted git files change.
     #[arg(short = 'p', long)]
     pub git_pending: bool,
+    /// Name of an environment variable. Invalidates cache if the value changes.
     #[arg(short = 'e', long)]
     pub env: Vec<String>,
     /// Just a text. Invalidates cache if a different text is passed.
@@ -39,6 +40,7 @@ pub struct CachedArgs {
     /// Does NOT cache if different env vars are passed to the command (does not include inherited env)
     #[arg(short = 'E', long)]
     pub no_direct_env: bool,
+    /// When loading from cache, do not show the previous output.
     #[arg(short = 's', long)]
     pub no_cached_output: bool,
     /// Use exit code 0 if the command is cached, and exit code 255 if it ran successfully.
