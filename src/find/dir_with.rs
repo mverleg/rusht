@@ -73,12 +73,16 @@ pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String>
     debug_assert!(args.upwards);
     let mut results = Vec::new();
     for root in args.roots.clone() {
-        debug!("searching root '{}' upwards", root.to_str().unwrap());
-        let mut current = root.canonicalize().unwrap();
+        let mut current = root.canonicalize()
+            .map_err(|err| format!("cannot get absolute path for '{}', err {err}", root.to_string_lossy()))?;
+        debug!("searching root '{}' upwards", current.to_str().unwrap());
         let mut depth_remaining = args.max_depth;
-        while let Some(next) = current.parent() && depth_remaining > 0 {
+        loop {
+            if depth_remaining <= 0 {
+                debug!("stopping for '{}' because max depth {} is reached", current.to_string_lossy(), args.max_depth);
+                break;
+            }
             depth_remaining -= 1;
-            current = next.to_owned();
             trace!("checking '{}'", &current.to_string_lossy());
 
             // Use depth_remaining=0 here, because this is downward depths, not upward
@@ -88,9 +92,12 @@ pub fn find_dir_with_upwards(args: &DirWithArgs) -> Result<Vec<PathBuf>, String>
                 matches = make_relative(&root, &mut matches);
             }
             results.extend(matches);
+            let Some(next) = current.parent() else {
+                debug!("stopping for '{}' because there are no more parents", current.to_string_lossy());
+                break
+            };
+            current = next.to_owned();
         }
-        debug!("stopping for '{}' either because there is no parent or max depth {} is reached",
-            current.to_string_lossy(), args.max_depth);
     }
     Ok(results)
 }
