@@ -216,7 +216,7 @@ mod tests {
     fn read_from_test_env(env_key: &str) -> Result<String, String> {
         Ok(match env_key {
             "KEY" => "ENV_VALUE".to_owned(),
-            other_key => format!("{env_key}_NO"),
+            other_key => format!("{other_key}_NO"),
         })
     }
 

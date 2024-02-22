@@ -2,11 +2,8 @@ use ::std::time::Duration;
 
 use ::clap::Parser;
 use ::parse_duration0::parse as parse_dur;
-use clap::Subcommand;
 
 use crate::common::CommandArgs;
-
-const KEY_DEFAULT: &'static str = "%{pwd}_%{env}_%{cmd}.cache";
 
 #[derive(Parser, Debug, PartialEq)]
 #[command(
@@ -17,7 +14,7 @@ pub struct CachedArgs {
     /// Duration after which the cache should be invalidated, e.g. "30 min" or "1 day -1 hour".
     #[arg(value_parser = parse_dur, short = 'd', long = "duration", default_value = "15 min")]
     pub duration: Duration,
-    #[clap(inline)]
+    #[clap(flatten)]
     pub key: CachedKeyArgs,
     /// When loading from cache, do not show the previous output.
     #[arg(short = 's', long)]
