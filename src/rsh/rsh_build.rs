@@ -15,9 +15,11 @@ use ::log::trace;
 use crate::rsh::rsh_context::RshContext;
 use crate::rsh::rsh_program::RshProg;
 use crate::rsh::rsh_run::create_rsh_env;
-use crate::rsh::rsh_state::{
-    check_should_refresh, derive_prog_state, read_prog_state, write_prog_state, ProgState,
-};
+use crate::rsh::rsh_state::write_prog_state;
+use crate::rsh::rsh_state::read_prog_state;
+use crate::rsh::rsh_state::derive_prog_state;
+use crate::rsh::rsh_state::check_should_refresh;
+use crate::rsh::rsh_state::ProgState;
 use crate::rsh::rsh_state::{CARGO_SRC, DUMMY_ARGS_SRC, DUMMY_RUN_SRC, MAIN_SRC};
 use crate::rsh::RshArgs;
 
@@ -248,7 +250,7 @@ fn cargo_compile_dir(
 ) -> Result<(), String> {
     info!("going to compile Rust code in '{}'", pth.to_string_lossy());
     env.insert("RUSTFLAGS", "-C target-cpu=native".to_owned());
-    let mut args = vec!["build", "--release"];
+    let mut args = vec!["+nightly", "build", "--release"];
     if is_offline {
         args.push("--offline");
     }
