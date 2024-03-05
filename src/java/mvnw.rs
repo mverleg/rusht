@@ -171,14 +171,14 @@ async fn mvnw_dir(
 
 fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
     let modules = if args.all {
-        vec![]
+        None
     } else if !args.modules.is_empty() {
-        args.modules.iter()
+        Some(args.modules.iter()
             .flat_map(|m| m.split(','))
             .map(|m| m.trim().to_owned())
             .sorted()
             .unique()
-            .collect()
+            .collect())
     } else {
         unimplemented!()
     };
@@ -224,6 +224,7 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
     let cmd_config = MvnCmdConfig {
         changed_files,
         modules,
+        no_build_deps: args.no_build_deps,
         tests: args.test(),
         lint: !args.no_lint,
         checkstyle_version: "10.6.0".to_string(),

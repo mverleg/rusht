@@ -20,7 +20,8 @@ pub struct MvnCmdConfig {
     /// Which files were changed. Might have been deleted.
     pub changed_files: HashSet<PathBuf>,
     /// Which modules to build. Empty means everything.
-    pub modules: Vec<String>,
+    pub modules: Option<Vec<String>>,
+    pub no_build_deps: bool,
     pub tests: TestMode,
     pub lint: bool,
     pub checkstyle_version: String,
@@ -57,7 +58,7 @@ impl MvnCmdConfig {
     }
 
     fn collect_tasks(&self) -> MvnTasks {
-        let single_cmd = self.modules.is_empty() && self.profiles.is_empty();
+        let single_cmd = self.modules.is_none() && self.profiles.is_empty();
 
         let mut tasks = MvnTasks::default();
         let mut args = vec![];
@@ -146,16 +147,22 @@ impl MvnCmdConfig {
         args.push(stage.to_owned());
 
         // Affected build modules
-        if !self.modules.is_empty() {
+        if let Some(modules) = &self.modules {
             debug!(
-                "building {} specific modules and their dependencies",
-                self.modules.len()
+                "building {} specific modules {} dependencies",
+                modules.len(),
+                if self.no_build_deps { "WITHOUT" } else  { "and their" }
             );
-            for module in &self.modules {
+            if modules.is_empty() {
+                panic!("no modules detected with -x nor specified with -p, and no --all")
+            }
+            for module in modules {
                 args.push("--projects".to_owned());
                 args.push(format!(":{}", module));
             }
-            args.push("--also-make".to_owned())
+            if ! self.no_build_deps {
+                args.push("--also-make".to_owned())
+            }
         } else {
             debug!("building all modules");
         }
