@@ -416,12 +416,38 @@ mod tests {
             ..MvnCmdConfig::default()
         };
         let cmds = conf.build_cmds();
+        assert_eq!(cmds.len(), 1);
+        let args = args_to_set(&cmds[0]);
+        assert!(!args.contains("compile"));
+        assert!(!args.contains("--also-make"));
+        assert!(args.contains("--quiet"));
+        assert!(args.contains("--offline"));
+    }
+
+    #[test]
+    #[ignore]
+    fn build_test_subset() {
+        //TODO @mverleg:
+        let conf = MvnCmdConfig {
+            //TODO @mverleg: infer
+            changed_files: vec![
+                PathBuf::from("src/ClsA.java"),
+                PathBuf::from("test/ClsB.java"),
+            ].into_iter().collect::<HashSet<_>>(),
+            modules: None,
+            tests: TestMode::Files,
+            ..MvnCmdConfig::default()
+        };
+        let cmds = conf.build_cmds();
         dbg!(&cmds);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(cmds.len(), 1);
-        let args = cmds[0].task().unwrap().args.iter()
-            .map(|a| a.to_owned())
-            .collect::<HashSet<_>>();
+        let args = args_to_set(&cmds[0]);
         assert!(args.contains("--also-make"));
-        assert!(args.contains("toimpl"));  //TODO @mverleg:
+    }
+
+    fn args_to_set(cmds: &Dependent) -> HashSet<String> {
+        cmds.task().unwrap().args.iter()
+            .map(|a| a.to_owned())
+            .collect::<HashSet<_>>()
     }
 }
