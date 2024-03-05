@@ -15,7 +15,7 @@ use crate::common::Task;
 use crate::java::mvnw_args::TestMode;
 use crate::java::newtype::{FullyQualifiedName, Profile};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct MvnCmdConfig {
     /// Which files were changed. Might have been deleted.
     pub changed_files: HashSet<PathBuf>,
@@ -403,25 +403,11 @@ mod tests {
     #[test]
     fn build_all() {
         let conf = MvnCmdConfig {
-            changed_files: Default::default(),
+            changed_files: vec![
+                PathBuf::from("test/file.java"),
+            ].into_iter().collect::<HashSet<_>>(),
             modules: None,
-            no_build_deps: false,
-            tests: TestMode::NoBuild,
-            lint: false,
-            checkstyle_version: "".to_string(),
-            verbose: false,
-            update: false,
-            clean: false,
-            phase_override: None,
-            execs: vec![],
-            profiles: vec![],
-            threads: 0,
-            max_memory_mb: 0,
-            max_exec_memory_mb: 0,
-            mvn_exe: Default::default(),
-            mvn_arg: vec![],
-            java_home: Default::default(),
-            cwd: Default::default(),
+            ..MvnCmdConfig::default()
         };
         let cmds = conf.build_cmds();
         assert_eq!(cmds.len(), 1);
