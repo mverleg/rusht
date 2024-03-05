@@ -60,9 +60,9 @@ pub struct MvnwArgs {
     /// Modules to build, like mvn -pl, either a dir or ':module'
     #[arg(short = 'p', long = "module", conflicts_with = "proj_roots")]
     pub modules: Vec<String>,
-    /// When using -p, also build dependencies
-    #[arg(long = "am", requires = "modules")]
-    pub incl_dependencies: Vec<String>,
+    /// Only build the modules specified with -p and -x, assume dependencies are already installed (like mvn -am)
+    #[arg(long = "no-build-deps", visible_alias = "nodep")]
+    pub no_build_deps: bool,
     //TODO @mverleg: ^
 
     /// Do not run checkstyle lints on the code.
@@ -136,6 +136,7 @@ fn test_cli_args() {
         "--clean",
         "--update",
         "-p", "proj/subproj",
+        "--nodep",
     ])
     .unwrap();
 }
