@@ -212,7 +212,10 @@ impl MvnCmdConfig {
         }
         if !single_cmd || !self.tests.run_any() {
             debug!("skipping tests in build command, since tests are run in a separate command, or not at all");
-            args.push("-DskipTests=true".to_owned());
+            if ! args.contains(&"-DskipTests".to_owned()) {
+                //TODO: to_owned is horrible but not impactful ^
+                args.push("-DskipTests".to_owned());
+            }
         }
         if self.tests.run_any() {
             if single_cmd {
