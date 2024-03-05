@@ -140,9 +140,9 @@ impl MvnCmdConfig {
             "compile"
         } else {
             debug!("maven test-compile because no install requested, and tests are run in a separate command");
-            //"test-compile"
+            "test-compile"
             //TODO @mverleg: using package because goat does not compile well without it
-            "package"
+            //"package"
         };
         args.push(stage.to_owned());
 
@@ -418,7 +418,7 @@ mod tests {
         let cmds = conf.build_cmds();
         assert_eq!(cmds.len(), 1);
         let args = args_to_set(&cmds[0]);
-        assert!(!args.contains("compile"));
+        assert!(!args.contains("test-compile"));
         assert!(!args.contains("--also-make"));
         assert!(args.contains("--quiet"));
         assert!(args.contains("--offline"));
