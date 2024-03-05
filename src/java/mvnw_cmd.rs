@@ -395,3 +395,40 @@ impl MvnTasks {
         tasks
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_all() {
+        let conf = MvnCmdConfig {
+            changed_files: Default::default(),
+            modules: None,
+            no_build_deps: false,
+            tests: TestMode::NoBuild,
+            lint: false,
+            checkstyle_version: "".to_string(),
+            verbose: false,
+            update: false,
+            clean: false,
+            phase_override: None,
+            execs: vec![],
+            profiles: vec![],
+            threads: 0,
+            max_memory_mb: 0,
+            max_exec_memory_mb: 0,
+            mvn_exe: Default::default(),
+            mvn_arg: vec![],
+            java_home: Default::default(),
+            cwd: Default::default(),
+        };
+        let cmds = conf.build_cmds();
+        assert_eq!(cmds.len(), 1);
+        let args = cmds[0].task().unwrap().args.iter()
+            .map(|a| a.to_owned())
+            .collect::<HashSet<_>>();
+        assert!(args.contains("--also-make"));
+        assert!(args.contains("toimpl"));  //TODO @mverleg:
+    }
+}
