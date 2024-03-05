@@ -1,15 +1,24 @@
 #![allow(unused)] //TODO @mark: TEMPORARY! REMOVE THIS!
 
-use ::log::debug;
-use ::log::warn;
+use crate::common::StdWriter;
+use crate::common::Task;
 
-pub fn sound_notification(
+pub async fn sound_notification(
     sound_on_success: bool,
     sound_on_failure: bool,
     is_success: bool,
-) -> Result<(), String> {
-    debug!("sound temporarily disabled, awaiting fixes"); //TODO @mark: TEMPORARY! REMOVE THIS!
-    Ok(())
+) -> Box<Result<(), String>> {
+    let task = if is_success {
+        Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()])
+    } else {
+        Task::new_in_cwd("say".to_owned(), None, vec!["that failed, sorry".to_owned()])
+    };
+    let status = task.execute_with_stdout(true, &mut StdWriter::stdout()).await;
+    if status.is_err() {
+        return Box::new(Err(format!("failed to play sound using {}", &task.as_cmd_str())))
+    }
+    Box::new(Ok(()))
+
     // let sl = Soloud::default().unwrap();
     // let mut sound = audio::Wav::default();
     // sound.load_mem(include_bytes!("../../resource/success-sound.mp3")).unwrap();
