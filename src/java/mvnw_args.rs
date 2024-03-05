@@ -105,6 +105,9 @@ pub struct MvnwArgs {
     /// Extra arguments to pass on to maven, e.g. -a=-Djava.net.preferIPv4Stack=true
     #[arg(short = 'a', long = "mvn-arg")]
     pub mvn_args: Vec<String>,
+    /// Definition to pass to maven as -D
+    #[arg(short = 'D', long = "mvn-def")]
+    pub mvn_defs: Vec<String>,
     /// Maven profiles to activate. Prefix '!' to deactivate.
     #[arg(short = 'P', long = "profile")]
     pub profiles: Vec<Profile>,

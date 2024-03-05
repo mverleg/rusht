@@ -36,6 +36,7 @@ pub struct MvnCmdConfig {
     pub max_exec_memory_mb: u32,
     pub mvn_exe: PathBuf,
     pub mvn_arg: Vec<String>,
+    pub mvn_defs: Vec<String>,
     pub java_home: PathBuf,
     pub cwd: PathBuf,
 }
@@ -290,6 +291,9 @@ impl MvnCmdConfig {
         mut extra_env: HashMap<String, String>,
     ) -> Task {
         args.extend_from_slice(&self.mvn_arg);
+        for def in &self.mvn_defs {
+            args.push(format!("-D{def}"))
+        }
         extra_env.insert(
             "JAVA_HOME".to_owned(),
             self.java_home.to_str().unwrap().to_owned(),

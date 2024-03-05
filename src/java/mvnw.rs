@@ -236,6 +236,7 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         max_exec_memory_mb: args.max_exec_memory_mb.unwrap_or(args.max_memory_mb),
         mvn_exe: args.mvn_exe,
         mvn_arg: args.mvn_args.into_iter().sorted().collect(),
+        mvn_defs: args.mvn_defs.into_iter().sorted().collect(),
         java_home,
         cwd,
     };
