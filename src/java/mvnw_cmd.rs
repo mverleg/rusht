@@ -399,9 +399,7 @@ impl MvnTasks {
             .collect::<Vec<_>>();
         let mut tasks = vec![version, clean, install_lint, lint, build, test];
         tasks.extend(exes);
-        tasks.into_iter()
-            .filter(|t| t.task().is_some())
-            .collect()
+        tasks
     }
 }
 
