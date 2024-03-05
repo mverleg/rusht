@@ -58,7 +58,7 @@ pub struct MvnwArgs {
     prod_only: bool,
 
     /// Modules to build, like mvn -pl, either a dir or ':module'
-    #[arg(short = 'p', long = "module", conflicts_with = "proj_root")]
+    #[arg(short = 'p', long = "module", conflicts_with = "proj_roots")]
     pub modules: Vec<String>,
     /// When using -p, also build dependencies
     #[arg(long = "am", requires = "modules")]
@@ -135,6 +135,7 @@ fn test_cli_args() {
         "--install",
         "--clean",
         "--update",
+        "-p", "proj/subproj",
     ])
     .unwrap();
 }
@@ -154,6 +155,8 @@ fn strictly_positive(val: &str) -> Result<u32, String> {
 
 #[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AffectedPolicy {
+    /// Do not automatically detect changes; only makes sense with -p
+    None,
     /// `Branch` + `Uncommmitted`
     AnyChange,
     /// `Commit` + `Uncommmitted`
@@ -171,6 +174,7 @@ impl FromStr for AffectedPolicy {
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
         Ok(match text.to_lowercase().as_str() {
+            "n" | "no" | "none" => AffectedPolicy::None,
             "a" | "any-change" | "all" => AffectedPolicy::AnyChange,
             "r" | "recent" => AffectedPolicy::Recent,
             "u" | "uncommitted" => AffectedPolicy::Uncommitted,
@@ -187,6 +191,7 @@ impl fmt::Display for AffectedPolicy {
             f,
             "{}",
             match self {
+                AffectedPolicy::None => "none",
                 AffectedPolicy::AnyChange => "any-change",
                 AffectedPolicy::Recent => "recent",
                 AffectedPolicy::Uncommitted => "uncommitted",

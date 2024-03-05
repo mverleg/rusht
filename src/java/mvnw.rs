@@ -183,7 +183,9 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         unimplemented!()
     };
 
-    if args.affected_policy != AffectedPolicy::Head {
+    if args.affected_policy == AffectedPolicy::None && args.modules.is_empty() {
+        return Err("--affected=none only makes sense with --module".to_owned())
+    } else if args.affected_policy != AffectedPolicy::Head {
         eprintln!("ignoring provided --affected and using --affected=head instead");
         //TODO @mverleg: ^
     }
