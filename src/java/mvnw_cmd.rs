@@ -392,7 +392,9 @@ impl MvnTasks {
             .collect::<Vec<_>>();
         let mut tasks = vec![version, clean, install_lint, lint, build, test];
         tasks.extend(exes);
-        tasks
+        tasks.into_iter()
+            .filter(|t| t.task().is_some())
+            .collect()
     }
 }
 
@@ -407,9 +409,11 @@ mod tests {
                 PathBuf::from("test/file.java"),
             ].into_iter().collect::<HashSet<_>>(),
             modules: None,
+            tests: TestMode::NoBuild,
             ..MvnCmdConfig::default()
         };
         let cmds = conf.build_cmds();
+        dbg!(&cmds);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(cmds.len(), 1);
         let args = cmds[0].task().unwrap().args.iter()
             .map(|a| a.to_owned())
