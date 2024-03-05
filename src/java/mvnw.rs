@@ -172,8 +172,14 @@ async fn mvnw_dir(
 fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
     let modules = if args.all {
         vec![]
+    } else if !args.modules.is_empty() {
+        args.modules.iter()
+            .flat_map(|m| m.split(','))
+            .map(|m| m.trim().to_owned())
+            .sorted()
+            .unique()
+            .collect()
     } else {
-        vec!["omm-goat".to_owned()]; //TODO @mverleg: TEMPORARY! REMOVE THIS!
         unimplemented!()
     };
 

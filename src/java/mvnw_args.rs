@@ -23,7 +23,7 @@ pub struct MvnwArgs {
     #[arg(short = 'i', long, hide_short_help = true, conflicts_with = "phase")]
     pub install: bool,
     /// Install the modules into local .m2 after building them.
-    #[arg(short = 'p', long)]
+    #[arg(long)]
     pub phase: Vec<String>,  // only use last one
     /// Build all the code, not just changed files.
     #[arg(long)]
@@ -56,6 +56,14 @@ pub struct MvnwArgs {
     /// Only build prod (main) code, skip building tests.
     #[arg(short = 'T', long = "prod-only", group = "test")]
     prod_only: bool,
+
+    /// Modules to build, like mvn -pl, either a dir or ':module'
+    #[arg(short = 'p', long = "module", conflicts_with = "proj_root")]
+    pub modules: Vec<String>,
+    /// When using -p, also build dependencies
+    #[arg(long = "am", requires = "modules")]
+    pub incl_dependencies: Vec<String>,
+    //TODO @mverleg: ^
 
     /// Do not run checkstyle lints on the code.
     #[arg(short = 'L', long = "no-lint")]
