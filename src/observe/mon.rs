@@ -115,7 +115,7 @@ pub async fn mon_task(
     } else if !timing && !status.is_ok() {
         eprintln!("FAILED command {} (code {})", cmd_str, status.code());
     }
-    if let Err(err) = *sound_notification(sound_success, sound_failure, status.is_ok()).await {
+    if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()).await {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err();
     }
