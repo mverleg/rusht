@@ -11,9 +11,9 @@ use ::async_std::sync::Mutex;
 use ::async_std::sync::MutexGuard;
 use ::async_trait::async_trait;
 use ::log::debug;
+use ::log::warn;
 use ::regex::Regex;
 use ::smallvec::SmallVec;
-use log::warn;
 
 #[async_trait]
 pub trait LineWriter: Debug + Send {

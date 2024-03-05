@@ -5,12 +5,12 @@ use ::std::path::Path;
 use ::std::process::exit;
 
 use ::async_std::fs::File;
+use ::async_std::io::prelude::BufReadExt;
 use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
 use ::futures::AsyncReadExt;
 use ::futures::FutureExt;
 use ::log::debug;
-use async_std::io::prelude::BufReadExt;
 
 use crate::common::async_gate::AsyncGate;
 

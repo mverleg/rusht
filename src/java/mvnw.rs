@@ -189,13 +189,10 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
         eprintln!("ignoring provided --affected and using --affected=head instead");
         //TODO @mverleg: ^
     }
-    let (changed_files, _) = match git_affected_files_head(&cwd) {
-        Ok(files) => files,
-        Err(err) => {
-            eprintln!("skipping git integration: {}", err);
-            (HashSet::new(), HashSet::new())
-        }
-    };
+    let (changed_files, _) = git_affected_files_head(&cwd).unwrap_or_else(|err| {
+        eprintln!("skipping git integration: {}", err);
+        (HashSet::new(), HashSet::new())
+    });
     if let Some(example) = changed_files.iter().next() {
         debug!(
             "found {} affected files for {}, e.g. {}",
