@@ -141,6 +141,11 @@ impl Dependent {
     pub fn task(&self) -> Option<&Task> {
         self.task.as_ref()
     }
+
+    #[cfg(test)]
+    pub fn take_task(self) -> Option<Task> {
+        self.task
+    }
 }
 
 pub async fn run_all(dependents: Vec<Dependent>, writer: &mut impl LineWriter) -> ExitStatus {

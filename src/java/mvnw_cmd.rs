@@ -417,7 +417,7 @@ mod tests {
             tests: TestMode::NoBuild,
             ..MvnCmdConfig::default()
         };
-        let cmds = conf.build_cmds();
+        let cmds = get_tasks(conf.build_cmds());
         assert_eq!(cmds.len(), 1);
         let args = args_to_set(&cmds[0]);
         assert!(!args.contains("test-compile"));
@@ -440,15 +440,21 @@ mod tests {
             tests: TestMode::Files,
             ..MvnCmdConfig::default()
         };
-        let cmds = conf.build_cmds();
+        let cmds = get_tasks(conf.build_cmds());
         dbg!(&cmds);  //TODO @mverleg: TEMPORARY! REMOVE THIS!
         assert_eq!(cmds.len(), 1);
         let args = args_to_set(&cmds[0]);
         assert!(args.contains("--also-make"));
     }
 
-    fn args_to_set(cmds: &Dependent) -> HashSet<String> {
-        cmds.task().unwrap().args.iter()
+    fn get_tasks(deps: Vec<Dependent>) -> Vec<Task> {
+        deps.into_iter()
+            .flat_map(|d| d.take_task().into_iter())
+            .collect()
+    }
+
+    fn args_to_set(cmds: &Task) -> HashSet<String> {
+        cmds.args.iter()
             .map(|a| a.to_owned())
             .collect::<HashSet<_>>()
     }
