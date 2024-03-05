@@ -91,13 +91,13 @@ pub async fn mon_task(
     };
     let duration = t0.elapsed().as_millis();
     if timing && status.is_ok() {
-        if cmd_str.len() > 256 {
+        if cmd_str.len() > 1000 {
             // approximate for non-ascii
             monitor_writer
                 .write_line(format!(
                     "success: took {} ms to run {}...",
                     duration,
-                    cmd_str.chars().take(256).collect::<String>()
+                    cmd_str.chars().take(1000).collect::<String>()
                 ))
                 .await;
         } else {
