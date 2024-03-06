@@ -146,6 +146,9 @@ impl MvnCmdConfig {
             //"package"
         };
         args.push(stage.to_owned());
+        if self.tests == TestMode::NoBuild {
+            args.push("-Dmaven.test.skip=true".to_owned())
+        }
 
         // Affected build modules
         if let Some(modules) = &self.modules {
