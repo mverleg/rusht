@@ -1,6 +1,4 @@
 
-use ::async_std::task::block_on;
-
 use crate::common::StdWriter;
 use crate::common::Task;
 
@@ -12,12 +10,15 @@ pub async fn sound_notification(
     let task = if is_success && sound_on_success {
         Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()])
     } else if !is_success && sound_on_failure {
-        Task::new_in_cwd("say".to_owned(), None, vec!["that failed, sorry".to_owned()])
+        Task::new_in_cwd("say".to_owned(), None, vec!["that failed".to_owned()])
     } else {
         return Ok(())
     };
     //TODO @mverleg: use block_on since async wants recursive future type, and we anyway want to wait
-    let status = block_on(task.execute_with_stdout(true, &mut StdWriter::stdout()));
+    let status = task.execute_with_stdout_nomonitor(
+        &mut StdWriter::stdout(),
+        &mut StdWriter::stderr()
+    ).await;
     if status.is_err() {
         return Err(format!("failed to play sound using {}", &task.as_cmd_str()))
     }
