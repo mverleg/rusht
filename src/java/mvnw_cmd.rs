@@ -159,7 +159,7 @@ impl MvnCmdConfig {
             }
             for module in modules {
                 args.push("--projects".to_owned());
-                args.push(format!(":{}", module));
+                args.push(format!("{}", module));
             }
             if ! self.no_build_deps {
                 args.push("--also-make".to_owned())
