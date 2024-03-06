@@ -171,9 +171,7 @@ async fn mvnw_dir(
 
 fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
     let modules = if !args.modules.is_empty() {
-        if args.all {
-            warn!("ignoring --all because -p was specified");
-        }
+        assert!(!args.all);
         Some(args.modules.iter()
             .flat_map(|m| m.split(','))
             .map(|m| m.trim().to_owned())
@@ -183,7 +181,8 @@ fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnC
     } else if args.all {
         None
     } else {
-        unimplemented!()
+        warn!("using --all as default; this behaviour might change");
+        None
     };
 
     if args.affected_policy == AffectedPolicy::None && args.modules.is_empty() {

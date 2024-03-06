@@ -58,7 +58,7 @@ pub struct MvnwArgs {
     prod_only: bool,
 
     /// Modules to build, like mvn -pl, either a dir or ':module'
-    #[arg(short = 'p', long = "module", conflicts_with = "proj_roots")]
+    #[arg(short = 'p', long = "module", conflicts_with = "proj_roots,all")]
     pub modules: Vec<String>,
     /// Only build the modules specified with -p and -x, assume dependencies are already installed (like mvn -am)
     #[arg(long = "no-build-deps", visible_alias = "nodep")]
