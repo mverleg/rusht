@@ -28,9 +28,6 @@ pub async fn mvnw(
         warn!("--fail-if-added not implemented");
     }
     debug!("arguments: {:?}", &args);
-    if !args.all {
-        return Err((ExitStatus::err(), "--all required for now".to_owned())); //TODO @mverleg: --all required for now
-    }
 
     if !args.proj_roots.is_empty() {
         debug!("using multi-dir mode for {} roots", args.proj_roots.len());
