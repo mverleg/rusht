@@ -102,6 +102,6 @@ fn test_cli_args() {
     assert!(args.any_explicit_key());
     args = CachedArgs::try_parse_from(&["cmd", "-d1y", "--text", "string", "ls", "-alsh"]).unwrap();
     assert!(args.any_explicit_key());
-    args = CachedArgs::try_parse_from(&["cmd", "-d1y", "-gbpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
+    args = CachedArgs::try_parse_from(&["cmd", "-d1y", "-gpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
     assert!(args.any_explicit_key());
 }

@@ -223,7 +223,7 @@ fn compute_hash(texts: Vec<String>) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
+    use ::std::collections::HashMap;
 
     use super::*;
 
