@@ -168,7 +168,7 @@ async fn mvnw_dir(
 
 fn build_config(cwd: PathBuf, java_home: PathBuf, args: MvnwArgs) -> Result<MvnCmdConfig, String> {
     let modules = if !args.modules.is_empty() {
-        assert!(!args.all);
+        assert!(!args.all, "do not use --all if modules are explicitly specified");
         Some(args.modules.iter()
             .flat_map(|m| m.split(','))
             .map(|m| m.trim().to_owned())
