@@ -36,7 +36,7 @@ pub struct CachedKeyArgs {
     #[arg(short = 'g', long)]
     pub git_head: bool,
     /// Invalidates cache if the current git branch merge-base commit is different.
-    #[arg(short = 'b', long)]
+    #[arg(short = 'b', long, conflicts_with = "git_head")]
     pub git_base: bool,
     /// Invalidates cache if the uncommitted git files change.
     #[arg(short = 'p', long)]

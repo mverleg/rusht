@@ -183,8 +183,7 @@ fn build_key_with(
         let head = git_head_ref(&task.working_dir).map_err(|err| {
             format!("caching based on git HEAD, but could not read it, err: {err}") })?;
         key.push(head)
-    }
-    if args.git_base {
+    } else if args.git_base {
         let head = git_master_base_ref(&task.working_dir).map_err(|err| {
             format!("caching based on git merge base, but could not determine it, err: {err}") })?;
         key.push(head)
