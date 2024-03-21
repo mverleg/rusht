@@ -58,7 +58,8 @@ pub struct MvnwArgs {
     prod_only: bool,
 
     /// Modules to build, like mvn -pl, either a dir or ':module'
-    #[arg(short = 'p', long = "module", conflicts_with = "proj_roots,all")]
+    #[arg(short = 'p', long = "module", conflicts_with_all = ["proj_roots", "all"])]
+    //TODO @mverleg: all
     pub modules: Vec<String>,
     /// Only build the modules specified with -p and -x, assume dependencies are already installed (like mvn -am)
     #[arg(long = "no-build-deps", visible_alias = "nodep")]
@@ -129,7 +130,6 @@ pub struct MvnwArgs {
 fn test_cli_args() {
     MvnwArgs::try_parse_from(&[
         "cmd",
-        "--all",
         "--test-none",
         "--max-exec-memory=2048",
         "--fail-if-added=//TODO @mverleg:",

@@ -208,12 +208,17 @@ fn build_key_with(
 }
 
 fn compute_hash(texts: Vec<String>) -> String {
+    if texts.is_empty() {
+        return "nopending".to_owned()
+    }
     let mut hasher = Sha256::new();
     for text in texts {
         hasher.update(text.as_bytes());
     }
     let hash_out = hasher.finalize();
-    URL_SAFE_NO_PAD.encode(hash_out).to_ascii_lowercase()
+    let mut hash = "pend".to_owned();
+    hash.push_str(&URL_SAFE_NO_PAD.encode(hash_out)[..20].to_ascii_lowercase());
+    hash
 }
 
 #[cfg(test)]
