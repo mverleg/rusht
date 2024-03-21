@@ -8,14 +8,18 @@ use ::std::path::PathBuf;
 use ::std::time::Duration;
 use std::env::VarError;
 
+use ::base64::Engine;
+use ::base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
+use ::sha2::Digest;
+use ::sha2::Sha256;
 use ::time::OffsetDateTime;
-use crate::cached::args::CachedKeyArgs;
 
+use crate::cached::args::CachedKeyArgs;
 use crate::cached::CachedArgs;
-use crate::common::unique_filename;
+use crate::common::{git_uncommitted_changes, safe_filename, unique_filename};
 use crate::common::fail;
 use crate::common::git_head_ref;
 use crate::common::git_master_base_ref;
@@ -23,6 +27,7 @@ use crate::common::LineWriter;
 use crate::common::Task;
 use crate::common::TeeWriter;
 use crate::common::VecWriter;
+use crate::escape::namesafe_line;
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -188,6 +193,11 @@ fn build_key_with(
             format!("caching based on git merge base, but could not determine it, err: {err}") })?;
         key.push(head)
     }
+    if args.git_pending {
+        let pending = git_uncommitted_changes(&task.working_dir).map_err(|err| {
+            format!("caching based on pending git changes, but could not query them, err: {err}") })?;
+        key.push(safe_filename(&pending.join("_")))
+    }
     for env_key in &args.env {
         key.push(get_from_env(env_key)?)
     }
@@ -197,9 +207,19 @@ fn build_key_with(
     Ok(unique_filename(&key.join("_")))
 }
 
+fn compute_hash(texts: Vec<String>) -> String {
+    let mut hasher = Sha256::new();
+    for text in texts {
+        hasher.update(text.as_bytes());
+    }
+    let hash_out = hasher.finalize();
+    URL_SAFE_NO_PAD.encode(hash_out).to_ascii_lowercase()
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+
     use super::*;
 
     fn create_test_task() -> Task {

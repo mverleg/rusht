@@ -34,8 +34,13 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
 }
 
 pub fn git_master_base_ref(dir: &Path) -> Result<String, String> {
-    //git base-cmt HEAD || git rev-list --max-parents=0 HEAD
+    // git base-cmt HEAD || git rev-list --max-parents=0 HEAD
     unimplemented!("cannot get master base")
+}
+
+pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
+    // set(line.split(maxsplit=1)[1] for line in _run_git_cmd(['status', '-v', '--porcelain']).splitlines())
+    unimplemented!("cannot get uncommitted changes")
 }
 
 /// Returns changed and deleted files (separately) in head
