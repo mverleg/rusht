@@ -1,4 +1,5 @@
 use ::std::env;
+use ::std::env::VarError;
 use ::std::fs::create_dir_all;
 use ::std::fs::OpenOptions;
 use ::std::io::BufReader;
@@ -6,28 +7,24 @@ use ::std::io::Write;
 use ::std::path::Path;
 use ::std::path::PathBuf;
 use ::std::time::Duration;
-use std::env::VarError;
 
-use ::base64::Engine;
-use ::base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use ::log::debug;
 use ::serde::Deserialize;
 use ::serde::Serialize;
-use ::sha2::Digest;
-use ::sha2::Sha256;
 use ::time::OffsetDateTime;
 
 use crate::cached::args::CachedKeyArgs;
 use crate::cached::CachedArgs;
-use crate::common::{git_uncommitted_changes, safe_filename, unique_filename};
 use crate::common::fail;
 use crate::common::git_head_ref;
 use crate::common::git_master_base_ref;
+use crate::common::git_uncommitted_changes;
 use crate::common::LineWriter;
+use crate::common::safe_filename;
 use crate::common::Task;
 use crate::common::TeeWriter;
+use crate::common::unique_filename;
 use crate::common::VecWriter;
-use crate::escape::namesafe_line;
 use crate::ExitStatus;
 
 pub const DATA_VERSION: u32 = 1;
@@ -194,8 +191,9 @@ async fn build_key_with(
         key.push(head)
     }
     if args.git_pending {
-        let pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
+        let mut pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
             format!("caching based on pending git changes, but could not query them, err: {err}") })?;
+        pending.sort();  // perhaps unnecessary, but just in case git changes order
         key.push(safe_filename(&pending.join("_")))
     }
     for env_key in &args.env {
@@ -205,20 +203,6 @@ async fn build_key_with(
         key.push(text.to_owned())
     }
     Ok(unique_filename(&key.join("_")))
-}
-
-fn compute_hash(texts: Vec<String>) -> String {
-    if texts.is_empty() {
-        return "nopending".to_owned()
-    }
-    let mut hasher = Sha256::new();
-    for text in texts {
-        hasher.update(text.as_bytes());
-    }
-    let hash_out = hasher.finalize();
-    let mut hash = "pend".to_owned();
-    hash.push_str(&URL_SAFE_NO_PAD.encode(hash_out)[..20].to_ascii_lowercase());
-    hash
 }
 
 #[cfg(test)]

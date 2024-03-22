@@ -1,6 +1,7 @@
 
 //TODO @mverleg: scopes
 //TODO @mverleg: switch to tinyvec
+#![allow(dead_code)]  //TODO @mverleg: TEMPORARY! REMOVE THIS!
 
 use ::std::collections::hash_map::Entry;
 use ::std::collections::HashMap;

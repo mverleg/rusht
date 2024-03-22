@@ -282,7 +282,7 @@ fn batched_apart(
 async fn run_batch(_batch: &[String], task: &Task, writer: &mut impl LineWriter) -> Result<(), String> {
     let _res = task.execute_with_stdout_nomonitor(writer, &mut StdWriter::stderr()).await;
     todo!("waiting for exec2 code");
-    Ok(())
+    //Ok(())
 }
 
 #[cfg(test)]
