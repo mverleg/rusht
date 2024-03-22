@@ -38,11 +38,16 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
 }
 
 pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
-    git_shell_cmd(
+    let mut lines = git_shell_cmd(
         dir,
         vec!["merge-base".to_owned(), "origin/master".to_owned(), "HEAD".to_owned()],
+        //TODO @mverleg: master?
         "getting git merge base",
-    ).await
+    ).await?;
+    if lines.len() != 1 {
+        return Err(format!("unexpected response when getting git merge base: {}", lines.join("\\n")))
+    }
+    Ok(lines.pop().unwrap())
 }
 
 pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
@@ -50,7 +55,11 @@ pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
     unimplemented!("cannot get uncommitted changes")
 }
 
-async fn git_shell_cmd(dir: &Path, git_args: Vec<String>, context_descr: &str) -> Result<String, String> {
+async fn git_shell_cmd(
+    dir: &Path,
+    git_args: Vec<String>,
+    context_descr: &str
+) -> Result<Vec<String>, String> {
     let mut output = VecWriter::new();
     let mut errors = VecWriter::new();
     let status = Task::new(
@@ -63,13 +72,9 @@ async fn git_shell_cmd(dir: &Path, git_args: Vec<String>, context_descr: &str) -
         &mut errors
     ).await;
     if status.is_ok() {
-        let mut lines = output.get();
-        if lines.len() != 1 {
-            return Err(format!("unexpected response when {context_descr}: {}", lines.join("\\n")))
-        }
-        Ok(lines.pop().unwrap())
+        Ok(output.get())
     } else {
-        return Err(format!("error while {context_descr}: {}", errors.get().join("; ")))
+        Err(format!("error while {context_descr}: {}", errors.get().join("; ")))
     }
 }
 
