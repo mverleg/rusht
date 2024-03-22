@@ -48,7 +48,7 @@ struct Cache {
 
 pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter) -> Result<CacheStatus, String> {
     let task = args.cmd.clone().into_task();
-    let cache_pth = get_cache_path(&args, &task)?;
+    let cache_pth = get_cache_path(&args, &task).await?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {
         return Ok(CacheStatus::FromCache(output));
@@ -140,8 +140,8 @@ fn update_cache(output: String, task: Task, cache_pth: &Path) {
         });
 }
 
-fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
-    let key = build_key(args, task)?;
+async fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
+    let key = build_key(args, task).await?;
     let filename = unique_filename(&key);
     let mut pth = dirs::cache_dir().expect("failed to find cache directory");
     pth.push(format!("cmdcache_v{}", DATA_VERSION));
@@ -151,8 +151,8 @@ fn get_cache_path(args: &CachedArgs, task: &Task) -> Result<PathBuf, String> {
     Ok(pth)
 }
 
-fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
-    build_key_with(&args.key, task, read_from_sys_env)
+async fn build_key(args: &CachedArgs, task: &Task) -> Result<String, String> {
+    build_key_with(&args.key, task, read_from_sys_env).await
 }
 
 fn read_from_sys_env(env_key: &str) -> Result<String, String> {
@@ -164,7 +164,7 @@ fn read_from_sys_env(env_key: &str) -> Result<String, String> {
     })
 }
 
-fn build_key_with(
+async fn build_key_with(
     args: &CachedKeyArgs,
     task: &Task,
     get_from_env: impl Fn(&str) -> Result<String, String>
@@ -189,7 +189,7 @@ fn build_key_with(
             format!("caching based on git HEAD, but could not read it, err: {err}") })?;
         key.push(head)
     } else if args.git_base {
-        let head = git_master_base_ref(&task.working_dir).map_err(|err| {
+        let head = git_master_base_ref(&task.working_dir).await.map_err(|err| {
             format!("caching based on git merge base, but could not determine it, err: {err}") })?;
         key.push(head)
     }
@@ -244,16 +244,16 @@ mod tests {
         })
     }
 
-    #[test]
-    fn build_key_vanilla() {
+    #[async_std::test]
+    async fn build_key_vanilla() {
         let task = create_test_task();
         let args = CachedArgs::default();
-        let key = build_key_with(&args.key, &task, read_from_test_env);
+        let key = build_key_with(&args.key, &task, read_from_test_env).await;
         assert_eq!(key, Ok("tmp_ls_a_qjtza8xbfyol".to_owned()));
     }
 
-    #[test]
-    fn build_key_with_text_env() {
+    #[async_std::test]
+    async fn build_key_with_text_env() {
         let task = create_test_task();
         let args = CachedArgs {
             key: CachedKeyArgs {
@@ -263,7 +263,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let key = build_key_with(&args.key, &task, read_from_test_env);
+        let key = build_key_with(&args.key, &task, read_from_test_env).await;
         assert_eq!(key, Ok("tmp_ls_a_VAR_NO_hellq1kzva1h4vlt".to_owned()));
     }
 }

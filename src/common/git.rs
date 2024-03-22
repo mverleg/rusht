@@ -50,16 +50,13 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
         &mut errors
     ).await;
     if status.is_ok() {
-        let lines = output.get();
-        let Some ((first, others)) = lines.split() else {
-            return Err(format!("no response when getting git merge base"))
-        };
-        if ! others.is_empty() {
+        let mut lines = output.get();
+        if lines.len() != 1 {
             return Err(format!("unexpected response when getting git merge base: {}", lines.join("\\n")))
         }
-        Ok(first)
+        Ok(lines.pop().unwrap())
     } else {
-        return Err(format!("error while getting git merge base: {}", err))
+        return Err(format!("error while getting git merge base: {}", errors.get().join("; ")))
     }
 }
 
