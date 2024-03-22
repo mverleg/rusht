@@ -9,8 +9,10 @@ use ::git2::Error;
 use ::git2::Repository;
 use ::log::debug;
 use ::log::warn;
-use num_cpus::get;
-use crate::common::{Task, VecWriter};
+use ::num_cpus::get;
+
+use crate::common::Task;
+use crate::common::VecWriter;
 
 pub fn git_head_ref(dir: &Path) -> Result<String, String> {
     let repo = repo_open_ancestor(dir)?;
@@ -36,13 +38,24 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
 }
 
 pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
-    // git merge-base "$frm" "$to" 2>/dev/null ||\
-    //     git rev-list --max-parents=0 HEAD
+    git_shell_cmd(
+        dir,
+        vec!["merge-base".to_owned(), "origin/master".to_owned(), "HEAD".to_owned()],
+        "getting git merge base",
+    ).await
+}
+
+pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
+    // set(line.split(maxsplit=1)[1] for line in _run_git_cmd(['status', '-v', '--porcelain']).splitlines())
+    unimplemented!("cannot get uncommitted changes")
+}
+
+async fn git_shell_cmd(dir: &Path, git_args: Vec<String>, context_descr: &str) -> Result<String, String> {
     let mut output = VecWriter::new();
     let mut errors = VecWriter::new();
     let status = Task::new(
         "git".to_owned(),
-        vec!["merge-base".to_owned(), "origin/master".to_owned(), "HEAD".to_owned()],
+        git_args,
         dir.to_owned(),
         None
     ).execute_with_stdout_nomonitor(
@@ -52,17 +65,12 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
     if status.is_ok() {
         let mut lines = output.get();
         if lines.len() != 1 {
-            return Err(format!("unexpected response when getting git merge base: {}", lines.join("\\n")))
+            return Err(format!("unexpected response when {context_descr}: {}", lines.join("\\n")))
         }
         Ok(lines.pop().unwrap())
     } else {
-        return Err(format!("error while getting git merge base: {}", errors.get().join("; ")))
+        return Err(format!("error while {context_descr}: {}", errors.get().join("; ")))
     }
-}
-
-pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
-    // set(line.split(maxsplit=1)[1] for line in _run_git_cmd(['status', '-v', '--porcelain']).splitlines())
-    unimplemented!("cannot get uncommitted changes")
 }
 
 /// Returns changed and deleted files (separately) in head
@@ -116,17 +124,6 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
     }
     //TODO @mverleg: ^ this (hopefully) works for the specific commit, but when combining multiple commits, the files don't necessarily exist anymore at the end
     Ok((changed_files, deleted_files))
-}
-
-pub fn git_affected_files_uncommitted() {
-    //diff --name-only HEAD;
-    todo!()
-}
-
-pub fn git_affected_files_branch() {
-    //let base = git master-base;
-    //git diff-tree --no-commit-id --name-only -r base;
-    todo!()
 }
 
 #[cfg(test)]
