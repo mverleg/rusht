@@ -9,6 +9,8 @@ use ::git2::Error;
 use ::git2::Repository;
 use ::log::debug;
 use ::log::warn;
+use num_cpus::get;
+use crate::common::{Task, VecWriter};
 
 pub fn git_head_ref(dir: &Path) -> Result<String, String> {
     let repo = repo_open_ancestor(dir)?;
@@ -33,9 +35,32 @@ fn repo_open_ancestor(deepest: &Path) -> Result<Repository, String> {
         deepest.to_string_lossy(), msg.unwrap_or_else(|| "(no message)".to_owned())))
 }
 
-pub fn git_master_base_ref(dir: &Path) -> Result<String, String> {
-    // git base-cmt HEAD || git rev-list --max-parents=0 HEAD
-    unimplemented!("cannot get master base")
+pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
+    // git merge-base "$frm" "$to" 2>/dev/null ||\
+    //     git rev-list --max-parents=0 HEAD
+    let mut output = VecWriter::new();
+    let mut errors = VecWriter::new();
+    let status = Task::new(
+        "git".to_owned(),
+        vec!["merge-base".to_owned(), "origin/master".to_owned(), "HEAD".to_owned()],
+        dir.to_owned(),
+        None
+    ).execute_with_stdout_nomonitor(
+        &mut output,
+        &mut errors
+    ).await;
+    if status.is_ok() {
+        let lines = output.get();
+        let Some ((first, others)) = lines.split() else {
+            return Err(format!("no response when getting git merge base"))
+        };
+        if ! others.is_empty() {
+            return Err(format!("unexpected response when getting git merge base: {}", lines.join("\\n")))
+        }
+        Ok(first)
+    } else {
+        return Err(format!("error while getting git merge base: {}", err))
+    }
 }
 
 pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
@@ -98,11 +123,13 @@ pub fn git_affected_files_head(dir: &Path) -> Result<(HashSet<PathBuf>, HashSet<
 
 pub fn git_affected_files_uncommitted() {
     //diff --name-only HEAD;
+    todo!()
 }
 
 pub fn git_affected_files_branch() {
     //let base = git master-base;
     //git diff-tree --no-commit-id --name-only -r base;
+    todo!()
 }
 
 #[cfg(test)]
