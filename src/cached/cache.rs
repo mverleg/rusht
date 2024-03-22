@@ -194,7 +194,7 @@ async fn build_key_with(
         key.push(head)
     }
     if args.git_pending {
-        let pending = git_uncommitted_changes(&task.working_dir).map_err(|err| {
+        let pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
             format!("caching based on pending git changes, but could not query them, err: {err}") })?;
         key.push(safe_filename(&pending.join("_")))
     }

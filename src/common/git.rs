@@ -50,9 +50,17 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
     Ok(lines.pop().unwrap())
 }
 
-pub fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
-    // set(line.split(maxsplit=1)[1] for line in _run_git_cmd(['status', '-v', '--porcelain']).splitlines())
-    unimplemented!("cannot get uncommitted changes")
+pub async fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
+    let lines = git_shell_cmd(
+        dir,
+        vec!["status".to_owned(), "-c".to_owned(), "--porcelain".to_owned()],
+        "finding uncommitted git changes",
+    ).await?;
+    Ok(lines.into_iter()
+        .flat_map(|line| line.split_ascii_whitespace()
+            .skip(1).next()
+            .map(ToOwned::to_owned))
+        .collect())
 }
 
 async fn git_shell_cmd(
