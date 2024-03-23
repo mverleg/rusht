@@ -10,8 +10,8 @@ pub async fn sound_notification(
     is_success: bool,
     details: String,
 ) -> Result<(), String> {
-    let popup_msg = format!("display notification \"{}\" with title \"Build {}\"'",
-            details.replace("\"", ""),
+    let popup_msg = format!("display notification \"{}\" with title \"{} (mon)\"",
+            details.replace("\"", "").replace("'", ""),
             if is_success { "OK" } else { "FAILED"});
     let (sound_task, popup_task) = if is_success && sound_on_success {
         (
