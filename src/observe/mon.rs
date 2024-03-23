@@ -28,8 +28,7 @@ pub async fn mon(
             args,
             &mut PrefixWriter::new(output_writer, prefix),
             monitor_writer,
-        )
-        .await
+        ).await
     } else {
         mon_task_with_writer(&task, args, output_writer, monitor_writer).await
     }
@@ -50,8 +49,7 @@ pub async fn mon_task_with_writer(
         !args.no_timing,
         args.sound_success,
         args.sound_failure,
-    )
-    .await
+    ).await
 }
 
 pub async fn mon_task(
@@ -90,7 +88,7 @@ pub async fn mon_task(
         status
     };
     let duration = t0.elapsed().as_millis();
-    if timing && status.is_ok() {
+    let details = if timing && status.is_ok() {
         if cmd_str.len() > 1000 {
             // approximate for non-ascii
             monitor_writer
@@ -105,6 +103,7 @@ pub async fn mon_task(
                 .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
                 .await;
         }
+        format!("took {} ms to run {}", duration, cmd_str)
     } else if timing && !status.is_ok() {
         eprintln!(
             "FAILED command {} in {} ms (code {})",
@@ -112,10 +111,15 @@ pub async fn mon_task(
             duration,
             status.code()
         );
+        format!("err {} in {} ms for {}", status.code() duration, cmd_str)
     } else if !timing && !status.is_ok() {
         eprintln!("FAILED command {} (code {})", cmd_str, status.code());
-    }
-    if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok()).await {
+        format!("err {} for {}", status.code(), cmd_str)
+    } else {
+        format!("finished {}", cmd_str)
+    };
+    debug!("{}", &details);
+    if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok(), details).await {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err();
     }
