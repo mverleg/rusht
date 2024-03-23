@@ -1,3 +1,4 @@
+use ::std::future::join;
 
 use crate::common::StdWriter;
 use crate::common::Task;
@@ -12,27 +13,35 @@ pub async fn sound_notification(
     let popup_msg = format!("display notification \"{}\" with title \"Build {}\"'",
             details.replace("\"", ""),
             if is_success { "OK" } else { "FAILED"});
-    let popup_task = if is_success && sound_on_success {
-        Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
+    let (sound_task, popup_task) = if is_success && sound_on_success {
+        (
+            Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()]),
+            Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
+        )
     } else if !is_success && sound_on_failure {
-        Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
-    } else {
-        return Ok(())
-    };
-    let sound_task = if is_success && sound_on_success {
-        Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()])
-    } else if !is_success && sound_on_failure {
-        Task::new_in_cwd("say".to_owned(), None, vec!["that failed".to_owned()])
+        (
+            Task::new_in_cwd("say".to_owned(), None, vec!["that failed".to_owned()]),
+            Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
+        )
     } else {
         return Ok(())
     };
     //TODO @mverleg: use block_on since async wants recursive future type, and we anyway want to wait
-    let status = sound_task.execute_with_stdout_nomonitor(
-        &mut StdWriter::stdout(),
-        &mut StdWriter::stderr()
+    let (sound_status, popup_status) = join!(
+        sound_task.execute_with_stdout_nomonitor(
+            &mut StdWriter::stdout(),
+            &mut StdWriter::stderr()
+        ),
+        popup_task.execute_with_stdout_nomonitor(
+            &mut StdWriter::stdout(),
+            &mut StdWriter::stderr()
+        ),
     ).await;
-    if status.is_err() {
+    if sound_status.is_err() {
         return Err(format!("failed to play sound using {}", &sound_task.as_cmd_str()))
+    }
+    if popup_status.is_err() {
+        return Err(format!("failed to show popup using {}", &popup_task.as_cmd_str()))
     }
     Ok(())
 

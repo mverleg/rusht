@@ -111,7 +111,7 @@ pub async fn mon_task(
             duration,
             status.code()
         );
-        format!("err {} in {} ms for {}", status.code() duration, cmd_str)
+        format!("err {} in {} ms for {}", status.code(), duration, cmd_str)
     } else if !timing && !status.is_ok() {
         eprintln!("FAILED command {} (code {})", cmd_str, status.code());
         format!("err {} for {}", status.code(), cmd_str)
