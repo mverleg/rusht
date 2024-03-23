@@ -2,12 +2,24 @@
 use crate::common::StdWriter;
 use crate::common::Task;
 
+//TODO @mverleg: rename since not just sound anymore?
 pub async fn sound_notification(
     sound_on_success: bool,
     sound_on_failure: bool,
     is_success: bool,
+    details: String,
 ) -> Result<(), String> {
-    let task = if is_success && sound_on_success {
+    let popup_msg = format!("display notification \"{}\" with title \"Build {}\"'",
+            details.replace("\"", ""),
+            if is_success { "OK" } else { "FAILED"});
+    let popup_task = if is_success && sound_on_success {
+        Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
+    } else if !is_success && sound_on_failure {
+        Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
+    } else {
+        return Ok(())
+    };
+    let sound_task = if is_success && sound_on_success {
         Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()])
     } else if !is_success && sound_on_failure {
         Task::new_in_cwd("say".to_owned(), None, vec!["that failed".to_owned()])
@@ -15,12 +27,12 @@ pub async fn sound_notification(
         return Ok(())
     };
     //TODO @mverleg: use block_on since async wants recursive future type, and we anyway want to wait
-    let status = task.execute_with_stdout_nomonitor(
+    let status = sound_task.execute_with_stdout_nomonitor(
         &mut StdWriter::stdout(),
         &mut StdWriter::stderr()
     ).await;
     if status.is_err() {
-        return Err(format!("failed to play sound using {}", &task.as_cmd_str()))
+        return Err(format!("failed to play sound using {}", &sound_task.as_cmd_str()))
     }
     Ok(())
 
