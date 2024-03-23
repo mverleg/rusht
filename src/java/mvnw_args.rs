@@ -14,6 +14,7 @@ use crate::java::newtype::{FullyQualifiedName, Profile};
     about = "Wrapper for maven (daemon) to add speed flags. Needs maven and uses git.",
     after_help = "Thanks for using! Note: some options are only visible with --help (not with -h).",
     group = clap::ArgGroup::new("test").multiple(false),
+    args_override_self = true,
 )]
 pub struct MvnwArgs {
     /// Do a clean build (also cleans unchanged modules).
