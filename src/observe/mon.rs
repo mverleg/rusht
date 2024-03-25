@@ -2,7 +2,11 @@ use ::std::time::Instant;
 
 use ::log::debug;
 
-use crate::common::{LineWriter, PrefixWriter, StdWriter, Task, VecWriter};
+use crate::common::Task;
+use crate::common::StdWriter;
+use crate::common::PrefixWriter;
+use crate::common::LineWriter;
+use crate::common::VecWriter;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
 use crate::ExitStatus;
