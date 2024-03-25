@@ -1,5 +1,7 @@
 use ::std::future::join;
 
+use ::log::error;
+
 use crate::common::StdWriter;
 use crate::common::Task;
 
@@ -41,7 +43,7 @@ pub async fn sound_notification(
         return Err(format!("failed to play sound using {}", &sound_task.as_cmd_str()))
     }
     if popup_status.is_err() {
-        return Err(format!("failed to show popup using {}", &popup_task.as_cmd_str()))
+        error!("failed to show popup using {}", &popup_task.as_cmd_str())
     }
     Ok(())
 
