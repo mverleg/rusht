@@ -127,6 +127,20 @@ mod tests {
     }
 
     #[test]
+    fn short_name_bug() {
+        let res = namesafe_line(
+            "vp",
+            &NamesafeArgs {
+                hash_policy: HashPolicy::TooLong,
+                keep_tail: true,
+                single_line: true,
+                ..Default::default()
+            },
+        );
+        assert_eq!(res, "vp");
+    }
+
+    #[test]
     fn legal_filename_hash() {
         let res = namesafe_line(
             "Hello world",
