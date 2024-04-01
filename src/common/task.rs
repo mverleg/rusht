@@ -106,8 +106,13 @@ impl Task {
 
     /// Command but with at most max_len chars (except if the executable is longer)
     fn as_cmd_str_maxlen(&self, exe_name: String, max_len: usize) -> String {
-        let txt = exe_name;
+        debug_assert!(max_len > 3);
+        let mut txt = exe_name;
         for arg in &self.args {
+            if txt.len() + arg.len() > max_len - 4 {
+                write!(txt, " ...");
+                break;
+            }
             if SAFE_ARG_RE.is_match(arg) {
                 write!(txt, " {}", arg).unwrap()
             } else {

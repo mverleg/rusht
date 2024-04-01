@@ -68,7 +68,6 @@ pub async fn mon_task(
     sound_success: bool,
     sound_failure: bool,
 ) -> ExitStatus {
-    debug!("print_cmd={print_cmd} output_on_success={output_on_success} timing={timing} sound_success={sound_success} sound_failure={sound_failure} for task {}", task.as_str());
     let cmd_str = if full_cmd {
         task.as_str()
     } else {
@@ -99,20 +98,9 @@ pub async fn mon_task(
     };
     let duration = t0.elapsed().as_millis();
     let details = if timing && status.is_ok() {
-        if cmd_str.len() > 1000 {
-            // approximate for non-ascii
-            monitor_writer
-                .write_line(format!(
-                    "success: took {} ms to run {}...",
-                    duration,
-                    cmd_str.chars().take(1000).collect::<String>()
-                ))
-                .await;
-        } else {
-            monitor_writer
-                .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
-                .await;
-        }
+        monitor_writer
+            .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
+            .await;
         format!("took {} ms to run {}", duration, cmd_str)
     } else if timing && !status.is_ok() {
         eprintln!(
