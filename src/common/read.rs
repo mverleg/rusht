@@ -112,8 +112,7 @@ impl RejectStdin {
     pub fn new() -> Self {
         let gate = AsyncGate::new();
         let gate_clone = gate.clone();
-        #[allow(clippy::redundant_closure_call)] // not as easy to remove as clippy thinks
-        async_std::task::spawn((async move || {
+        let f = async move || {
             debug!("starting monitor to reject stdin input");
             let res = async_std::io::stdin()
                 .read(&mut [0])
@@ -125,7 +124,8 @@ impl RejectStdin {
                 exit(1);
             }
             debug!("finished stdin rejection monitor because the reader was dropped");
-        })());
+        };
+        async_std::task::spawn(f());
         RejectStdin { gate }
     }
 }

@@ -1,7 +1,5 @@
 use ::std::cmp::Ordering;
 
-use ::serde;
-
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FSNode {
     pub name: String,
