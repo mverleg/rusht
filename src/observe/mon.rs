@@ -49,6 +49,7 @@ pub async fn mon_task_with_writer(
         output_writer,
         monitor_writer,
         !args.no_print_cmd,
+        args.full_command,
         !args.no_output_on_success,
         !args.no_timing,
         args.sound_success,
@@ -61,13 +62,18 @@ pub async fn mon_task(
     output_writer: &mut impl LineWriter,
     monitor_writer: &mut impl LineWriter,
     print_cmd: bool,
+    full_cmd: bool,
     output_on_success: bool,
     timing: bool,
     sound_success: bool,
     sound_failure: bool,
 ) -> ExitStatus {
     debug!("print_cmd={print_cmd} output_on_success={output_on_success} timing={timing} sound_success={sound_success} sound_failure={sound_failure} for task {}", task.as_str());
-    let cmd_str = task.as_str();
+    let cmd_str = if full_cmd {
+        task.as_str()
+    } else {
+        task.as_short_cmd_str()
+    };
     if print_cmd {
         monitor_writer
             .write_line(format!("going to run {}", cmd_str))

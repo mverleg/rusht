@@ -94,6 +94,19 @@ impl Task {
         if txt.is_empty() {
             txt.push_str(&self.cmd)
         }
+        self.as_cmd_str_maxlen(txt, usize::MAX)
+    }
+
+    pub fn as_short_cmd_str(&self) -> String {
+        let txt = PathBuf::from(&self.cmd).file_name()
+            .map(|n| n.to_str().unwrap().to_owned())
+            .unwrap_or_else(|| self.cmd.to_owned());
+        self.as_cmd_str_maxlen(txt, 72)
+    }
+
+    /// Command but with at most max_len chars (except if the executable is longer)
+    fn as_cmd_str_maxlen(&self, exe_name: String, max_len: usize) -> String {
+        let txt = exe_name;
         for arg in &self.args {
             if SAFE_ARG_RE.is_match(arg) {
                 write!(txt, " {}", arg).unwrap()

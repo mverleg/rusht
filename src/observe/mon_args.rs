@@ -29,6 +29,9 @@ pub struct MonArgs {
     /// Log command and timing to stdout instead of stderr
     #[arg(short = 'x', long)]
     pub use_stdout: bool,
+    /// Do not abbreviate the command when it is long
+    #[arg(short = 'f', long)]
+    pub full_command: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
@@ -36,4 +39,5 @@ pub struct MonArgs {
 #[test]
 fn test_cli_args() {
     MonArgs::try_parse_from(&["cmd", "ls"]).unwrap();
+    MonArgs::try_parse_from(&["cmd", "-cbtxf", "-sS", "-p=pre", "ls"]).unwrap();
 }
