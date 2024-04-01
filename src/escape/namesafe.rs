@@ -88,7 +88,7 @@ fn shorten(filtered: &str, actual_len: usize, goal_len: usize, keep_tail: bool) 
     if keep_tail {
         filtered
             .chars()
-            .skip(actual_len - goal_len)
+            .skip(actual_len.saturating_sub(goal_len))
             .collect::<String>()
     } else {
         filtered.chars().take(goal_len).collect::<String>()
