@@ -110,7 +110,7 @@ impl Task {
         let mut txt = exe_name;
         for arg in &self.args {
             if txt.len() + arg.len() > max_len - 4 {
-                write!(txt, " ...");
+                write!(txt, " ...").unwrap();
                 break;
             }
             if SAFE_ARG_RE.is_match(arg) {

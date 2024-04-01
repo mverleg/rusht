@@ -1,4 +1,5 @@
-use crate::common::{RejectStdin, StdWriter};
+
+use crate::common::StdWriter;
 use crate::find::jl::list_files;
 use crate::find::jl_args::JlArgs;
 use crate::ExitStatus;
@@ -24,6 +25,6 @@ pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
 }
 
 pub async fn handle_jl(args: JlArgs) -> ExitStatus {
-    RejectStdin::new(); // start a thread
+    // //TODO @mverleg: disabled because broken for now: RejectStdin::new(); // start a thread
     list_files(args, &mut StdWriter::stdout()).await
 }

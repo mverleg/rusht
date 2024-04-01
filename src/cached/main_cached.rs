@@ -1,5 +1,4 @@
 use ::clap::Parser;
-use ::env_logger;
 
 use ::rusht::cached::handle_cached;
 use ::rusht::cached::CachedArgs;

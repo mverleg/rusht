@@ -1,15 +1,13 @@
 use ::std::fmt::Debug;
-use ::std::io::{BufReader, stdin, Stdin};
+use ::std::io::stdin;
+use ::std::io::BufReader;
+use ::std::io::Stdin;
 use ::std::io::BufRead;
 use ::std::path::Path;
-use ::std::process::exit;
 
 use ::async_std::fs::File;
 use ::async_std::io::prelude::BufReadExt;
-use ::async_std::prelude::FutureExt as AltExt;
 use ::async_trait::async_trait;
-use ::futures::AsyncReadExt;
-use ::futures::FutureExt;
 use ::log::debug;
 
 use crate::common::async_gate::AsyncGate;
@@ -102,6 +100,7 @@ pub struct RejectStdin {
     gate: AsyncGate,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 enum StdinWaitResult {
     Data,
@@ -110,29 +109,25 @@ enum StdinWaitResult {
 
 impl RejectStdin {
     pub fn new() -> Self {
-        let gate = AsyncGate::new();
-        let gate_clone = gate.clone();
-        let f = async move || {
-            debug!("starting monitor to reject stdin input");
-            let res = async_std::io::stdin()
-                .read(&mut [0])
-                .map(|_| StdinWaitResult::Data)
-                .race(gate_clone.wait().map(|_| StdinWaitResult::Completed))
-                .await;
-            if res == StdinWaitResult::Data {
-                eprintln!("received data on stdin but did not expect any");
-                exit(1);
-            }
-            debug!("finished stdin rejection monitor because the reader was dropped");
-        };
-        async_std::task::spawn(f());
-        RejectStdin { gate }
-    }
-}
-
-impl Default for RejectStdin {
-    fn default() -> Self {
-        RejectStdin::new()
+        debug!("disabled stdin rejection in {}:{}", file!(), line!());
+        // let gate = AsyncGate::new();
+        // let gate_clone = gate.clone();
+        // let f = async move || {
+        //     debug!("starting monitor to reject stdin input");
+        //     let res = async_std::io::stdin()
+        //         .read(&mut [0])
+        //         .map(|_| StdinWaitResult::Data)
+        //         .race(gate_clone.wait().map(|_| StdinWaitResult::Completed))
+        //         .await;
+        //     if res == StdinWaitResult::Data {
+        //         eprintln!("received data on stdin but did not expect any");
+        //         exit(1);
+        //     }
+        //     debug!("finished stdin rejection monitor because the reader was dropped");
+        // };
+        // async_std::task::spawn(f());
+        // RejectStdin { gate }
+        unimplemented!()
     }
 }
 

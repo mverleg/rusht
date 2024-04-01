@@ -92,6 +92,7 @@ impl AsyncGate {
 
     /// Wait for the gate until someone else opens it, then return
     /// whether it was successful (true) or failed (false).
+    #[allow(dead_code)]
     pub fn wait(&self) -> AsyncGateFuture {
         AsyncGateFuture(self)
     }

@@ -1,5 +1,4 @@
 use ::clap::Parser;
-use ::env_logger;
 
 use ::rusht::wait::locked;
 use ::rusht::wait::LockedArgs;
