@@ -37,8 +37,11 @@ fn perform_read_input_lines(has_data: Arc<AtomicBool>, empty: EmptyLineHandling)
 }
 
 fn start_time_monitor(has_data: Arc<AtomicBool>) {
+    let timeout = read_timeout_env();
+    if timeout == 0 {
+        return;
+    }
     spawn(move || {
-        let timeout = read_timeout_env();
         sleep(Duration::from_millis(timeout * 100));
         if !has_data.load(Ordering::Acquire) {
             eprintln!("no input on stdin so far")
@@ -65,8 +68,8 @@ fn read_timeout_env() -> u64 {
             }
         },
         Err(_) => {
-            debug!("did not filter RUSHT_STDIN_READ_TIMEOUT in env, using default");
-            30
+            debug!("did not filter RUSHT_STDIN_READ_TIMEOUT in env, disabling timeout");
+            0
         }
     }
 }
