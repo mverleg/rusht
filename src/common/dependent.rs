@@ -164,8 +164,6 @@ pub async fn run_all(dependents: Vec<Dependent>, writer: &mut impl LineWriter) -
 
 #[cfg(test)]
 mod tests {
-    use ::std::time::Duration;
-
     use ::async_std::task::sleep;
     use ::futures::future::select;
     use ::futures::future::Either;

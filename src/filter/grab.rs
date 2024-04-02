@@ -38,8 +38,6 @@ pub async fn grab(
 
 #[cfg(test)]
 mod tests {
-    use ::async_std;
-
     use crate::common::CollectorWriter;
     use crate::common::VecReader;
 

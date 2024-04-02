@@ -132,7 +132,6 @@ impl<'a> Future for AsyncGateFuture<'a> {
 mod tests {
     use ::std::thread;
     use ::std::thread::sleep;
-    use ::std::time::Duration;
 
     use ::async_std::future::timeout;
     use ::futures::future::join;

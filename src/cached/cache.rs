@@ -15,7 +15,7 @@ use ::time::OffsetDateTime;
 
 use crate::cached::args::CachedKeyArgs;
 use crate::cached::CachedArgs;
-use crate::common::fail;
+use crate::common::{fail, file_modified_time_in_seconds};
 use crate::common::git_head_ref;
 use crate::common::git_master_base_ref;
 use crate::common::git_uncommitted_changes;
@@ -193,7 +193,12 @@ async fn build_key_with(
         let mut pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
             format!("caching based on pending git changes, but could not query them, err: {err}") })?;
         pending.sort();  // perhaps unnecessary, but just in case git changes order
-        key.push(safe_filename(&pending.join("_")))
+        let mut with_ts = pending.join("_");
+        for file in pending {
+            let mod_ts = file_modified_time_in_seconds(&file).await.unwrap_or(1);
+            with_ts.push_str(&format!("_{mod_ts}"))
+        }
+        key.push(safe_filename(&with_ts))
     }
     for env_key in &args.env {
         key.push(get_from_env(env_key)?)
