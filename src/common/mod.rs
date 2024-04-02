@@ -8,6 +8,7 @@ pub use self::dependent::Dependent;
 pub use self::dependent::run_all;
 pub use self::err::ExitStatus;
 pub use self::err::fail;
+pub use self::files::file_modified_time_in_seconds;
 pub use self::git::git_affected_files_head;
 pub use self::git::git_head_ref;
 pub use self::git::git_master_base_ref;
@@ -47,6 +48,7 @@ mod stdin;
 mod task;
 mod which;
 mod write;
+mod files;
 
 pub fn safe_filename(text: &str) -> String {
     namesafe_line(
