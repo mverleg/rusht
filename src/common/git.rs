@@ -53,7 +53,7 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
 pub async fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
     let lines = git_shell_cmd(
         dir,
-        vec!["status".to_owned(), "-c".to_owned(), "--porcelain".to_owned()],
+        vec!["status".to_owned(), "-v".to_owned(), "--porcelain".to_owned()],
         "finding uncommitted git changes",
     ).await?;
     Ok(lines.into_iter()

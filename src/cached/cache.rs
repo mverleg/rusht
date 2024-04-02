@@ -166,7 +166,6 @@ async fn build_key_with(
     task: &Task,
     get_from_env: impl Fn(&str) -> Result<String, String>
 ) -> Result<String, String> {
-    assert!(!args.git_pending, "--git-pending not implemented");
     debug_assert!(args.env.is_sorted());
     debug_assert!(args.env.is_sorted());
     let mut key: Vec<String> = Vec::new();
