@@ -6,7 +6,7 @@ use ::serde::Deserialize;
 use ::serde::Serialize;
 
 lazy_static! {
-    static ref PROFILE_RE: Regex = Regex::new(r"^!?\w[\w/_\-]*\w?$").unwrap();
+    static ref PROFILE_RE: Regex = Regex::new(r"^[!-]?\w[\w/_\-]*\w?$").unwrap();
 }
 
 #[derive(
