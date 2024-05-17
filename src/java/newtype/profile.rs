@@ -1,4 +1,6 @@
 use ::std::str::FromStr;
+use std::fmt;
+use std::fmt::Formatter;
 
 use ::lazy_static::lazy_static;
 use ::regex::Regex;
@@ -10,10 +12,11 @@ lazy_static! {
 }
 
 #[derive(
-    Debug, derive_more::Display, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+    Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
 )]
 #[serde(try_from = "String", into = "String")]
 pub struct Profile {
+    negate: bool,
     value: String,
 }
 
@@ -25,7 +28,11 @@ impl Profile {
                 "profile name must be alphanumeric and may also contain: / - _".to_string(),
             );
         }
-        Ok(Profile { value })
+        if value.starts_with('!') || value.starts_with('-') {
+            Ok(Profile { negate: true, value: value[1..].to_owned() })
+        } else {
+            Ok(Profile { negate: false, value })
+        }
     }
 }
 
@@ -48,6 +55,12 @@ impl TryFrom<String> for Profile {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Profile::new(value)
+    }
+}
+
+impl fmt::Display for Profile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}{}", if self.negate { "-" } else { "" }, &self.value)
     }
 }
 
