@@ -24,6 +24,7 @@ pub use self::read::VecReader;
 pub use self::stdin::EmptyLineHandling;
 pub use self::stdin::stdin_lines;
 pub use self::task::Task;
+pub use self::time::current_time_user_str;
 pub use self::which::resolve_executable;
 pub use self::write::CollectorWriter;
 pub use self::write::DiscardWriter;
@@ -35,6 +36,7 @@ pub use self::write::StdWriter;
 pub use self::write::TeeWriter;
 pub use self::write::VecWriter;
 
+mod time;
 mod async_gate;
 mod cmd_args;
 mod dependent;
