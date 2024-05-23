@@ -1,6 +1,7 @@
 use ::std::time::Instant;
 
 use ::log::debug;
+use time::OffsetDateTime;
 
 use crate::common::Task;
 use crate::common::StdWriter;
@@ -75,7 +76,8 @@ pub async fn mon_task(
     };
     if print_cmd {
         monitor_writer
-            .write_line(format!("going to run {}", cmd_str))
+            .write_line(format!("going to run {} at {}",
+                cmd_str, OffsetDateTime::now_local().unwrap()))
             .await;
     }
     let t0 = Instant::now();
