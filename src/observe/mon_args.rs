@@ -29,7 +29,7 @@ pub struct MonArgs {
     /// Log command and timing to stdout instead of stderr
     #[arg(short = 'x', long)]
     pub use_stdout: bool,
-    /// Do not abbreviate the command when it is long
+    /// Do not abbreviate the command when it is long. Can also be set using env MON_FULL_CMD
     #[arg(short = 'f', long)]
     pub full_command: bool,
     #[command(subcommand)]

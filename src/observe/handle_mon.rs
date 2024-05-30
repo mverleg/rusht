@@ -1,11 +1,12 @@
-use std::env;
-use std::env::VarError;
+use ::std::env;
+use ::std::env::VarError;
+
 use ::log::debug;
 
 use crate::common::StdWriter;
+use crate::ExitStatus;
 use crate::observe::mon::mon;
 use crate::observe::mon_args::MonArgs;
-use crate::ExitStatus;
 
 static MON_FULL_CMD_VAR_NAME: &'static str = "MON_FULL_CMD";
 
