@@ -98,20 +98,27 @@ pub async fn mon_task(
         }
         status
     };
-    let duration = t0.elapsed().as_millis();
+    let duration_ms = t0.elapsed().as_millis();
+    let duration_fmtd = if duration_ms > 120_000 {
+        format!("{} ms ({} min)", duration_ms, (duration_ms as f64 / 60_000.0).round() as u64)
+    } else if duration_ms > 10_000 {
+        format!("{} ms ({} s)", duration_ms, (duration_ms as f64 / 1000.0).round() as u64)
+    } else {
+        format!("{} ms", duration_ms)
+    };
     let time_fmtd = current_time_user_str();
     let details = if timing && status.is_ok() {
         monitor_writer
-            .write_line(format!("{} success: took {} ms to run {}",
-                time_fmtd, duration, cmd_str))
+            .write_line(format!("{} success: took {} to run {}",
+                time_fmtd, duration_fmtd, cmd_str))
             .await;
-        format!("took {} ms to run {}", duration, cmd_str)
+        format!("took {} to run {}", duration_fmtd, cmd_str)
     } else if timing && !status.is_ok() {
         eprintln!(
-            "{} FAILED command {} in {} ms (code {})",
-            time_fmtd, cmd_str, duration, status.code()
+            "{} FAILED command {} in {} (code {})",
+            time_fmtd, cmd_str, duration_fmtd, status.code()
         );
-        format!("err {} in {} ms for {}", status.code(), duration, cmd_str)
+        format!("err {} in {} for {}", status.code(), duration_fmtd, cmd_str)
     } else if !timing && !status.is_ok() {
         eprintln!("{} FAILED command {} (code {})",
             time_fmtd, cmd_str, status.code());
