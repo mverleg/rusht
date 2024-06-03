@@ -76,8 +76,8 @@ pub async fn mon_task(
     };
     if print_cmd {
         monitor_writer
-            .write_line(format!("going to run {} at {}",
-                cmd_str, current_time_user_str()))
+            .write_line(format!("{}: going to run {}",
+                current_time_user_str(), cmd_str))
             .await;
     }
     let t0 = Instant::now();
@@ -99,24 +99,26 @@ pub async fn mon_task(
         status
     };
     let duration = t0.elapsed().as_millis();
+    let time_fmtd = current_time_user_str();
     let details = if timing && status.is_ok() {
         monitor_writer
-            .write_line(format!("success: took {} ms to run {}", duration, cmd_str))
+            .write_line(format!("{} success: took {} ms to run {}",
+                time_fmtd, duration, cmd_str))
             .await;
         format!("took {} ms to run {}", duration, cmd_str)
     } else if timing && !status.is_ok() {
         eprintln!(
-            "FAILED command {} in {} ms (code {})",
-            cmd_str,
-            duration,
-            status.code()
+            "{} FAILED command {} in {} ms (code {})",
+            time_fmtd, cmd_str, duration, status.code()
         );
         format!("err {} in {} ms for {}", status.code(), duration, cmd_str)
     } else if !timing && !status.is_ok() {
-        eprintln!("FAILED command {} (code {})", cmd_str, status.code());
+        eprintln!("{} FAILED command {} (code {})",
+            time_fmtd, cmd_str, status.code());
         format!("err {} for {}", status.code(), cmd_str)
     } else {
-        format!("finished {}", cmd_str)
+        format!("{} finished {}",
+            time_fmtd, cmd_str)
     };
     debug!("{}", &details);
     if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok(), details).await {
