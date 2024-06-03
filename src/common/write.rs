@@ -253,7 +253,11 @@ impl<'a, W: LineWriter> LineWriter for FunnelWriter<'a, W> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let line = line.as_ref();
         let mut dw = self.delegate.lock().await;
-        dw.write_line(format!("[{}] {}", self.name, line)).await;
+        if self.name.is_empty() {
+            dw.write_line(format!("{}", line)).await;
+        } else {
+            dw.write_line(format!("[{}] {}", self.name, line)).await;
+        }
     }
 }
 

@@ -46,8 +46,8 @@ impl Task {
             let funnel = FunnelFactory::new(out_writer);
             mon_task(
                 self,
-                &mut funnel.writer("out"),
-                &mut funnel.writer("mon"),
+                &mut funnel.writer(""),
+                &mut funnel.writer(""),
                 true,
                 true,
                 true,
