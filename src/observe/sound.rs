@@ -1,5 +1,7 @@
+use ::std::env;
 use ::std::future::join;
 
+use ::log::debug;
 use ::log::error;
 
 use crate::common::StdWriter;
@@ -12,6 +14,10 @@ pub async fn sound_notification(
     is_success: bool,
     details: String,
 ) -> Result<(), String> {
+    if ! env::var("NO_SOUND").unwrap_or("".to_owned()).trim().is_empty() {
+        debug!("sound suppressed by NO_SOUND env var");
+        return Ok(())
+    }
     let popup_msg = format!("display notification \"{}\" with title \"{} (mon)\"",
             details.replace("\"", "").replace("'", "").replace("\\", "\\\\"),
             if is_success { "OK" } else { "FAILED"});
