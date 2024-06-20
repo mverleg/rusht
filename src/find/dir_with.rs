@@ -43,6 +43,7 @@ type Dirs = SmallVec<[PathBuf; 2]>;
 
 pub fn find_dir_with(args: &DirWithArgs) -> Result<Vec<PathBuf>, String> {
     debug!("args = {:?}", args);
+    eprintln!("not really reliable, filters are combined incorrectly, e.g. -i/-f or -f/-F");  //TODO @mverleg:
     validate_roots_unique(&args.roots)?;
     let mut results = if args.upwards {
         find_dir_with_upwards(args)
@@ -130,6 +131,7 @@ fn find_matching_dirs(
         children_count_in_range,
         is_parent_match(parent, &args.itself, &args.not_self),
     );
+    //TODO @mverleg: should use AND for parent match and child match (but not recursive match)
     results = match parent_match {
         IsMatch::Include => {
             let found = parent.to_path_buf();
