@@ -101,7 +101,7 @@ impl Task {
         let txt = PathBuf::from(&self.cmd).file_name()
             .map(|n| n.to_str().unwrap().to_owned())
             .unwrap_or_else(|| self.cmd.to_owned());
-        self.as_cmd_str_maxlen(txt, 120)
+        self.as_cmd_str_maxlen(txt, 5 * 72)
     }
 
     /// Command but with at most max_len chars (except if the executable is longer)
