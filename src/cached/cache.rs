@@ -15,9 +15,11 @@ use ::time::OffsetDateTime;
 
 use crate::cached::args::CachedKeyArgs;
 use crate::cached::CachedArgs;
-use crate::common::{fail, file_modified_time_in_seconds};
+use crate::common::fail;
+use crate::common::file_modified_time_in_seconds;
 use crate::common::git_head_ref;
 use crate::common::git_master_base_ref;
+use crate::common::git_repo_dir;
 use crate::common::git_uncommitted_changes;
 use crate::common::LineWriter;
 use crate::common::safe_filename;
@@ -188,6 +190,9 @@ async fn build_key_with(
         let head = git_master_base_ref(&task.working_dir).await.map_err(|err| {
             format!("caching based on git merge base, but could not determine it, err: {err}") })?;
         key.push(head)
+    }
+    if args.git_repo_dir {
+        key.push(git_repo_dir(&task.working_dir).await?)
     }
     if args.git_pending {
         let mut pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {

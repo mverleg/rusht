@@ -50,6 +50,18 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
     Ok(lines.pop().unwrap())
 }
 
+pub async fn git_repo_dir(dir: &Path) -> Result<String, String> {
+    let mut lines = git_shell_cmd(
+        dir,
+        vec!["git".to_owned(), "rev-parse".to_owned(), "--show-toplevel".to_owned()],
+        "getting git repo root directory",
+    ).await?;
+    if lines.len() != 1 {
+        return Err(format!("unexpected response when getting git repo root directory: {}", lines.join("\\n")))
+    }
+    Ok(lines.pop().unwrap())
+}
+
 pub async fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
     let lines = git_shell_cmd(
         dir,
