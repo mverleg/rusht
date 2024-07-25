@@ -11,11 +11,15 @@ use ::log::warn;
 use ::regex::Regex;
 use ::smallvec::SmallVec;
 
-use crate::common::{git_affected_files_head, run_all, LineWriter, RegexWatcherWriter, TeeWriter};
-use crate::java::mvnw_args::AffectedPolicy;
-use crate::java::MvnCmdConfig;
-use crate::java::MvnwArgs;
+use crate::common::git::git_affected_files_head;
+use crate::common::LineWriter;
+use crate::common::RegexWatcherWriter;
+use crate::common::run_all;
+use crate::common::TeeWriter;
 use crate::ExitStatus;
+use crate::java::MvnCmdConfig;
+use crate::java::mvnw_args::AffectedPolicy;
+use crate::java::MvnwArgs;
 
 pub async fn mvnw(
     args: MvnwArgs,
