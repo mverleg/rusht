@@ -53,7 +53,7 @@ pub async fn git_master_base_ref(dir: &Path) -> Result<String, String> {
 pub async fn git_repo_dir(dir: &Path) -> Result<String, String> {
     let mut lines = git_shell_cmd(
         dir,
-        vec!["git".to_owned(), "rev-parse".to_owned(), "--show-toplevel".to_owned()],
+        vec!["rev-parse".to_owned(), "--show-toplevel".to_owned()],
         "getting git repo root directory",
     ).await?;
     if lines.len() != 1 {
