@@ -143,7 +143,7 @@ eframe = { version = "0.23.0", optional = true }
 tracing-subscriber = { version = "0.3.16", optional = true }
 
 [patch.crates-io]
-# necessary because of a big in ahash that is fixed, but indirectly memoize pulls in old version
+# necessary because of a bug in ahash that is fixed, but indirectly memoize pulls in old version
 ahash = { git = "https://github.com/tkaitchuck/aHash", tag = "v0.8.8" }
 
 [features]
