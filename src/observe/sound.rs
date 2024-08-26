@@ -18,19 +18,23 @@ pub async fn sound_notification(
         debug!("sound suppressed by NO_SOUND env var");
         return Ok(())
     }
-    if ! env::var("MON_NESTED_SOUND").unwrap_or("".to_owned()).trim().is_empty() {
-        debug!("sound suppressed because of nested `mon` invocations; parent should already play sound");
-        return Ok(())
-    }
     let popup_msg = format!("display notification \"{}\" with title \"{} (mon)\"",
             details.replace("\"", "").replace("'", "").replace("\\", "\\\\"),
             if is_success { "OK" } else { "FAILED"});
     let (sound_task, popup_task) = if is_success && sound_on_success {
+        if !env::var("MON_NESTED_SOUND_OK").unwrap_or("".to_owned()).trim().is_empty() {
+            debug!("success sound suppressed because of nested `mon` invocations; parent should already play sound");
+            return Ok(())
+        }
         (
             Task::new_in_cwd("say".to_owned(), None, vec!["ready".to_owned()]),
             Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
         )
     } else if !is_success && sound_on_failure {
+        if !env::var("MON_NESTED_SOUND_ERR").unwrap_or("".to_owned()).trim().is_empty() {
+            debug!("error sound suppressed because of nested `mon` invocations; parent should already play sound");
+            return Ok(())
+        }
         (
             Task::new_in_cwd("say".to_owned(), None, vec!["that failed".to_owned()]),
             Task::new_in_cwd("osascript".to_owned(), None, vec!["-e".to_owned(), popup_msg])
