@@ -82,6 +82,15 @@ impl Task {
         self.args.push(extra_arg.to_owned());
     }
 
+    pub fn with_extra_env(self, key: impl Into<String>, value: impl Into<String>) -> Task {
+        let mut extra_envs = self.extra_envs.clone();
+        extra_envs.insert(key.into(), value.into());
+        Task {
+            extra_envs,
+            ..self
+        }
+    }
+
     pub fn as_cmd_str(&self) -> String {
         let mut txt = String::new();
         if let Some(home) = home_dir() {

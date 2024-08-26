@@ -46,7 +46,7 @@ pub async fn mon_task_with_writer(
     monitor_writer: &mut impl LineWriter,
 ) -> ExitStatus {
     mon_task(
-        &task,
+        task,
         output_writer,
         monitor_writer,
         !args.no_print_cmd,
@@ -79,6 +79,9 @@ pub async fn mon_task(
             .write_line(format!("{}: going to run {}",
                 current_time_user_str(), cmd_str))
             .await;
+    }
+    if sound_success || sound_failure {
+        task.add_extra_env("MON_NESTED_SOUND", cmd_str)
     }
     let t0 = Instant::now();
     let status = if output_on_success {

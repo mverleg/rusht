@@ -18,6 +18,10 @@ pub async fn sound_notification(
         debug!("sound suppressed by NO_SOUND env var");
         return Ok(())
     }
+    if ! env::var("MON_NESTED_SOUND").unwrap_or("".to_owned()).trim().is_empty() {
+        debug!("sound suppressed because of nested `mon` invocations; parent should already play sound");
+        return Ok(())
+    }
     let popup_msg = format!("display notification \"{}\" with title \"{} (mon)\"",
             details.replace("\"", "").replace("'", "").replace("\\", "\\\\"),
             if is_success { "OK" } else { "FAILED"});
