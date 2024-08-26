@@ -82,12 +82,12 @@ impl Task {
         self.args.push(extra_arg.to_owned());
     }
 
-    pub fn with_extra_env(self, key: impl Into<String>, value: impl Into<String>) -> Task {
+    pub fn with_extra_env(&self, key: impl Into<String>, value: impl Into<String>) -> Task {
         let mut extra_envs = self.extra_envs.clone();
         extra_envs.insert(key.into(), value.into());
         Task {
             extra_envs,
-            ..self
+            ..self.clone()
         }
     }
 

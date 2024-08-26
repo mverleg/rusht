@@ -59,7 +59,7 @@ pub async fn mon_task_with_writer(
 }
 
 pub async fn mon_task(
-    task: &Task,
+    mut task: &Task,
     output_writer: &mut impl LineWriter,
     monitor_writer: &mut impl LineWriter,
     print_cmd: bool,
@@ -80,9 +80,12 @@ pub async fn mon_task(
                 current_time_user_str(), cmd_str))
             .await;
     }
+    let mut owned_task = None;
     if sound_success || sound_failure {
-        task.add_extra_env("MON_NESTED_SOUND", cmd_str)
-    }
+        owned_task = Some(task.with_extra_env("MON_NESTED_SOUND", &cmd_str));
+        task = owned_task.as_ref().unwrap();
+        // ^ not beautiful, but making task owned or mutable was too impactful; this is good enough
+    };
     let t0 = Instant::now();
     let status = if output_on_success {
         let mut err_writer = StdWriter::stderr();
