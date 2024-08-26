@@ -82,9 +82,14 @@ pub async fn mon_task(
     }
     let mut owned_task = None;
     if sound_success || sound_failure {
-        owned_task = Some(task.clone().with_extra_env(&[
-            ("MON_NESTED_SOUND_OK".to_owned(), cmd_str.to_owned()),
-            ("MON_NESTED_SOUND_ERR".to_owned(), cmd_str.to_owned())]));
+        let mut env_overrides = Vec::with_capacity(2);
+        if sound_success {
+            env_overrides.push(("MON_NESTED_SOUND_OK".to_owned(), cmd_str.to_owned()));
+        }
+        if sound_failure {
+            env_overrides.push(("MON_NESTED_SOUND_ERR".to_owned(), cmd_str.to_owned()));
+        }
+        owned_task = Some(task.clone().with_extra_env(&env_overrides));
         task = owned_task.as_ref().unwrap();
         // ^ not beautiful, but making task owned or mutable was too impactful; this is good enough
     };
