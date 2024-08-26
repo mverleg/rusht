@@ -46,7 +46,7 @@ struct Cache {
 }
 
 pub async fn cached(args: CachedArgs, writer: &mut impl LineWriter) -> Result<CacheStatus, String> {
-    let mut task = args.cmd.clone().into_task();
+    let task = args.cmd.clone().into_task();
     let cache_pth = get_cache_path(&args, &task).await?;
     let cached_output = try_read_cache(&args.duration, &cache_pth);
     if let Some(output) = cached_output {

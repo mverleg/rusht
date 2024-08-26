@@ -59,7 +59,7 @@ pub async fn mon_task_with_writer(
 }
 
 pub async fn mon_task(
-    task: &mut Task,
+    task: &Task,
     output_writer: &mut impl LineWriter,
     monitor_writer: &mut impl LineWriter,
     print_cmd: bool,
@@ -81,7 +81,7 @@ pub async fn mon_task(
             .await;
     }
     if sound_success || sound_failure {
-        task.add_extra_env("MON_NESTED_SOUND", cmd_str.as_str())
+        task.add_extra_env("MON_NESTED_SOUND", cmd_str)
     }
     let t0 = Instant::now();
     let status = if output_on_success {
