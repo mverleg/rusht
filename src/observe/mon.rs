@@ -82,7 +82,7 @@ pub async fn mon_task(
     }
     let mut owned_task = None;
     if sound_success || sound_failure {
-        owned_task = Some(task.with_extra_env(&[
+        owned_task = Some(task.clone().with_extra_env(&[
             ("MON_NESTED_SOUND_OK".to_owned(), cmd_str.to_owned()),
             ("MON_NESTED_SOUND_ERR".to_owned(), cmd_str.to_owned())]));
         task = owned_task.as_ref().unwrap();
