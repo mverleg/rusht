@@ -59,7 +59,7 @@ pub async fn mon_task_with_writer(
 }
 
 pub async fn mon_task(
-    task: &Task,
+    task: &mut Task,
     output_writer: &mut impl LineWriter,
     monitor_writer: &mut impl LineWriter,
     print_cmd: bool,
