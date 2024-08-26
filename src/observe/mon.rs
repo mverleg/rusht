@@ -81,7 +81,7 @@ pub async fn mon_task(
             .await;
     }
     if sound_success || sound_failure {
-        task.add_extra_env("MON_NESTED_SOUND", cmd_str)
+        task.add_extra_env("MON_NESTED_SOUND", cmd_str.as_str())
     }
     let t0 = Instant::now();
     let status = if output_on_success {

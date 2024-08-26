@@ -27,7 +27,7 @@ impl Task {
     }
 
     pub async fn execute_with_stdout(
-        &self,
+        &mut self,
         monitor: bool,
         out_writer: &mut impl LineWriter,
     ) -> ExitStatus {
@@ -37,7 +37,7 @@ impl Task {
     }
 
     pub async fn execute_with_outerr(
-        &self,
+        &mut self,
         monitor: bool,
         out_writer: &mut impl LineWriter,
         err_writer: &mut impl LineWriter,

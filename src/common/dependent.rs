@@ -68,7 +68,7 @@ impl Dependent {
     }
 
     // Note this takes owned LineWriter instead of &mut because of run_all. Try using e.g. `FunnelWriter`.
-    pub async fn await_and_exec(&self, mut writer: impl LineWriter) -> ExitStatus {
+    pub async fn await_and_exec(&mut self, mut writer: impl LineWriter) -> ExitStatus {
         let count = self.dependencies.len();
         for (nr, dependency) in self.dependencies.iter().enumerate() {
             if dependency.gate.is_open() {
@@ -129,7 +129,7 @@ impl Dependent {
                 //TODO @mverleg: TEMPORARY! REMOVE THIS!
             }
         }
-        if let Some(task) = &self.task {
+        if let Some(task) = &mut self.task {
             self.current.open(false);
             task.execute_with_stdout(true, &mut writer).await
         } else {
@@ -148,12 +148,12 @@ impl Dependent {
     }
 }
 
-pub async fn run_all(dependents: Vec<Dependent>, writer: &mut impl LineWriter) -> ExitStatus {
+pub async fn run_all(mut dependents: Vec<Dependent>, writer: &mut impl LineWriter) -> ExitStatus {
     let fac = FunnelFactory::new(writer);
     join_all(
         dependents
-            .iter()
-            .map(|dep| dep.await_and_exec(fac.writer(dep.name.as_ref())))
+            .iter_mut()
+            .map(|dep| dep.await_and_exec(fac.writer(dep.name.clone().as_ref())))
             .collect::<Vec<_>>(),
     )
     .await
