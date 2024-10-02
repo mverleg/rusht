@@ -170,6 +170,7 @@ async fn build_key_with(
 ) -> Result<String, String> {
     debug_assert!(args.env.is_sorted());
     debug_assert!(args.env.is_sorted());
+    assert!(!args.git_head_diff, "not impl");  //TODO @mverleg:
     let mut key: Vec<String> = Vec::new();
     if ! args.no_dir {
         key.push(task.working_dir.to_string_lossy().into_owned())

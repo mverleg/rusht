@@ -32,12 +32,15 @@ pub struct CachedArgs {
 #[derive(Parser, Debug, PartialEq, Default)]
 #[command()]
 pub struct CachedKeyArgs {
-    /// Invalidates cache if the current git HEAD commit is different.
+    /// Invalidates cache if the current git HEAD commit is different. For only code changes, see --git-head-diff
     #[arg(short = 'g', long)]
     pub git_head: bool,
     /// Invalidates cache if the current git branch merge-base commit is different.
     #[arg(short = 'b', long, conflicts_with = "git_head")]
     pub git_base: bool,
+    /// Invalidates cache if the diff of HEAD has changed. This is more lenient than --git-head as it ignores commit message and trivial rebases.
+    #[arg(short = 'G', long, conflicts_with = "git_head")]
+    pub git_head_diff: bool,
     /// Invalidates cache if we're in a different git repo. This doesn't make much sense without --no-dir.
     #[arg(long)]
     pub git_repo_dir: bool,
@@ -64,8 +67,8 @@ pub struct CachedKeyArgs {
 
 impl CachedArgs {
     pub fn any_explicit_key(&self) -> bool {
-        self.key.git_head || self.key.git_base || self.key.git_repo_dir || self.key.git_pending ||
-            !self.key.env.is_empty() || !self.key.text.is_empty()
+        self.key.git_head || self.key.git_head_diff || self.key.git_base || self.key.git_repo_dir ||
+            self.key.git_pending || !self.key.env.is_empty() || !self.key.text.is_empty()
     }
 }
 
@@ -76,6 +79,7 @@ impl Default for CachedArgs {
             key: CachedKeyArgs {
                 git_head: false,
                 git_base: false,
+                git_head_diff: false,
                 git_repo_dir: false,
                 git_pending: false,
                 env: vec![],

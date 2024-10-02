@@ -4,7 +4,6 @@
 #![feature(result_flattening)]
 #![feature(map_try_insert)]
 #![feature(let_chains)]
-#![feature(is_sorted)]
 
 extern crate core;
 
