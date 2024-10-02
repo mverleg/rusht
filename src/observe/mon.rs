@@ -80,7 +80,7 @@ pub async fn mon_task(
                 current_time_user_str(), cmd_str))
             .await;
     }
-    let mut owned_task = None;
+    #[allow(unused_assignments)] let mut owned_task = None;
     if sound_success || sound_failure {
         let mut env_overrides = Vec::with_capacity(2);
         if sound_success {

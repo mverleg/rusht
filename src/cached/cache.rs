@@ -17,7 +17,7 @@ use crate::cached::args::CachedKeyArgs;
 use crate::cached::CachedArgs;
 use crate::common::fail;
 use crate::common::file_modified_time_in_seconds;
-use crate::common::git::git_head_ref;
+use crate::common::git::{git_head_ref, git_stripped_diff};
 use crate::common::git::git_master_base_ref;
 use crate::common::git::git_repo_dir;
 use crate::common::git::git_uncommitted_changes;
@@ -170,7 +170,6 @@ async fn build_key_with(
 ) -> Result<String, String> {
     debug_assert!(args.env.is_sorted());
     debug_assert!(args.env.is_sorted());
-    assert!(!args.git_head_diff, "not impl");  //TODO @mverleg:
     let mut key: Vec<String> = Vec::new();
     if ! args.no_dir {
         key.push(task.working_dir.to_string_lossy().into_owned())
@@ -182,6 +181,9 @@ async fn build_key_with(
         for (env_key, value) in &task.extra_envs {
             key.push(format!("{}-{}", env_key, value))
         }
+    }
+    if args.git_head_diff {
+        key.push(git_stripped_diff(&task.working_dir, "HEAD").await?)
     }
     if args.git_head {
         let head = git_head_ref(&task.working_dir).map_err(|err| {
@@ -196,15 +198,7 @@ async fn build_key_with(
         key.push(git_repo_dir(&task.working_dir).await?)
     }
     if args.git_pending {
-        let mut pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
-            format!("caching based on pending git changes, but could not query them, err: {err}") })?;
-        pending.sort();  // perhaps unnecessary, but just in case git changes order
-        let mut with_ts = pending.join("_");
-        for file in pending {
-            let mod_ts = file_modified_time_in_seconds(&file).await.unwrap_or(1);
-            with_ts.push_str(&format!("_{mod_ts}"))
-        }
-        key.push(safe_filename(&with_ts))
+        add_pending_file_timestamps(&task, &mut key).await?;
     }
     for env_key in &args.env {
         key.push(get_from_env(env_key)?)
@@ -213,6 +207,20 @@ async fn build_key_with(
         key.push(text.to_owned())
     }
     Ok(unique_filename(&key.join("_")))
+}
+
+async fn add_pending_file_timestamps(task: &&Task, key: &mut Vec<String>) -> Result<(), String> {
+    let mut pending = git_uncommitted_changes(&task.working_dir).await.map_err(|err| {
+        format!("caching based on pending git changes, but could not query them, err: {err}")
+    })?;
+    pending.sort();  // perhaps unnecessary, but just in case git changes order
+    let mut with_ts = pending.join("_");
+    for file in pending {
+        let mod_ts = file_modified_time_in_seconds(&file).await.unwrap_or(1);
+        with_ts.push_str(&format!("_{mod_ts}"))
+    }
+    key.push(safe_filename(&with_ts));
+    Ok(())
 }
 
 #[cfg(test)]
