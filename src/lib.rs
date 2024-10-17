@@ -20,4 +20,5 @@ pub mod observe;
 pub mod rsh;
 pub mod textproc;
 pub mod wait;
+pub mod server;
 mod shywolf;
