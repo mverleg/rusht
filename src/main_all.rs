@@ -23,10 +23,8 @@ use ::rusht::textproc::batched_args::BatchedArgs;
 use ::rusht::textproc::handle::handle_batched;
 use ::rusht::wait::handle_locked;
 use ::rusht::wait::LockedArgs;
-use ::rusht::cmd::{BufArgs, handle_buf};
-use ::rusht::filter::{BetweenArgs, handle_between};
-use ::rusht::server::ServerArgs;
-use rusht::server::serve;
+use rusht::cmd::{BufArgs, handle_buf};
+use rusht::filter::{BetweenArgs, handle_between};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -40,7 +38,6 @@ pub struct RushtArgs {
 
 #[derive(Subcommand, Debug)]
 enum SubCmd {
-    Server(ServerArgs),
     Cached(CachedArgs),
     Cmadd(AddArgs),
     Cmdo(DoArgs),
@@ -75,7 +72,6 @@ async fn main() -> ExitStatus {
     );
     let args = RushtArgs::parse();
     match args.subcommand {
-        SubCmd::Server(sub_args) => serve(sub_args),
         SubCmd::Cached(sub_args) => handle_cached(sub_args).await,
         SubCmd::Cmadd(sub_args) => handle_add(sub_args),
         SubCmd::Cmdo(sub_args) => handle_do(sub_args),
