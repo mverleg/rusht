@@ -95,6 +95,10 @@ name = "rsh"
 path = "src/rsh/main_rsh.rs"
 
 [[bin]]
+name = "clap_experiment"
+path = "src/clap_experiment.rs"
+
+[[bin]]
 name = "rusht_debug"
 path = "src/main_debug.rs"
 required-features = ["experimental"]
