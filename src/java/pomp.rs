@@ -7,12 +7,19 @@ use ::serde_xml_rs::from_str;
 use ::std::fs;
 use async_std::task::block_on;
 
-#[allow(non_snake_case)]
 #[derive(Debug, Deserialize)]
 struct Pom {
+    parent: Option<ArtifactId>,
+    #[serde(flatten)]
+    root: ArtifactId,
+}
+
+#[allow(non_snake_case)]
+#[derive(Debug, Deserialize)]
+struct ArtifactId {
     artifactId: String,
-    groupId: String,
-    version: String,
+    groupId: Option<String>,
+    version: Option<String>,
 }
 
 pub fn pomp(
@@ -35,13 +42,23 @@ pub fn pomp(
         };
         let mut parts = Vec::with_capacity(3);
         if args.group_id {
-            parts.push(pom.groupId.clone())
+            let parent_fallback = pom.parent.as_ref().map(|parent| parent.groupId.as_ref()).flatten();
+            parts.push(match (pom.root.groupId, parent_fallback) {
+                (Some(part), _) => part.to_owned(),
+                (None, Some(parent)) => parent.to_owned(),
+                (None, None) => return Err((ExitStatus::err(), format!("No groupId and no parent groupId for {}",pth.display()))),
+            })
         }
         if args.artifact_id {
-            parts.push(pom.artifactId.clone())
+            parts.push(pom.root.artifactId.clone())
         }
         if args.version {
-            parts.push(pom.version.clone())
+            let parent_fallback = pom.parent.as_ref().map(|parent| parent.version.as_ref()).flatten();
+            parts.push(match (pom.root.version, parent_fallback) {
+                (Some(part), _) => part.to_owned(),
+                (None, Some(parent)) => parent.to_owned(),
+                (None, None) => return Err((ExitStatus::err(), format!("No version and no parent version for {}",pth.display()))),
+            })
         }
         let line = parts.join(":");
         block_on(writer.write_line(line));
