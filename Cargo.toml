@@ -71,6 +71,10 @@ name = "mvnw"
 path = "src/java/main_mvnw.rs"
 
 [[bin]]
+name = "pomp"
+path = "src/java/main_pomp.rs"
+
+[[bin]]
 name = "mon"
 path = "src/observe/main_mon.rs"
 

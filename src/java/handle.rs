@@ -1,5 +1,5 @@
 use crate::common::StdWriter;
-use crate::java::mvnw;
+use crate::java::{mvnw, PompArgs};
 use crate::java::MvnwArgs;
 use crate::ExitStatus;
 
@@ -13,4 +13,8 @@ pub async fn handle_mvnw(args: MvnwArgs) -> ExitStatus {
             code
         }
     }
+}
+
+pub fn handle_pomp(args: PompArgs) -> ExitStatus {
+
 }
