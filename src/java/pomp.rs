@@ -1,17 +1,19 @@
-
 use crate::common::LineWriter;
 use crate::java::PompArgs;
 use crate::ExitStatus;
+use ::async_std::task::block_on;
 use ::serde::Deserialize;
 use ::serde_xml_rs::from_str;
 use ::std::fs;
-use async_std::task::block_on;
 
+#[allow(non_snake_case)]
 #[derive(Debug, Deserialize)]
 struct Pom {
     parent: Option<ArtifactId>,
-    #[serde(flatten)]
-    root: ArtifactId,
+    //TODO: cannot get #[serde(flatten)] to work
+    artifactId: String,
+    groupId: Option<String>,
+    version: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -43,18 +45,18 @@ pub fn pomp(
         let mut parts = Vec::with_capacity(3);
         if args.group_id {
             let parent_fallback = pom.parent.as_ref().map(|parent| parent.groupId.as_ref()).flatten();
-            parts.push(match (pom.root.groupId, parent_fallback) {
+            parts.push(match (pom.groupId, parent_fallback) {
                 (Some(part), _) => part.to_owned(),
                 (None, Some(parent)) => parent.to_owned(),
                 (None, None) => return Err((ExitStatus::err(), format!("No groupId and no parent groupId for {}",pth.display()))),
             })
         }
         if args.artifact_id {
-            parts.push(pom.root.artifactId.clone())
+            parts.push(pom.artifactId.clone())
         }
         if args.version {
             let parent_fallback = pom.parent.as_ref().map(|parent| parent.version.as_ref()).flatten();
-            parts.push(match (pom.root.version, parent_fallback) {
+            parts.push(match (pom.version, parent_fallback) {
                 (Some(part), _) => part.to_owned(),
                 (None, Some(parent)) => parent.to_owned(),
                 (None, None) => return Err((ExitStatus::err(), format!("No version and no parent version for {}",pth.display()))),
