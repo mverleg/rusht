@@ -145,6 +145,7 @@ walkdir = "2.3.3"
 egui = { version = "0.23.0", optional = true }
 eframe = { version = "0.23.0", optional = true }
 tracing-subscriber = { version = "0.3.16", optional = true }
+serde-xml-rs = "0.6.0"
 
 [patch.crates-io]
 # necessary because of a bug in ahash that is fixed, but indirectly memoize pulls in old version

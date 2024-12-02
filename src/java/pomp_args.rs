@@ -12,11 +12,11 @@ pub struct PompArgs {
     #[arg(required = true)]
     pub pom_paths: Vec<PathBuf>,
     #[arg(short='a', long="artifactId")]
-    artifact_id: bool,
+    pub artifact_id: bool,
     #[arg(short='g', long="groupId")]
-    group_id: bool,
+    pub group_id: bool,
     #[arg(short='v', long="version")]
-    version: bool,
+    pub version: bool,
 }
 
 #[test]
