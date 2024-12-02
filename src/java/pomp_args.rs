@@ -9,8 +9,8 @@ use ::clap::Parser;
 )]
 pub struct PompArgs {
     /// Pomfile paths
-    #[arg()]
-    pub proj_roots: Vec<PathBuf>,
+    #[arg(required = true)]
+    pub pom_paths: Vec<PathBuf>,
     #[arg(short='a', long="artifactId")]
     artifact_id: bool,
     #[arg(short='g', long="groupId")]

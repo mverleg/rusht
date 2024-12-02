@@ -10,5 +10,5 @@ async fn main() -> ExitStatus {
         env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
     );
     let args = PompArgs::parse();
-    handle_pomp(args).await
+    handle_pomp(args)
 }
