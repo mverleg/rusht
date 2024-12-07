@@ -19,7 +19,6 @@ struct Pom {
 #[allow(non_snake_case)]
 #[derive(Debug, Deserialize)]
 struct ArtifactId {
-    artifactId: String,
     groupId: Option<String>,
     version: Option<String>,
 }
