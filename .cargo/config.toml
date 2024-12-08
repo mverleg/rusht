@@ -2,7 +2,8 @@
 rust.use-ldd = true
 
 [build]
-rustflags = ["-Z", "threads=8"]
+#rustflags = ["-Z", "threads=8"]
+# ^ only for nightly
 
 # to install cranelift:
 # rustup component add rustc-codegen-cranelift-preview --toolchain nightly
