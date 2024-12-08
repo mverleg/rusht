@@ -83,10 +83,8 @@ pub fn chained(buffer_size: usize) -> (ChainWriter, ChainReader) {
 
 #[cfg(test)]
 mod tests {
-    use ::std::future::join;
-
     use ::regex::Regex;
-
+    use futures::future::join;
     use crate::common::{CollectorWriter, VecReader};
     use crate::filter::{grab, unique, GrabArgs, Keep, Order, UniqueArgs};
     use crate::observe::chain::chained;
@@ -123,7 +121,7 @@ mod tests {
             prefix: false,
             keep_empty: false,
         };
-        let (res, ()) = join!(
+        let (res, ()) = join(
             //TODO @mark: probably an easier way for this:
             grab(grab_args, inp1, out1),
             unique(unique_args, &mut inp2, &mut out2),

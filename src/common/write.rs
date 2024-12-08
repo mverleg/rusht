@@ -1,7 +1,6 @@
 use ::std::fmt;
 // using async caused deadlocks in concurrent mvn commands
 use ::std::fmt::Debug;
-use ::std::future::join;
 use ::std::io;
 use ::std::io::Write;
 use std::process::exit;
@@ -14,6 +13,7 @@ use ::log::debug;
 use ::log::warn;
 use ::regex::Regex;
 use ::smallvec::SmallVec;
+use futures::future::join;
 
 #[async_trait]
 pub trait LineWriter: Debug + Send {
@@ -217,7 +217,7 @@ impl<'a, W1: LineWriter, W2: LineWriter> TeeWriter<'a, W1, W2> {
 impl<'a, W1: LineWriter, W2: LineWriter> LineWriter for TeeWriter<'a, W1, W2> {
     async fn write_line(&mut self, line: impl AsRef<str> + Send) {
         let line = line.as_ref();
-        let _: ((), ()) = join!(self.first.write_line(line), self.second.write_line(line),).await;
+        let _: ((), ()) = join(self.first.write_line(line), self.second.write_line(line),).await;
     }
 }
 

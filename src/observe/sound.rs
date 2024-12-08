@@ -1,9 +1,8 @@
 use ::std::env;
-use ::std::future::join;
 
 use ::log::debug;
 use ::log::error;
-
+use futures::future::join;
 use crate::common::StdWriter;
 use crate::common::Task;
 
@@ -43,7 +42,7 @@ pub async fn sound_notification(
         return Ok(())
     };
     //TODO @mverleg: use block_on since async wants recursive future type, and we anyway want to wait
-    let (sound_status, popup_status) = join!(
+    let (sound_status, popup_status) = join(
         sound_task.execute_with_stdout_nomonitor(
             &mut StdWriter::stdout(),
             &mut StdWriter::stderr()
