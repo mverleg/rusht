@@ -46,6 +46,9 @@ pub struct NamesafeArgs {
     /// Expect exactly one input line. Fail if more. Fail if fewer unless --allow_empty.
     #[arg(short = '1', long = "single", conflicts_with = "input")]
     pub single_line: bool,
+    /// Only allow one separator, instead of both - and _
+    #[arg(short = 'S', long)]
+    pub separator: Option<char>,
 }
 //TODO @mverleg: when to hash? (always, if changed, if too long, never)
 
@@ -131,6 +134,7 @@ impl Default for NamesafeArgs {
             allow_outer_connector: false,
             input: None,
             single_line: false,
+            separator: None,
         }
     }
 }
