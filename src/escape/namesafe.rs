@@ -53,7 +53,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let separator_arg = if let Some(sep) = args.separator { sep } else { '_' };
     let mut filtered = original
         .chars()
-        .map(|c| if args.charset.is_allowed(c) { c } else { separator_arg })
+        .map(|c| if args.charset.is_allowed(c, args.separator) { c } else { separator_arg })
         .filter(|c| skip_subsequent_special(*c, &mut is_prev_special, args.separator))
         .inspect(|_| count += 1)
         .collect::<String>();

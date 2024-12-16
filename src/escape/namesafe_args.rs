@@ -107,15 +107,20 @@ impl Charset {
         }
     }
 
-    pub fn is_allowed(&self, symbol: char) -> bool {
+    pub fn is_allowed(&self, symbol: char, separator: Option<char>) -> bool {
+        let is_sep = match separator {
+            None => symbol == '-' || symbol == '_',
+            Some(sep) => symbol == sep,
+        };
+        if is_sep {
+            return false;
+        }
         match self {
-            Charset::AllowUnicode => symbol.is_alphanumeric() || symbol == '-' || symbol == '_',
+            Charset::AllowUnicode => symbol.is_alphanumeric(),
             Charset::AsciiOnly => {
                 ('a'..='z').contains(&symbol)
                     || ('A'..='Z').contains(&symbol)
                     || ('0'..='9').contains(&symbol)
-                    || symbol == '-'
-                    || symbol == '_'
             }
         }
     }
