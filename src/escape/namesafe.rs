@@ -57,6 +57,11 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         .filter(|c| skip_subsequent_special(*c, &mut is_prev_special, args.separator))
         .inspect(|_| count += 1)
         .collect::<String>();
+    if !args.allow_outer_connector {
+        while filtered.ends_with('_') || filtered.ends_with('-') || filtered.ends_with(separator_arg) {
+            filtered.pop();
+        }
+    }
     let was_changed = original != filtered;
     let was_too_long = count > max_length;
     let do_hash = filtered.is_empty() || args.hash_policy.should_hash(was_changed, was_too_long);
@@ -65,11 +70,6 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
             count={count}, max_length={max_length}, do_hash={do_hash}, hash_policy={0:?}",
         args.hash_policy
     );
-    if !args.allow_outer_connector {
-        while filtered.ends_with('_') || filtered.ends_with('-') || filtered.ends_with(separator_arg) {
-            filtered.pop();
-        }
-    }
     if !do_hash {
         return shorten(&filtered, count, max_length, args.keep_tail);
     }
