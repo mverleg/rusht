@@ -54,7 +54,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     let mut filtered = original
         .chars()
         .map(|c| if args.charset.is_allowed(c) { c } else { separator_arg })
-        .filter(|c| skip_subsequent_special(*c, &mut is_prev_special, separator_arg))
+        .filter(|c| skip_subsequent_special(*c, &mut is_prev_special, args.separator))
         .inspect(|_| count += 1)
         .collect::<String>();
     let was_changed = original != filtered;
@@ -74,6 +74,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
         return shorten(&filtered, count, max_length, args.keep_tail);
     }
     if !filtered.is_empty() {
+        //TODO @mark: this might cause issues if allow_outer_connector and ends with _-
         filtered.push(separator_arg);
     }
     let hash_length = min(12, max_length / 2);
@@ -96,8 +97,11 @@ fn shorten(filtered: &str, actual_len: usize, goal_len: usize, keep_tail: bool) 
     }
 }
 
-fn skip_subsequent_special(symbol: char, is_prev_special: &mut bool, separator_arg: char) -> bool {
-    let is_special = symbol == '_' || symbol == '-' || symbol == separator_arg;
+fn skip_subsequent_special(symbol: char, is_prev_special: &mut bool, separator_arg: Option<char>) -> bool {
+    let is_special = match separator_arg {
+        None => symbol == '_' || symbol == '-',
+        Some(separator) => symbol == separator,
+    };
     if is_special && *is_prev_special {
         return false;
     }
