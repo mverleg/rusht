@@ -50,7 +50,7 @@ pub fn namesafe_line(original: &str, args: &NamesafeArgs) -> String {
     } else {
         true
     };
-    let separator_arg = if let Some(sep) = args.separator { sep } else { '-' };
+    let separator_arg = if let Some(sep) = args.separator { sep } else { '_' };
     let mut filtered = original
         .chars()
         .map(|c| if args.charset.is_allowed(c, args.separator) { c } else { separator_arg })
