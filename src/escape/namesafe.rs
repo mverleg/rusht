@@ -212,4 +212,13 @@ mod tests {
         let res = namesafe_line("commits-for-review-unpushed-firstN", &args);
         assert_eq!(res, "commits-for-review-unpushed-firs");
     }
+
+    #[test]
+    fn custom_separator() {
+        let res = namesafe_line(
+            "The King is dead. Long live the 皇帝! %^",
+            &NamesafeArgs::parse_from(vec!["namesafe", "-x=l", "-E", "-S=/", "-u", "-l=24"]),
+        );
+        assert_eq!(res, "live/the/皇帝/844x4njhe2kx");
+    }
 }
