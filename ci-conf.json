@@ -16,7 +16,6 @@
       ],
       "bins": [
         "rusht",
-        "rusht",
         "cmadd",
         "cmdo",
         "cmlist",
