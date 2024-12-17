@@ -113,7 +113,7 @@ impl Charset {
             Some(sep) => symbol == sep,
         };
         if is_sep {
-            return false;
+            return true;
         }
         match self {
             Charset::AllowUnicode => symbol.is_alphanumeric(),
