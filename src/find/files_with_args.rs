@@ -1,8 +1,9 @@
 use ::std::path::PathBuf;
-use ::std::str::FromStr;
 
 use ::clap::Parser;
 use ::regex::Regex;
+
+use crate::find::dir_with_args::OnErr;
 
 #[derive(Parser, Debug, Default)]
 #[command(
@@ -23,83 +24,26 @@ pub struct FilesWithArgs {
     #[arg(short = 'p', long = "path")]
     /// Full path pattern that must match
     pub paths: Vec<Regex>,
-    #[arg(short = 't', long = "content")]
+    #[arg(short = 'c', long = "content")]
     /// Content pattern that must match inside the file
     pub contents: Vec<Regex>,
     #[arg(short = 'P', long = "not-path")]
     /// Opposite of -p; file only matches if full path does NOT match this pattern
     pub not_paths: Vec<Regex>,
-    #[arg(short = 'T', long = "not-content")]
+    #[arg(short = 'C', long = "not-content")]
     /// Opposite of -t; file only matches if content does NOT match this pattern
     pub not_contents: Vec<Regex>,
 }
 
 #[test]
 fn test_cli_args() {
-    FilesWithArgs::try_parse_from(&["cmd", "-r", ".", "-l", "6", "-f", ".*\\.txt", "-x=silent", ]).unwrap();
-    FilesWithArgs::try_parse_from(&["cmd", "-r", ".", "-t", "TODO", "-F", "test.*", ]).unwrap();
+    // Test basic path pattern matching
+    FilesWithArgs::try_parse_from(&["cmd", "-r", ".", "-l", "6", "-p", ".*\\.txt", "-x=silent"]).unwrap();
+    
+    // Test content pattern matching with negative path pattern
+    FilesWithArgs::try_parse_from(&["cmd", "-r", ".", "-c", "TODO", "-P", "test.*"]).unwrap();
+    
+    // Test multiple patterns
+    FilesWithArgs::try_parse_from(&["cmd", "-p", ".*\\.rs", "-p", ".*\\.toml", "-c", "async", "-C", "deprecated"]).unwrap();
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub enum OnErr {
-    #[default]
-    Warn,
-    Abort,
-    Ignore,
-}
-
-impl FromStr for OnErr {
-    type Err = String;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        Ok(match value.to_ascii_lowercase().as_str() {
-            "w" | "warn" => OnErr::Warn,
-            "a" | "abort" | "exit" | "stop" => OnErr::Abort,
-            "i" | "ignore" | "silent" | "skip" => OnErr::Ignore,
-            _ => return Err(format!("did not understand error handling strategy '{}', try '[w]arn', '[a]bort' or '[i]gnore'", value)),
-        })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_value() {
-        let range = IntRange::from_str("1024").unwrap();
-        assert!(range.is_provided());
-        assert!(range.includes(1024));
-        assert!(!range.includes(1023));
-        assert!(!range.includes(1025));
-    }
-
-    #[test]
-    fn parse_lower_bound() {
-        let range = IntRange::from_str("1024,").unwrap();
-        assert!(range.is_provided());
-        assert!(!range.includes(1023));
-        assert!(range.includes(1024));
-        assert!(range.includes(1025));
-    }
-
-    #[test]
-    fn parse_upper_bound() {
-        let range = IntRange::from_str(",1024").unwrap();
-        assert!(range.is_provided());
-        assert!(range.includes(1023));
-        assert!(range.includes(1024));
-        assert!(!range.includes(1025));
-    }
-
-    #[test]
-    fn parse_closed_range() {
-        let range = IntRange::from_str("1024,2048").unwrap();
-        assert!(range.is_provided());
-        assert!(range.includes(1024));
-        assert!(range.includes(1536));
-        assert!(range.includes(2048));
-        assert!(!range.includes(1023));
-        assert!(!range.includes(2049));
-    }
-}

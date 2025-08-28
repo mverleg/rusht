@@ -4,7 +4,7 @@ use ::std::path::Path;
 
 use crate::common::LineWriter;
 use crate::find::files_with_args::FilesWithArgs;
-use crate::find::files_with_args::OnErr;
+use crate::find::dir_with_args::OnErr;
 use crate::ExitStatus;
 use ::ignore::WalkBuilder;
 use ::log::debug;
