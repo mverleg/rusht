@@ -118,7 +118,7 @@ pub struct LineContainer {
 }
 
 impl LineContainer {
-    pub async fn snapshot(&self) -> MutexGuard<Vec<String>> {
+    pub async fn snapshot(&self) -> MutexGuard<'_, Vec<String>> {
         self.lines.lock().await
     }
 }

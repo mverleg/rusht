@@ -24,17 +24,6 @@ pub const DATA_VERSION: u32 = 3;
 //     Docker,
 // }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Namespace {
-    name: String,
-}
-
-impl fmt::Display for Namespace {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)
-    }
-}
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct RunId {
     pub run_ts_s: u32,
@@ -133,11 +122,11 @@ impl TaskStack {
     }
 
     /// Iterate from next to last (reverse to `self.task`)
-    pub fn iter(&self) -> Rev<Iter<TaskType>> {
+    pub fn iter(&self) -> Rev<Iter<'_, TaskType>> {
         self.iter_old2new().rev()
     }
 
-    pub fn iter_old2new(&self) -> Iter<TaskType> {
+    pub fn iter_old2new(&self) -> Iter<'_, TaskType> {
         self.tasks.iter()
     }
 }

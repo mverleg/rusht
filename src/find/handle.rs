@@ -4,7 +4,11 @@ use crate::find::jl::list_files;
 use crate::find::jl_args::JlArgs;
 use crate::ExitStatus;
 
-use super::{find_dir_with, DirWithArgs, PathModification};
+use super::FilesWithArgs;
+use super::DirWithArgs;
+use super::find_dir_with;
+use super::files_with;
+use super::PathModification;
 
 pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
     if args.roots.len() > 1 && args.path_modification == PathModification::Relative {
@@ -22,6 +26,12 @@ pub fn handle_dir_with(args: DirWithArgs) -> ExitStatus {
             ExitStatus::err()
         }
     }
+}
+
+pub async fn handle_files_with(
+    args: FilesWithArgs,
+) -> ExitStatus {
+    files_with(args, &mut StdWriter::stdout()).await
 }
 
 pub async fn handle_jl(args: JlArgs) -> ExitStatus {
