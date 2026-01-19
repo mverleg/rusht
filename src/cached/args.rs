@@ -42,8 +42,11 @@ pub struct CachedKeyArgs {
     #[arg(short = 'G', long, conflicts_with = "git_head")]
     pub git_head_diff: bool,
     /// Invalidates cache if we're in a different git repo. This doesn't make much sense without --no-dir.
-    #[arg(long)]
+    #[arg(long, requires = "no_dir")]
     pub git_repo_dir: bool,
+    /// Invalidates cache if the git worktree changes (uses git common dir). Only makes sense with --no-dir; doesn't make sense with --git-repo-dir.
+    #[arg(long, requires = "no_dir", conflicts_with = "git_repo_dir")]
+    pub git_worktree: bool,
     /// Invalidates cache if the uncommitted git files change.
     #[arg(short = 'p', long)]
     pub git_pending: bool,
@@ -68,7 +71,7 @@ pub struct CachedKeyArgs {
 impl CachedArgs {
     pub fn any_explicit_key(&self) -> bool {
         self.key.git_head || self.key.git_head_diff || self.key.git_base || self.key.git_repo_dir ||
-            self.key.git_pending || !self.key.env.is_empty() || !self.key.text.is_empty()
+            self.key.git_worktree || self.key.git_pending || !self.key.env.is_empty() || !self.key.text.is_empty()
     }
 }
 
@@ -81,6 +84,7 @@ impl Default for CachedArgs {
                 git_base: false,
                 git_head_diff: false,
                 git_repo_dir: false,
+                git_worktree: false,
                 git_pending: false,
                 env: vec![],
                 text: vec![],
@@ -112,4 +116,10 @@ fn test_cli_args() {
     assert!(args.any_explicit_key());
     args = CachedArgs::try_parse_from(&["cmd", "-d1y", "-gpe", "ENV_VAR", "-CDEt", "string", "-t", "another string", "--", "ls"]).unwrap();
     assert!(args.any_explicit_key());
+    args = CachedArgs::try_parse_from(&["cmd", "-D", "--git-worktree", "ls"]).unwrap();
+    assert!(args.any_explicit_key());
+    assert!(args.key.git_worktree);
+    assert!(args.key.no_dir);
+    assert!(CachedArgs::try_parse_from(&["cmd", "--git-worktree", "ls"]).is_err());
+    assert!(CachedArgs::try_parse_from(&["cmd", "-D", "--git-worktree", "--git-repo-dir", "ls"]).is_err());
 }

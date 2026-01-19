@@ -20,6 +20,7 @@ use crate::common::file_modified_time_in_seconds;
 use crate::common::git::{git_head_ref, git_stripped_diff};
 use crate::common::git::git_master_base_ref;
 use crate::common::git::git_repo_dir;
+use crate::common::git::git_common_dir;
 use crate::common::git::git_uncommitted_changes;
 use crate::common::LineWriter;
 use crate::common::safe_filename;
@@ -196,6 +197,9 @@ async fn build_key_with(
     }
     if args.git_repo_dir {
         key.push(git_repo_dir(&task.working_dir).await?)
+    }
+    if args.git_worktree {
+        key.push(git_common_dir(&task.working_dir).await?)
     }
     if args.git_pending {
         add_pending_file_timestamps(&task, &mut key).await?;

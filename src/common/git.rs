@@ -67,6 +67,18 @@ pub async fn git_repo_dir(dir: &Path) -> Result<String, String> {
     Ok(lines.pop().unwrap())
 }
 
+pub async fn git_common_dir(dir: &Path) -> Result<String, String> {
+    let mut lines = git_shell_cmd(
+        dir,
+        vec!["rev-parse".to_owned(), "--path-format=absolute".to_owned(), "--git-common-dir".to_owned()],
+        "getting git common directory",
+    ).await?;
+    if lines.len() != 1 {
+        return Err(format!("unexpected response when getting git common directory: {}", lines.join("\\n")))
+    }
+    Ok(lines.pop().unwrap())
+}
+
 pub async fn git_uncommitted_changes(dir: &Path) -> Result<Vec<String>, String> {
     let lines = git_shell_cmd(
         dir,
