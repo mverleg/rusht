@@ -1,9 +1,8 @@
 use ::log::debug;
 use std::collections::HashSet;
-use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use ::std::time::Instant;
-use egui::show_tooltip_for;
+use std::fmt::Display;
 use crate::common::current_time_user_str;
 use crate::common::LineWriter;
 use crate::common::PrefixWriter;
@@ -57,7 +56,7 @@ pub async fn mon_task_with_writer(
         !args.no_timing,
         args.sound_success,
         args.sound_failure,
-        args.print_envs,
+        &args.print_envs,
     ).await
 }
 
@@ -76,7 +75,7 @@ pub async fn mon_task(
     let print_envs = unique_envs(print_envs);
     //TODO @mverleg: print_envs
     let cmd_str = if full_cmd {
-        task.as_str_print_env(print_envs)
+        task.as_str_print_env(&print_envs)
     } else {
         debug_assert!(print_envs.is_empty());
         task.as_short_cmd_str()

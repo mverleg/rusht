@@ -137,7 +137,7 @@ impl Task {
         txt
     }
 
-    pub fn as_str(&self) -> String {
+    pub fn as_str_print_env(&self, print_envs: &[String]) -> String {
         let mut cmd_str = if let Some(sin) = &self.stdin {
             format!(" <{}b", sin.len())
         } else {
@@ -146,17 +146,27 @@ impl Task {
         if self.working_dir != env::current_dir().unwrap() {
             write!(cmd_str, " @ {}", self.working_dir.to_string_lossy()).unwrap()
         };
-        let env_str = if self.extra_envs.is_empty() {
+        let mut all_print_envs = self.extra_envs.clone();
+        for extra_print_env in print_envs {
+            if ! all_print_envs.contains_key(extra_print_env) {
+                all_print_envs.insert(extra_print_env.clone(), env::var(extra_print_env).unwrap_or_else(|_| "".to_owned()));
+            }
+        }
+        let env_str = if all_print_envs.is_empty() {
             "".to_owned()
         } else {
             format!(
                 "{} ",
-                self.extra_envs
+                all_print_envs
                     .iter()
                     .map(|(k, v)| format!("{}='{}'", k, v))
                     .join(" ")
             )
         };
         format!("{}{}{}", env_str, self.as_cmd_str(), cmd_str,)
+    }
+
+    pub fn as_str(&self) -> String {
+        self.as_str_print_env(&[])
     }
 }

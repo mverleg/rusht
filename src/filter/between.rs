@@ -58,7 +58,6 @@ pub async fn between(
         debug!("no end pattern in 'between', returning all remaining lines from line #{i}");
         while let Some(line) = reader.read_line().await {
             writer.write_line(line).await;
-            i += 1;
         }
     }
     // Skip the rest
