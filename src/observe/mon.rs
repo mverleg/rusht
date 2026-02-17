@@ -1,12 +1,14 @@
-use ::std::time::Instant;
-
 use ::log::debug;
-
+use std::collections::HashSet;
+use std::fmt::{Debug, Display};
+use std::hash::Hash;
+use ::std::time::Instant;
+use egui::show_tooltip_for;
 use crate::common::current_time_user_str;
-use crate::common::Task;
-use crate::common::StdWriter;
-use crate::common::PrefixWriter;
 use crate::common::LineWriter;
+use crate::common::PrefixWriter;
+use crate::common::StdWriter;
+use crate::common::Task;
 use crate::common::VecWriter;
 use crate::observe::mon_args::MonArgs;
 use crate::observe::sound_notification;
@@ -55,6 +57,7 @@ pub async fn mon_task_with_writer(
         !args.no_timing,
         args.sound_success,
         args.sound_failure,
+        args.print_envs,
     ).await
 }
 
@@ -68,10 +71,14 @@ pub async fn mon_task(
     timing: bool,
     sound_success: bool,
     sound_failure: bool,
+    print_envs: &[String],
 ) -> ExitStatus {
+    let print_envs = unique_envs(print_envs);
+    //TODO @mverleg: print_envs
     let cmd_str = if full_cmd {
-        task.as_str()
+        task.as_str_print_env(print_envs)
     } else {
+        debug_assert!(print_envs.is_empty());
         task.as_short_cmd_str()
     };
     if print_cmd {
@@ -147,3 +154,18 @@ pub async fn mon_task(
     }
     status
 }
+
+fn unique_envs<T>(items: &[T]) -> Vec<T>
+        where T: Eq + Hash + Clone + Display {
+    let mut seen = HashSet::new();
+    let mut unique_envs = Vec::new();
+    for item in items {
+        if seen.contains(item) {
+            println!("duplicate env var: {}", &item);
+        }
+        assert!(seen.insert(item.clone()));
+        unique_envs.push(item.clone());
+    }
+    unique_envs
+}
+

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use ::clap::Parser;
 
 use crate::common::CommandArgs;
@@ -30,8 +31,11 @@ pub struct MonArgs {
     #[arg(short = 'x', long)]
     pub use_stdout: bool,
     /// Do not abbreviate the command when it is long. Can also be set using env MON_FULL_CMD
-    #[arg(short = 'f', long)]
+    #[arg(short = 'f', long, conflicts_with = "no_print_cmd")]
     pub full_command: bool,
+    /// Print environment variable with this name (can be repeated).
+    #[arg(short = 'e', long, requires = "full_command")]
+    pub print_envs: Vec<String>,
     #[command(subcommand)]
     pub cmd: CommandArgs,
 }
