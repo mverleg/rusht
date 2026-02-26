@@ -1,7 +1,7 @@
 use ::clap::Parser;
 
-use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks};
-use crate::cmd::cmd_type::{TaskStack, TaskType};
+use crate::cmd::cmd_do::{mark_tasks_to_run, run_tasks, Status};
+use crate::cmd::cmd_type::{RunId, TaskStack, TaskType};
 use crate::cmd::create_cmd::create_tasks;
 use crate::common::{stdin_lines, CommandArgs, EmptyLineHandling};
 use crate::ExitStatus;
@@ -46,6 +46,9 @@ pub struct BufArgs {
     #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
     /// Do not log anything unless it is an error.
     pub quiet: bool,
+    #[arg(short = 'F', long)]
+    /// Print a summary of failed commands at the end.
+    pub failure_summary: bool,
     #[command(subcommand)]
     pub cmd: CommandArgs,
     #[arg(long, hide_short_help = true, conflicts_with = "lines_with")]
@@ -55,7 +58,7 @@ pub struct BufArgs {
 
 #[test]
 fn test_cli_args() {
-    BufArgs::try_parse_from(&["cmd", "-L", "%", "-c=5", "ls", "-Q", "%"]).unwrap();
+    BufArgs::try_parse_from(&["cmd", "-L", "%", "-c=5", "-F", "ls", "-Q", "%"]).unwrap();
 }
 
 pub fn buf_cmd(args: BufArgs) -> ExitStatus {
@@ -89,12 +92,22 @@ pub fn buf_cmd(args: BufArgs) -> ExitStatus {
             to_run[0].as_str()
         );
     }
+    let cmd_names: Vec<(RunId, String)> = to_run.iter()
+        .map(|task| (task.run_id, task.as_str()))
+        .collect();
     let statuses = run_tasks(
         to_run,
         args.continue_on_error || args.parallel > 1,
         args.parallel,
         args.quiet || args.mostly_quiet,
     );
+    if args.failure_summary {
+        for (id, cmd) in &cmd_names {
+            if matches!(statuses.get(id).map(|s| *s), Some(Status::Failed(_))) {
+                eprintln!("❌ {}", cmd);
+            }
+        }
+    }
     let exit_code = statuses
         .iter()
         .map(|entry| entry.value().exit_status())

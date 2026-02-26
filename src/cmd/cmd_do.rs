@@ -91,12 +91,10 @@ pub fn do_cmd(args: DoArgs) -> bool {
     let statuses = run_tasks(to_run, args.continue_on_error, args.parallel,
         args.quiet || args.mostly_quiet);
     if args.failure_summary {
-        let failed_cmds: Vec<&str> = cmd_names.iter()
-            .filter(|(id, _)| matches!(statuses.get(id).map(|s| *s), Some(Status::Failed(_))))
-            .map(|(_, cmd)| cmd.as_str())
-            .collect();
-        for cmd in &failed_cmds {
-            eprintln!("❌ {}", cmd);
+        for (id, cmd) in &cmd_names {
+            if matches!(statuses.get(id).map(|s| *s), Some(Status::Failed(_))) {
+                eprintln!("❌ {}", cmd);
+            }
         }
     }
 
