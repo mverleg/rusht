@@ -238,7 +238,7 @@ pub fn mark_tasks_to_run(
     tasks: &mut TaskStack,
     ts_s: u32,
 ) -> Vec<RunningTask> {
-    let rand_id = rand::thread_rng().gen::<u32>();
+    let rand_id = rand::rng().random::<u32>();
     let mut run_nr = 0;
     let mut to_run = vec![];
     for task in tasks.iter_mut() {

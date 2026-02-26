@@ -1,7 +1,6 @@
 use ::std::fs;
 use ::std::sync::Once;
 
-use ::rand::thread_rng;
 use ::rand::Rng;
 use ::tempfile::NamedTempFile;
 
@@ -16,8 +15,8 @@ fn init_test() -> String {
             env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "warn"),
         );
     });
-    let mut rng = thread_rng();
-    let namespace = format!("unit_test_{}", rng.gen::<u32>());
+    let mut rng = rand::rng();
+    let namespace = format!("unit_test_{}", rng.random::<u32>());
     drop_cmd(DropArgs {
         namespace: namespace.to_string(),
         all: true,
@@ -150,6 +149,7 @@ fn onebyone_add_run() {
         quiet: false,
         mostly_quiet: false,
         allow_empty: false,
+        failure_summary: false,
     });
     let out = list_cmds(ListArgs {
         namespace,
