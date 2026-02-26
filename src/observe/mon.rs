@@ -54,6 +54,7 @@ pub async fn mon_task_with_writer(
         args.full_command,
         !args.no_output_on_success,
         !args.no_timing,
+        !args.no_failure_summary,
         args.sound_success,
         args.sound_failure,
         &args.print_envs,
@@ -68,6 +69,7 @@ pub async fn mon_task(
     full_cmd: bool,
     output_on_success: bool,
     timing: bool,
+    failure_summary: bool,
     sound_success: bool,
     sound_failure: bool,
     print_envs: &[String],
@@ -150,6 +152,9 @@ pub async fn mon_task(
     if let Err(err) = sound_notification(sound_success, sound_failure, status.is_ok(), details).await {
         eprintln!("notification sound problem: {}", err);
         return ExitStatus::err();
+    }
+    if status.is_err() && failure_summary {
+        eprintln!("❌ {}", cmd_str);
     }
     status
 }
