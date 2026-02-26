@@ -33,9 +33,6 @@ pub struct MonArgs {
     /// Do not abbreviate the command when it is long. Can also be set using env MON_FULL_CMD
     #[arg(short = 'f', long, conflicts_with = "no_print_cmd")]
     pub full_command: bool,
-    /// Do not log failed commands with ❌ at the end.
-    #[arg(short = 'F', long)]
-    pub no_failure_summary: bool,
     /// Print environment variable with this name (can be repeated).
     #[arg(short = 'e', long, requires = "full_command")]
     pub print_envs: Vec<String>,
@@ -46,5 +43,5 @@ pub struct MonArgs {
 #[test]
 fn test_cli_args() {
     MonArgs::try_parse_from(&["cmd", "ls"]).unwrap();
-    MonArgs::try_parse_from(&["cmd", "-cbtxfF", "-sS", "-p=pre", "ls"]).unwrap();
+    MonArgs::try_parse_from(&["cmd", "-cbtxf", "-sS", "-p=pre", "ls"]).unwrap();
 }

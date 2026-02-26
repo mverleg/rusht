@@ -55,6 +55,9 @@ pub struct DoArgs {
     #[arg(short = 'q', long, conflicts_with = "mostly_quiet")]
     /// Do not log command and timing.
     pub quiet: bool,
+    #[arg(short = 'F', long)]
+    /// Print a summary of failed commands at the end.
+    pub failure_summary: bool,
     #[arg(short = '0', long = "allow-empty")]
     /// Silently do nothing if there are no commands.
     pub allow_empty: bool,
@@ -62,7 +65,7 @@ pub struct DoArgs {
 
 #[test]
 fn test_cli_args() {
-    DoArgs::try_parse_from(&["cmd", "-q", "-p=8", "--keep", "--all"]).unwrap();
+    DoArgs::try_parse_from(&["cmd", "-q", "-p=8", "--keep", "--all", "-F"]).unwrap();
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {
@@ -82,8 +85,20 @@ pub fn do_cmd(args: DoArgs) -> bool {
     let to_run = mark_tasks_to_run(args.restart_running, args.all, args.count, &mut tasks, ts_s);
     write(args.namespace.clone(), &tasks);
 
+    let cmd_names: Vec<(RunId, String)> = to_run.iter()
+        .map(|task| (task.run_id, task.as_str()))
+        .collect();
     let statuses = run_tasks(to_run, args.continue_on_error, args.parallel,
         args.quiet || args.mostly_quiet);
+    if args.failure_summary {
+        let failed_cmds: Vec<&str> = cmd_names.iter()
+            .filter(|(id, _)| matches!(statuses.get(id).map(|s| *s), Some(Status::Failed(_))))
+            .map(|(_, cmd)| cmd.as_str())
+            .collect();
+        for cmd in &failed_cmds {
+            eprintln!("❌ {}", cmd);
+        }
+    }
 
     let tasks = read(args.namespace.clone());
     let remaining = remove_completed_tasks(&args, tasks, &statuses);
