@@ -88,10 +88,14 @@ fn task_from_template(
 
 fn stdin_ignored_warning() {
     let mut buffer = [0u8; 1];
-    if let Err(err) = stdin().lock().read(&mut buffer) {
-        debug!("failed to read stdin, error {}", err)
-    }
-    if !buffer.is_empty() {
+    let bytes_read = match stdin().lock().read(&mut buffer) {
+        Ok(n) => n,
+        Err(err) => {
+            debug!("failed to read stdin, error {}", err);
+            return;
+        }
+    };
+    if bytes_read > 0 {
         eprintln!("found data on stdin, but --lines(-with) not given, so it will be ignored")
     }
 }
