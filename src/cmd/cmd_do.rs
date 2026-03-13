@@ -37,6 +37,9 @@ pub struct DoArgs {
     #[arg(short = 'p', long = "parallel", default_value = "1")]
     /// How many parallel tasks to run (implies --continue-on-error).
     pub parallel: u32,
+    #[arg(short = 'P', long = "parallel-per-core", conflicts_with = "parallel")]
+    /// Use one parallel task per CPU core (implies --continue-on-error).
+    pub parallel_per_core: bool,
     #[arg(short = 'g', long = "restart-running")]
     /// Run tasks even if they are marked as already running.
     pub restart_running: bool,
@@ -66,6 +69,8 @@ pub struct DoArgs {
 #[test]
 fn test_cli_args() {
     DoArgs::try_parse_from(&["cmd", "-q", "-p=8", "--keep", "--all", "-F"]).unwrap();
+    DoArgs::try_parse_from(&["cmd", "-P", "--all"]).unwrap();
+    assert!(DoArgs::try_parse_from(&["cmd", "-P", "-p=4"]).is_err());
 }
 
 pub fn do_cmd(args: DoArgs) -> bool {
@@ -175,6 +180,13 @@ pub fn run_tasks(
 }
 
 fn verify_args(mut args: DoArgs) -> DoArgs {
+    if args.parallel_per_core {
+        let my_cores = std::thread::available_parallelism()
+            .map(|n| n.get() as u32)
+            .unwrap_or(1);
+        info!("using {} parallel tasks (one per core)", my_cores);
+        args.parallel = my_cores;
+    }
     if args.parallel > 1 && !args.continue_on_error {
         info!("enabling --continue-on-error because of --parallel");
         args.continue_on_error = true
